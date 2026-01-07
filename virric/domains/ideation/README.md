@@ -4,8 +4,8 @@ Primary artifacts:
 - `idea` — a lightweight, decision-oriented proposal.
 
 Canonical locations:
-- Templates: `ideation/templates/`
-- Working artifacts: `ideation/ideas/`
+- Templates: `virric/domains/ideation/templates/`
+- Working artifacts: `virric/domains/ideation/ideas/`
 
 Naming convention (recommended):
 - `IDEA-0001-short-title.md`

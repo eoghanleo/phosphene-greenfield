@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates feature-management/backlog_tree.md (bash-only)
+# Generates virric/domains/feature-management/backlog_tree.md (bash-only)
 # - Single-dir only: show status-grouped listing derived from FR markdown headers
 #
 set -euo pipefail

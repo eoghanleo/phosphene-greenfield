@@ -5,10 +5,10 @@ Primary artifacts:
 - `playbook` — reusable runbooks / checklists / “how we do X”.
 
 Canonical locations:
-- Templates: `retrospective/templates/`
+- Templates: `virric/domains/retrospective/templates/`
 - Working artifacts:
-  - `retrospective/postmortems/`
-  - `retrospective/playbooks/`
+  - `virric/domains/retrospective/postmortems/`
+  - `virric/domains/retrospective/playbooks/`
 
 Handoff (default):
 - **From Test Management / Scrum Management** when outcomes are known.

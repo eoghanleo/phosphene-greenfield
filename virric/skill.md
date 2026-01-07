@@ -11,11 +11,11 @@ Not all agents support `skill.md`. Treat this as **optional** context that compl
 - Validate FR structure deterministically (bash-only header checks)
 - Manage FR lifecycle via status transitions
   - **Single layout (machine-optimized)**:
-    - FRs live under `feature-management/frs/` and status updates edit headers (no file moves)
+    - FRs live under `virric/domains/feature-management/frs/` and status updates edit headers (no file moves)
 - Generate project overviews and reports
-  - `feature-management/backlog_tree.md`
-  - `feature-management/fr_dependencies.md`
-  - `feature-management/fr_report.*`
+  - `virric/domains/feature-management/backlog_tree.md`
+  - `virric/domains/feature-management/fr_dependencies.md`
+  - `virric/domains/feature-management/fr_report.*`
 - Emit CI “signals” under `virric/signals/**` for GitHub Actions workflows
 - (Optional) Sync FRs to GitHub Issues via `gh` CLI
 

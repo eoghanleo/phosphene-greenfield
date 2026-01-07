@@ -4,8 +4,8 @@ Primary artifacts:
 - `issue` — operational work item (usually mirrored to GitHub Issues).
 
 Canonical locations:
-- Templates: `scrum-management/templates/`
-- Working artifacts (optional local mirror): `scrum-management/issues/`
+- Templates: `virric/domains/scrum-management/templates/`
+- Working artifacts (optional local mirror): `virric/domains/scrum-management/issues/`
 
 Handoff (default):
 - **From Feature Management** when an FR is decomposed into actionable issues.

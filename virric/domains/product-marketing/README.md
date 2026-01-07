@@ -5,10 +5,10 @@ Primary artifacts:
 - `proposition` — what we promise and why it’s compelling.
 
 Canonical locations:
-- Templates: `product-marketing/templates/`
+- Templates: `virric/domains/product-marketing/templates/`
 - Working artifacts:
-  - `product-marketing/personas/`
-  - `product-marketing/propositions/`
+  - `virric/domains/product-marketing/personas/`
+  - `virric/domains/product-marketing/propositions/`
 
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.

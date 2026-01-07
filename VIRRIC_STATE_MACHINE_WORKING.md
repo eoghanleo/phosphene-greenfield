@@ -96,19 +96,19 @@ Implication for VIRRIC:
 
 ## Entities (documents + system objects)
 
-- **IDEATION**: `ideation/ideas/IDEA-*.md` *(scaffold)*
-- **RESEARCH**: `research/research-assessments/RA-*.md` *(scaffold)*
+- **IDEATION**: `virric/domains/ideation/ideas/IDEA-*.md` *(scaffold)*
+- **RESEARCH**: `virric/domains/research/research-assessments/RA-*.md` *(scaffold)*
 - **PRODUCT MARKETING**:
-  - Personas: `product-marketing/personas/PER-*.md` *(scaffold)*
-  - Propositions: `product-marketing/propositions/PROP-*.md` *(scaffold)*
-- **PRODUCT STRATEGY**: `product-strategy/product-roadmaps/ROADMAP-*.md` *(scaffold)*
-- **PRODUCT MANAGEMENT**: `product-management/product-specs/SPEC-*.md` *(scaffold)*
-- **FEATURE MANAGEMENT (FR dossier)**: `feature-management/frs/FR-*.md` *(current; tooled)*
-- **SCRUM MANAGEMENT (Issue mirror, optional)**: `scrum-management/issues/ISSUE-*.md` *(scaffold)*
-- **TEST MANAGEMENT (test plan)**: `test-management/test-plans/TP-*.md` *(scaffold)*
+  - Personas: `virric/domains/product-marketing/personas/PER-*.md` *(scaffold)*
+  - Propositions: `virric/domains/product-marketing/propositions/PROP-*.md` *(scaffold)*
+- **PRODUCT STRATEGY**: `virric/domains/product-strategy/product-roadmaps/ROADMAP-*.md` *(scaffold)*
+- **PRODUCT MANAGEMENT**: `virric/domains/product-management/product-specs/SPEC-*.md` *(scaffold)*
+- **FEATURE MANAGEMENT (FR dossier)**: `virric/domains/feature-management/frs/FR-*.md` *(current; tooled)*
+- **SCRUM MANAGEMENT (Issue mirror, optional)**: `virric/domains/scrum-management/issues/ISSUE-*.md` *(scaffold)*
+- **TEST MANAGEMENT (test plan)**: `virric/domains/test-management/test-plans/TP-*.md` *(scaffold)*
 - **RETROSPECTIVE**:
-  - Postmortems: `retrospective/postmortems/PM-*.md` *(scaffold)*
-  - Playbooks: `retrospective/playbooks/PB-*.md` *(scaffold)*
+  - Postmortems: `virric/domains/retrospective/postmortems/PM-*.md` *(scaffold)*
+  - Playbooks: `virric/domains/retrospective/playbooks/PB-*.md` *(scaffold)*
 - **GitHub Issue**: operational state + routing + conversation
 - **Pull Request**: integration artifact linking code to Issues/FRs
 

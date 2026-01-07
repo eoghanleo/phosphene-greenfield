@@ -85,12 +85,14 @@ fi
 echo -e "${GREEN}VIRRIC:${RESET} initializing project at ${CYAN}$PROJECT_DIR${RESET}"
 
 mkdir -p "$PROJECT_DIR/.virric"
-mkdir -p "$PROJECT_DIR/feature-management"
 
-mkdir -p "$PROJECT_DIR/feature-management/frs"
+# Domain scaffold is carried inside the drop-in under virric/domains/**.
+# This install step initializes per-project working artifacts (FR backlog) in the feature-management domain.
+mkdir -p "$PROJECT_DIR/virric/domains/feature-management"
+mkdir -p "$PROJECT_DIR/virric/domains/feature-management/frs"
 
-touch "$PROJECT_DIR/feature-management/backlog_tree.md"
-touch "$PROJECT_DIR/feature-management/fr_dependencies.md"
+touch "$PROJECT_DIR/virric/domains/feature-management/backlog_tree.md"
+touch "$PROJECT_DIR/virric/domains/feature-management/fr_dependencies.md"
 
 cat > "$PROJECT_DIR/.virric/config.env" <<EOF
 # VIRRIC project configuration (bash-sourced)
@@ -98,9 +100,9 @@ export virric_version="0.2.0"
 export framework_path="$VIRRIC_DIR"
 export project_root="$PROJECT_DIR"
 # Canonical directory name (preferred)
-export feature_management_path="$PROJECT_DIR/feature-management"
+export feature_management_path="$PROJECT_DIR/virric/domains/feature-management"
 # Back-compat alias (older scripts may still read this name)
-export fr_management_path="$PROJECT_DIR/feature-management"
+export fr_management_path="$PROJECT_DIR/virric/domains/feature-management"
 export scripts_path="$VIRRIC_DIR/scripts"
 export fr_layout="$FR_LAYOUT"
 export fr_format="md"

@@ -36,7 +36,7 @@ virric_load_config() {
 
   # Canonical: feature-management directory (preferred). Back-compat: FR_management directory + fr_management_path.
   # Auto-heal: if a repo was renamed from FR_management -> feature-management, tolerate stale config.env paths.
-  local default_feature_dir="$project_root/feature-management"
+  local default_feature_dir="$project_root/virric/domains/feature-management"
 
   : "${feature_management_path:=${fr_management_path:-}}"
 
@@ -45,6 +45,13 @@ virric_load_config() {
     feature_management_path="$default_feature_dir"
   elif [[ -n "${feature_management_path:-}" && ! -d "${feature_management_path:-}" && -d "$default_feature_dir" ]]; then
     feature_management_path="$default_feature_dir"
+  fi
+
+  # Back-compat: previously feature-management lived at repo root.
+  if [[ -z "${feature_management_path:-}" && -d "$project_root/feature-management" ]]; then
+    feature_management_path="$project_root/feature-management"
+  elif [[ -n "${feature_management_path:-}" && ! -d "${feature_management_path:-}" && -d "$project_root/feature-management" ]]; then
+    feature_management_path="$project_root/feature-management"
   fi
 
   : "${fr_management_path:=${feature_management_path:-}}"
