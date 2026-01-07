@@ -14,6 +14,11 @@ Optional skills inventory (not all agents support `skill.md`):
 
 - `virric/skill.md`
 
+Execution model (high-level):
+
+- VIRRIC assumes **nine domains of product execution** (see `virric/AGENTS.md` → “Domain assignment”)
+- Agents should be assigned exactly one **primary domain** on entry.
+
 Quick start (run from repo root):
 
 ```bash

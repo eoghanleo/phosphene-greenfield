@@ -9,6 +9,28 @@ This is a **living sketch** of the machine-optimized VIRRIC workflow.
 - **Stance B**: repo documents **mirror** key operational state in a lightweight way (headers + history) so agents can operate locally without polling GitHub.
 - **PR is the hard synchronization point** between work-in-flight and truth being merged.
 
+## Nine-domain execution model (scaffold)
+
+VIRRIC assumes work is organized into **nine domains of product execution**. Incoming agents should be assigned exactly one **primary domain** on entry (see `virric/AGENTS.md`).
+
+Domains:
+
+- **ideation** (idea)
+- **research** (research-assessment)
+- **product-marketing** (persona, proposition)
+- **product-strategy** (product-roadmap)
+- **product-management** (product-spec)
+- **feature-management** (feature-request)
+- **scrum-management** (issue)
+- **test-management** (test-plan)
+- **retrospective** (postmortem, playbook)
+
+Default handoff spine (subject to refinement):
+
+`ideation → research → product-strategy → product-management → feature-management → scrum-management → test-management → retrospective`
+
+`product-marketing` runs alongside strategy/spec and constrains messaging and personas for downstream artifacts.
+
 ## Platform capability reality-check (GitHub Issues / GitHub Projects / GitHub Actions / Linear)
 
 This section is here to **constrain the design to what the platforms can actually do**, so VIRRIC doesn’t assume features that aren’t universally available.
@@ -74,12 +96,19 @@ Implication for VIRRIC:
 
 ## Entities (documents + system objects)
 
-- **IDEATION doc**: `virric/docs/ideation/ID-XXXX-*.md` *(future)*
-- **RESEARCH doc**: `virric/docs/research/RS-XXXX-*.md` *(future)*
-- **FR dossier**: `feature-management/frs/FR-XXX-*.md` *(current)*
-- **TASK dossier**: `virric/docs/tasks/TSK-XXXX-*.md` *(future)*
-- **DESIGN doc**: `virric/docs/design/DES-XXX-*.md` *(future)*
-- **REVIEW doc**: `virric/docs/review/REV-XXX-*.md` *(future)*
+- **IDEATION**: `ideation/ideas/IDEA-*.md` *(scaffold)*
+- **RESEARCH**: `research/research-assessments/RA-*.md` *(scaffold)*
+- **PRODUCT MARKETING**:
+  - Personas: `product-marketing/personas/PER-*.md` *(scaffold)*
+  - Propositions: `product-marketing/propositions/PROP-*.md` *(scaffold)*
+- **PRODUCT STRATEGY**: `product-strategy/product-roadmaps/ROADMAP-*.md` *(scaffold)*
+- **PRODUCT MANAGEMENT**: `product-management/product-specs/SPEC-*.md` *(scaffold)*
+- **FEATURE MANAGEMENT (FR dossier)**: `feature-management/frs/FR-*.md` *(current; tooled)*
+- **SCRUM MANAGEMENT (Issue mirror, optional)**: `scrum-management/issues/ISSUE-*.md` *(scaffold)*
+- **TEST MANAGEMENT (test plan)**: `test-management/test-plans/TP-*.md` *(scaffold)*
+- **RETROSPECTIVE**:
+  - Postmortems: `retrospective/postmortems/PM-*.md` *(scaffold)*
+  - Playbooks: `retrospective/playbooks/PB-*.md` *(scaffold)*
 - **GitHub Issue**: operational state + routing + conversation
 - **Pull Request**: integration artifact linking code to Issues/FRs
 
@@ -115,13 +144,15 @@ Humans move Issues on boards and talk to agents in comments; those changes trigg
 
 #### Issue types (examples; expandable)
 
-- **IDEA**: early concept / opportunity / problem framing
-- **RESEARCH**: investigation work (spikes, competitive analysis, feasibility)
-- **FR**: feature request lifecycle (spec + acceptance)
-- **TASK**: implementable unit of work delegated to an agent/human
-- **TEST/PLAN**: test plans, QA plans, rollout plans, release checklists
-- **REVIEW**: architecture review, security review, UX review
-- **RETRO**: retrospective / postmortem / lessons capture
+- **IDEATION**: ideas / opportunities / problem framing
+- **RESEARCH**: research assessments (feasibility, competitive, spikes)
+- **PRODUCT-MARKETING**: personas, propositions, positioning constraints
+- **PRODUCT-STRATEGY**: roadmaps, bets, outcomes, sequencing
+- **PRODUCT-MANAGEMENT**: specs, requirements, acceptance criteria
+- **FEATURE-MANAGEMENT (FR)**: feature request lifecycle (spec + acceptance)
+- **SCRUM-MANAGEMENT (ISSUE)**: operational work items (often GitHub Issues)
+- **TEST-MANAGEMENT (TEST-PLAN)**: test plans + execution strategy
+- **RETROSPECTIVE**: postmortems, playbooks, lessons capture
 
 #### Nesting rules (the key “fan-out” property)
 

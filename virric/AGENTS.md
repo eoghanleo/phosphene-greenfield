@@ -9,11 +9,37 @@ This repository contains a drop-in **`virric/`** folder that provides determinis
 
 ## What VIRRIC is (in one sentence)
 
-VIRRIC is a **bash-first SDLC control plane**: it creates and manages **Feature Requests (FRs)** as canonical XML “feature dossiers”, and provides deterministic commands for validation, status transitions, dependency analysis, and reporting.
+VIRRIC is a **bash-first SDLC control plane**: it provides a **multi-domain product execution scaffold** (documents + contracts) and deterministic bash tooling for the **feature-management** domain (FR lifecycle, validation, status transitions, dependency reporting).
+
+## Domain assignment (primary operating mode)
+
+Incoming agents should be told a single string:
+
+- **Primary domain**: one of the nine domains listed below.
+
+If you have that domain, do this:
+
+- Read **this file** (`virric/AGENTS.md`) for the contract and default handoffs.
+- If you support `skill.md`, also read `virric/skill.md`.
+- Go to the domain folder at repo root and use its templates:
+  - Example: domain = `research` → open `research/README.md` and `research/templates/`.
+
+### Nine domains (canonical)
+
+- **ideation** → artifacts: `idea` → `ideation/`
+- **research** → artifacts: `research-assessment` → `research/`
+- **product-marketing** → artifacts: `persona`, `proposition` → `product-marketing/`
+- **product-strategy** → artifacts: `product-roadmap` → `product-strategy/`
+- **product-management** → artifacts: `product-spec` → `product-management/`
+- **feature-management** → artifacts: `feature-request` → `feature-management/`
+- **scrum-management** → artifacts: `issue` → `scrum-management/`
+- **test-management** → artifacts: `test-plan` → `test-management/`
+- **retrospective** → artifacts: `postmortem`, `playbook` → `retrospective/`
 
 ## Canonical work items
 
-- **Source of truth**: `feature-management/**/*.md` (FR dossiers; bash-parseable Markdown)
+- **Source of truth**: repo-native SDLC docs across the nine domains (see domain folders at repo root).
+- **Feature-management source of truth**: `feature-management/**/*.md` (FR dossiers; bash-parseable Markdown)
 - **Auto-generated** (do not edit):
   - `feature-management/backlog_tree.md`
   - `feature-management/fr_dependencies.md`

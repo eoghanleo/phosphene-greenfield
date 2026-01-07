@@ -4,6 +4,9 @@ Not all agents support `skill.md`. Treat this as **optional** context that compl
 
 ## Capabilities
 
+- Navigate and operate within a **nine-domain product execution scaffold**:
+  - ideation, research, product-marketing, product-strategy, product-management,
+    feature-management, scrum-management, test-management, retrospective
 - Create structured **Feature Requests (FRs)** as bash-parseable Markdown “feature dossiers”
 - Validate FR structure deterministically (bash-only header checks)
 - Manage FR lifecycle via status transitions
