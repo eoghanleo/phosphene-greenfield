@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # VIRRIC install/init script (drop-in, bash-only).
-# Creates FR_management + .virric/config.env for deterministic, agent-friendly operation.
+# Creates feature-management + .virric/config.env for deterministic, agent-friendly operation.
 #
 set -euo pipefail
 
@@ -85,19 +85,22 @@ fi
 echo -e "${GREEN}VIRRIC:${RESET} initializing project at ${CYAN}$PROJECT_DIR${RESET}"
 
 mkdir -p "$PROJECT_DIR/.virric"
-mkdir -p "$PROJECT_DIR/FR_management"
+mkdir -p "$PROJECT_DIR/feature-management"
 
-mkdir -p "$PROJECT_DIR/FR_management/frs"
+mkdir -p "$PROJECT_DIR/feature-management/frs"
 
-touch "$PROJECT_DIR/FR_management/backlog_tree.md"
-touch "$PROJECT_DIR/FR_management/fr_dependencies.md"
+touch "$PROJECT_DIR/feature-management/backlog_tree.md"
+touch "$PROJECT_DIR/feature-management/fr_dependencies.md"
 
 cat > "$PROJECT_DIR/.virric/config.env" <<EOF
 # VIRRIC project configuration (bash-sourced)
 export virric_version="0.2.0"
 export framework_path="$VIRRIC_DIR"
 export project_root="$PROJECT_DIR"
-export fr_management_path="$PROJECT_DIR/FR_management"
+# Canonical directory name (preferred)
+export feature_management_path="$PROJECT_DIR/feature-management"
+# Back-compat alias (older scripts may still read this name)
+export fr_management_path="$PROJECT_DIR/feature-management"
 export scripts_path="$VIRRIC_DIR/scripts"
 export fr_layout="$FR_LAYOUT"
 export fr_format="md"

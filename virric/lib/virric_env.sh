@@ -34,7 +34,29 @@ virric_load_config() {
 
   export VIRRIC_PROJECT_ROOT="$project_root"
 
-  : "${fr_management_path:?missing fr_management_path in .virric/config.env}"
+  # Canonical: feature-management directory (preferred). Back-compat: FR_management directory + fr_management_path.
+  # Auto-heal: if a repo was renamed from FR_management -> feature-management, tolerate stale config.env paths.
+  local default_feature_dir="$project_root/feature-management"
+
+  : "${feature_management_path:=${fr_management_path:-}}"
+
+  # If config is missing/blank or points at a removed directory, prefer the canonical default if it exists.
+  if [[ -z "${feature_management_path:-}" && -d "$default_feature_dir" ]]; then
+    feature_management_path="$default_feature_dir"
+  elif [[ -n "${feature_management_path:-}" && ! -d "${feature_management_path:-}" && -d "$default_feature_dir" ]]; then
+    feature_management_path="$default_feature_dir"
+  fi
+
+  : "${fr_management_path:=${feature_management_path:-}}"
+
+  # If fr_management_path is stale (e.g. points at FR_management), keep it aligned to feature_management_path.
+  if [[ -n "${feature_management_path:-}" && -n "${fr_management_path:-}" && ! -d "$fr_management_path" && -d "$feature_management_path" ]]; then
+    fr_management_path="$feature_management_path"
+  fi
+
+  export feature_management_path fr_management_path
+
+  : "${feature_management_path:?missing feature_management_path in .virric/config.env}"
   : "${scripts_path:?missing scripts_path in .virric/config.env}"
   : "${fr_layout:=single_dir}"
   : "${fr_format:=md}"

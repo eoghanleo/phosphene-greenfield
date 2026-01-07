@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates FR_management/backlog_tree.md (bash-only)
+# Generates feature-management/backlog_tree.md (bash-only)
 # - Single-dir only: show status-grouped listing derived from FR markdown headers
 #
 set -euo pipefail
@@ -11,7 +11,7 @@ LIB_DIR="$(cd "$SCRIPT_DIR/../../lib" && pwd)"
 source "$LIB_DIR/virric_env.sh"
 virric_load_config
 
-BACKLOG_DIR="$fr_management_path"
+BACKLOG_DIR="$feature_management_path"
 TREE_FILE="$BACKLOG_DIR/backlog_tree.md"
 
 require_cmd() {

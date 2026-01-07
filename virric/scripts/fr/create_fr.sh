@@ -62,7 +62,7 @@ if [[ -z "$title" || -z "$description" ]]; then
   exit 1
 fi
 
-FRS_DIR="$fr_management_path/frs"
+FRS_DIR="$feature_management_path/frs"
 
 mkdir -p "$FRS_DIR"
 

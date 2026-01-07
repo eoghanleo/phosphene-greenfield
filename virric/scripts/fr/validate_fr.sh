@@ -11,7 +11,7 @@ LIB_DIR="$(cd "$SCRIPT_DIR/../../lib" && pwd)"
 source "$LIB_DIR/virric_env.sh"
 virric_load_config
 
-BACKLOG_DIR="$fr_management_path"
+BACKLOG_DIR="$feature_management_path"
 
 if [[ -t 1 ]]; then
   RED='\033[0;31m'

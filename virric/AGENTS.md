@@ -13,10 +13,10 @@ VIRRIC is a **bash-first SDLC control plane**: it creates and manages **Feature 
 
 ## Canonical work items
 
-- **Source of truth**: `FR_management/**/*.md` (FR dossiers; bash-parseable Markdown)
+- **Source of truth**: `feature-management/**/*.md` (FR dossiers; bash-parseable Markdown)
 - **Auto-generated** (do not edit):
-  - `FR_management/backlog_tree.md`
-  - `FR_management/fr_dependencies.md`
+  - `feature-management/backlog_tree.md`
+  - `feature-management/fr_dependencies.md`
 
 ## Install / init (required per repo)
 
@@ -28,7 +28,7 @@ Run from the repo root:
 
 Notes:
 - This creates `.virric/config.env` so scripts can auto-discover project paths from anywhere.
-- VIRRIC is **single-dir only**: FRs live under `FR_management/frs/` and status is tracked in the FR header.
+- VIRRIC is **single-dir only**: FRs live under `feature-management/frs/` and status is tracked in the FR header.
 
 ## Day-to-day commands (bash)
 

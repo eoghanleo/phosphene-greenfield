@@ -76,7 +76,7 @@ Implication for VIRRIC:
 
 - **IDEATION doc**: `virric/docs/ideation/ID-XXXX-*.md` *(future)*
 - **RESEARCH doc**: `virric/docs/research/RS-XXXX-*.md` *(future)*
-- **FR dossier**: `FR_management/frs/FR-XXX-*.md` *(current)*
+- **FR dossier**: `feature-management/frs/FR-XXX-*.md` *(current)*
 - **TASK dossier**: `virric/docs/tasks/TSK-XXXX-*.md` *(future)*
 - **DESIGN doc**: `virric/docs/design/DES-XXX-*.md` *(future)*
 - **REVIEW doc**: `virric/docs/review/REV-XXX-*.md` *(future)*
