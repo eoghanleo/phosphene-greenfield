@@ -7,8 +7,8 @@ Primary artifacts:
 Canonical locations:
 - Templates: `virric/domains/product-marketing/templates/`
 - Working artifacts:
-  - `virric/domains/product-marketing/personas/`
-  - `virric/domains/product-marketing/propositions/`
+  - `virric/domains/product-marketing/docs/personas/`
+  - `virric/domains/product-marketing/docs/propositions/`
 
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.

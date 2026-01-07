@@ -5,7 +5,7 @@ Primary artifacts:
 
 Canonical locations:
 - Templates: `virric/domains/ideation/templates/`
-- Working artifacts: `virric/domains/ideation/ideas/`
+- Working artifacts: `virric/domains/ideation/docs/ideas/`
 
 Naming convention (recommended):
 - `IDEA-0001-short-title.md`

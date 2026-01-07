@@ -7,8 +7,8 @@ Primary artifacts:
 Canonical locations:
 - Templates: `virric/domains/retrospective/templates/`
 - Working artifacts:
-  - `virric/domains/retrospective/postmortems/`
-  - `virric/domains/retrospective/playbooks/`
+  - `virric/domains/retrospective/docs/postmortems/`
+  - `virric/domains/retrospective/docs/playbooks/`
 
 Handoff (default):
 - **From Test Management / Scrum Management** when outcomes are known.

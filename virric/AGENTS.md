@@ -21,8 +21,12 @@ If you have that domain, do this:
 
 - Read **this file** (`virric/AGENTS.md`) for the contract and default handoffs.
 - If you support `skill.md`, also read `virric/skill.md`.
-- Go to the domain folder under the drop-in and use its templates:
-  - Example: domain = `research` → open `virric/domains/research/README.md` and `virric/domains/research/templates/`.
+- Go to the domain folder under the drop-in:
+  - Inventory: `virric/domains/<domain>/docs/`
+  - Templates: `virric/domains/<domain>/templates/`
+  - Scripts: `virric/domains/<domain>/scripts/`
+  - Signals: `virric/domains/<domain>/signals/` (or canonical `virric/signals/` if routing requires it)
+  - Example: domain = `research` → open `virric/domains/research/docs/README.md` and `virric/domains/research/templates/`.
 
 ### Nine domains (canonical)
 
@@ -39,10 +43,10 @@ If you have that domain, do this:
 ## Canonical work items
 
 - **Source of truth**: repo-native SDLC docs across the nine domains (see domain folders at repo root).
-- **Feature-management source of truth**: `virric/domains/feature-management/**/*.md` (FR dossiers; bash-parseable Markdown)
+- **Feature-management source of truth**: `virric/domains/feature-management/docs/**/*.md` (FR dossiers; bash-parseable Markdown)
 - **Auto-generated** (do not edit):
-  - `virric/domains/feature-management/backlog_tree.md`
-  - `virric/domains/feature-management/fr_dependencies.md`
+  - `virric/domains/feature-management/docs/backlog_tree.md`
+  - `virric/domains/feature-management/docs/fr_dependencies.md`
 
 ## Install / init (required per repo)
 
@@ -54,7 +58,7 @@ Run from the repo root:
 
 Notes:
 - This creates `.virric/config.env` so scripts can auto-discover project paths from anywhere.
-- VIRRIC is **single-dir only**: FRs live under `virric/domains/feature-management/frs/` and status is tracked in the FR header.
+- VIRRIC is **single-dir only**: FRs live under `virric/domains/feature-management/docs/frs/` and status is tracked in the FR header.
 
 ## Day-to-day commands (bash)
 

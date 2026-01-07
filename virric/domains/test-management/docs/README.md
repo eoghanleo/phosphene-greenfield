@@ -5,7 +5,7 @@ Primary artifacts:
 
 Canonical locations:
 - Templates: `virric/domains/test-management/templates/`
-- Working artifacts: `virric/domains/test-management/test-plans/`
+- Working artifacts: `virric/domains/test-management/docs/test-plans/`
 
 Handoff (default):
 - **From Scrum Management** when scope is stable enough to plan tests.

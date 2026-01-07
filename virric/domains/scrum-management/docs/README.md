@@ -5,7 +5,7 @@ Primary artifacts:
 
 Canonical locations:
 - Templates: `virric/domains/scrum-management/templates/`
-- Working artifacts (optional local mirror): `virric/domains/scrum-management/issues/`
+- Working artifacts (optional local mirror): `virric/domains/scrum-management/docs/issues/`
 
 Handoff (default):
 - **From Feature Management** when an FR is decomposed into actionable issues.

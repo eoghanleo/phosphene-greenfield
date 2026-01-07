@@ -5,7 +5,7 @@ Primary artifacts:
 
 Canonical locations:
 - Templates: `virric/domains/research/templates/`
-- Working artifacts: `virric/domains/research/research-assessments/`
+- Working artifacts: `virric/domains/research/docs/research-assessments/`
 
 Naming convention (recommended):
 - `RA-0001-short-title.md`

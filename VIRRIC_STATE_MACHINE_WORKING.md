@@ -96,19 +96,19 @@ Implication for VIRRIC:
 
 ## Entities (documents + system objects)
 
-- **IDEATION**: `virric/domains/ideation/ideas/IDEA-*.md` *(scaffold)*
-- **RESEARCH**: `virric/domains/research/research-assessments/RA-*.md` *(scaffold)*
+- **IDEATION**: `virric/domains/ideation/docs/ideas/IDEA-*.md` *(scaffold)*
+- **RESEARCH**: `virric/domains/research/docs/research-assessments/RA-*.md` *(scaffold)*
 - **PRODUCT MARKETING**:
-  - Personas: `virric/domains/product-marketing/personas/PER-*.md` *(scaffold)*
-  - Propositions: `virric/domains/product-marketing/propositions/PROP-*.md` *(scaffold)*
-- **PRODUCT STRATEGY**: `virric/domains/product-strategy/product-roadmaps/ROADMAP-*.md` *(scaffold)*
-- **PRODUCT MANAGEMENT**: `virric/domains/product-management/product-specs/SPEC-*.md` *(scaffold)*
-- **FEATURE MANAGEMENT (FR dossier)**: `virric/domains/feature-management/frs/FR-*.md` *(current; tooled)*
-- **SCRUM MANAGEMENT (Issue mirror, optional)**: `virric/domains/scrum-management/issues/ISSUE-*.md` *(scaffold)*
-- **TEST MANAGEMENT (test plan)**: `virric/domains/test-management/test-plans/TP-*.md` *(scaffold)*
+  - Personas: `virric/domains/product-marketing/docs/personas/PER-*.md` *(scaffold)*
+  - Propositions: `virric/domains/product-marketing/docs/propositions/PROP-*.md` *(scaffold)*
+- **PRODUCT STRATEGY**: `virric/domains/product-strategy/docs/product-roadmaps/ROADMAP-*.md` *(scaffold)*
+- **PRODUCT MANAGEMENT**: `virric/domains/product-management/docs/product-specs/SPEC-*.md` *(scaffold)*
+- **FEATURE MANAGEMENT (FR dossier)**: `virric/domains/feature-management/docs/frs/FR-*.md` *(current; tooled)*
+- **SCRUM MANAGEMENT (Issue mirror, optional)**: `virric/domains/scrum-management/docs/issues/ISSUE-*.md` *(scaffold)*
+- **TEST MANAGEMENT (test plan)**: `virric/domains/test-management/docs/test-plans/TP-*.md` *(scaffold)*
 - **RETROSPECTIVE**:
-  - Postmortems: `virric/domains/retrospective/postmortems/PM-*.md` *(scaffold)*
-  - Playbooks: `virric/domains/retrospective/playbooks/PB-*.md` *(scaffold)*
+  - Postmortems: `virric/domains/retrospective/docs/postmortems/PM-*.md` *(scaffold)*
+  - Playbooks: `virric/domains/retrospective/docs/playbooks/PB-*.md` *(scaffold)*
 - **GitHub Issue**: operational state + routing + conversation
 - **Pull Request**: integration artifact linking code to Issues/FRs
 
