@@ -134,8 +134,8 @@ echo "Updating FR '$fr_title' status from '$current_status' to '$new_status'..."
 update_fr_status_fields "$fr_file" "$new_status"
 append_history_entry "$fr_file" "$current_status" "$new_status"
 
-if [[ -x "$scripts_path/fr/update_backlog_tree.sh" ]]; then
-  "$scripts_path/fr/update_backlog_tree.sh" || true
+if [[ -x "$SCRIPT_DIR/update_backlog_tree.sh" ]]; then
+  "$SCRIPT_DIR/update_backlog_tree.sh" || true
 fi
 
 echo "FR status update complete."

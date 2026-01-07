@@ -1,6 +1,8 @@
-Signals for this domain live under the canonical signals namespace: `virric/signals/`.
+# Signals — retrospective
+
+Signals for this domain live in this folder:
+- `virric/domains/retrospective/signals/`
 
 Recommended convention:
-- `virric/signals/retrospective/*`
-
-
+- one file per intent, committed as part of a PR
+- keep names stable and machine-parseable

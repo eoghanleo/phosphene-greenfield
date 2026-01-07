@@ -1,45 +1,19 @@
-# VIRRIC Migration Payload (bash-only)
+# VIRRIC (bash-only)
 
-This folder is a **self-contained migration payload** for the “new build” of VIRRIC.
+VIRRIC is a **bash-first SDLC control plane**: a repo-native, multi-domain product execution scaffold (docs + contracts) plus deterministic tooling for the **feature-management** domain.
 
 ## What’s inside
 
-- `virric/`: the bash-only VIRRIC drop-in folder (scripts + neon CLI)
+- `virric/`: the canonical VIRRIC folder (hard requirement: must live at repo root)
 - `AGENTS.md`: root shim (points agents at `virric/AGENTS.md`)
 - `skill.md`: root shim (points to `virric/skill.md`)
-- `VIRRIC_STATE_MACHINE_WORKING.md`: living design note (typed Issues, labels contract, repo mirroring)
-- Domain scaffold (repo-native artifacts + templates):
-  - `virric/domains/ideation/`
-  - `virric/domains/research/`
-  - `virric/domains/product-marketing/`
-  - `virric/domains/product-strategy/`
-  - `virric/domains/product-management/`
-  - `virric/domains/feature-management/`
-  - `virric/domains/scrum-management/`
-  - `virric/domains/test-management/`
-  - `virric/domains/retrospective/`
+- `VIRRIC_STATE_MACHINE_WORKING.md`: living design note (contracts, PR gating, automation model)
 
-## How to adopt into a target repo
-
-From the target repo root, copy in:
-
-- `virric_migration/virric/` → `./virric/`
-- `virric_migration/AGENTS.md` → `./AGENTS.md`
-- `virric_migration/skill.md` → `./skill.md`
-- `virric_migration/VIRRIC_STATE_MACHINE_WORKING.md` → `./VIRRIC_STATE_MACHINE_WORKING.md`
-- Domain scaffold folders are included under `virric/domains/` inside the drop-in.
-
-Then run:
-
-```bash
-./virric/bin/virric banner
-./virric/install.sh --project-dir .
-./virric/scripts/fr/create_fr.sh --title "..." --description "..." --priority "High"
-```
+Domain scaffold (canonical):
+- `virric/domains/<domain>/{docs,templates,scripts,signals}/`
 
 ## Notes
 
-- This payload intentionally excludes legacy folders like `virric-sdlc-framework/`.
 - This build assumes **bash-only** + baseline Unix tools (`awk`, `sed`, `grep`, `find`, `date`).
 
 

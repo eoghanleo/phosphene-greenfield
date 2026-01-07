@@ -16,20 +16,15 @@ Not all agents support `skill.md`. Treat this as **optional** context that compl
   - `virric/domains/feature-management/docs/backlog_tree.md`
   - `virric/domains/feature-management/docs/fr_dependencies.md`
   - `virric/domains/feature-management/docs/fr_report.*`
-- Emit CI “signals” under `virric/signals/**` for GitHub Actions workflows
-- (Optional) Sync FRs to GitHub Issues via `gh` CLI
+- Emit CI “signals” under `virric/domains/<domain>/signals/**` for GitHub Actions workflows
 
 ## Primary commands
 
-- `./virric/install.sh --project-dir . [--fr-layout status_dirs|single_dir]`
-- `./virric/scripts/fr/create_fr.sh`
-- `./virric/scripts/fr/validate_fr.sh`
-- `./virric/scripts/fr/update_fr_status.sh`
-- `./virric/scripts/fr/approve_fr.sh`
-- `./virric/scripts/fr/update_backlog_tree.sh`
-- `./virric/scripts/fr/fr_dependency_tracker.sh`
-- `./virric/scripts/reporting/fr_report_generator.sh`
-- `./virric/scripts/ci/install_github_actions.sh`
-- `./virric/scripts/gh/issue_upsert_from_fr.sh`
+- `./virric/domains/feature-management/scripts/fr/create_fr.sh`
+- `./virric/domains/feature-management/scripts/fr/validate_fr.sh`
+- `./virric/domains/feature-management/scripts/fr/update_fr_status.sh`
+- `./virric/domains/feature-management/scripts/fr/approve_fr.sh`
+- `./virric/domains/feature-management/scripts/fr/update_backlog_tree.sh`
+- `./virric/domains/feature-management/scripts/fr/fr_dependency_tracker.sh`
 
 

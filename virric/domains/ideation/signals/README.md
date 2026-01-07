@@ -1,6 +1,8 @@
-Signals for this domain live under the canonical signals namespace: `virric/signals/`.
+# Signals — ideation
+
+Signals for this domain live in this folder:
+- `virric/domains/ideation/signals/`
 
 Recommended convention:
-- `virric/signals/ideation/*`
-
-
+- one file per intent, committed as part of a PR
+- keep names stable and machine-parseable

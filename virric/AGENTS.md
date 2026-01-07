@@ -25,7 +25,7 @@ If you have that domain, do this:
   - Inventory: `virric/domains/<domain>/docs/`
   - Templates: `virric/domains/<domain>/templates/`
   - Scripts: `virric/domains/<domain>/scripts/`
-  - Signals: `virric/domains/<domain>/signals/` (or canonical `virric/signals/` if routing requires it)
+  - Signals: `virric/domains/<domain>/signals/`
   - Example: domain = `research` → open `virric/domains/research/docs/README.md` and `virric/domains/research/templates/`.
 
 ### Nine domains (canonical)
@@ -48,67 +48,50 @@ If you have that domain, do this:
   - `virric/domains/feature-management/docs/backlog_tree.md`
   - `virric/domains/feature-management/docs/fr_dependencies.md`
 
-## Install / init (required per repo)
+## Hard requirements (for now)
 
-Run from the repo root:
-
-```bash
-./virric/install.sh --project-dir .
-```
-
-Notes:
-- This creates `.virric/config.env` so scripts can auto-discover project paths from anywhere.
-- VIRRIC is **single-dir only**: FRs live under `virric/domains/feature-management/docs/frs/` and status is tracked in the FR header.
+- `virric/` must exist at the **repo root**.
+- Scripts assume canonical paths under `virric/domains/**`.
 
 ## Day-to-day commands (bash)
 
 ### Create an FR
 
 ```bash
-./virric/scripts/fr/create_fr.sh --title "..." --description "..." --priority "High"
+./virric/domains/feature-management/scripts/fr/create_fr.sh --title "..." --description "..." --priority "High"
 ```
 
 ### Validate FRs
 
 ```bash
-./virric/scripts/fr/validate_fr.sh
+./virric/domains/feature-management/scripts/fr/validate_fr.sh
 ```
 
 ### Approve an FR
 
 ```bash
-./virric/scripts/fr/approve_fr.sh --id FR-001
+./virric/domains/feature-management/scripts/fr/approve_fr.sh --id FR-001
 ```
 
 ### Update FR status
 
 ```bash
-./virric/scripts/fr/update_fr_status.sh /path/to/FR-001-some-title.md "In Progress"
+./virric/domains/feature-management/scripts/fr/update_fr_status.sh /path/to/FR-001-some-title.md "In Progress"
 ```
 
 ### Refresh project overviews
 
 ```bash
-./virric/scripts/fr/update_backlog_tree.sh
-./virric/scripts/fr/fr_dependency_tracker.sh
+./virric/domains/feature-management/scripts/fr/update_backlog_tree.sh
+./virric/domains/feature-management/scripts/fr/fr_dependency_tracker.sh
 ```
 
-## GitHub Actions alignment (optional)
+## Automation (GitHub Actions)
 
-VIRRIC can emit **signals** under `virric/signals/**` to trigger CI workflows (templates live under `virric/workflows/`).
+Routing and validation are intended to be implemented as GitHub Actions that:
 
-Install the workflow templates into `.github/workflows/`:
-
-```bash
-./virric/scripts/ci/install_github_actions.sh
-```
-
-## GitHub Issues alignment (optional)
-
-If the GitHub CLI is available (`gh`) and `GH_TOKEN` is set, VIRRIC can create/update issues from FR metadata (optional, not required for core operation):
-
-```bash
-./virric/scripts/gh/issue_upsert_from_fr.sh /path/to/FR-001-some-title.md --dry-run false
-```
+- infer domain scope from changed paths under `virric/domains/**`
+- consume explicit signals under `virric/domains/<domain>/signals/**`
+- gate “official” doc changes on PR events (merge to the default branch)
 
 

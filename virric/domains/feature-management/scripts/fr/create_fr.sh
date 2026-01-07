@@ -122,8 +122,8 @@ fr_file="$FRS_DIR/${fr_id}-${slug}.md"
   echo "- $(date -u +"%Y-%m-%d") Created (Pending Approval)"
 } > "$fr_file"
 
-if [[ -x "$scripts_path/fr/update_backlog_tree.sh" ]]; then
-  "$scripts_path/fr/update_backlog_tree.sh" || true
+if [[ -x "$SCRIPT_DIR/update_backlog_tree.sh" ]]; then
+  "$SCRIPT_DIR/update_backlog_tree.sh" || true
 fi
 
 echo -e "${VIRRIC_GREEN}[${VIRRIC_BRIGHT}OK${VIRRIC_GREEN}]${RESET} Created Feature Request: ${CYAN_GLOW}$fr_id${RESET}"

@@ -1,6 +1,8 @@
-Signals for this domain live under the canonical signals namespace: `virric/signals/`.
+# Signals — feature-management
+
+Signals for this domain live in this folder:
+- `virric/domains/feature-management/signals/`
 
 Recommended convention:
-- `virric/signals/feature-management/*`
-
-
+- one file per intent, committed as part of a PR
+- keep names stable and machine-parseable

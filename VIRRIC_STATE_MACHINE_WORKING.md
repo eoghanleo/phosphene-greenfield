@@ -244,16 +244,13 @@ If the transition requires judgment (e.g., generating tasks, writing acceptance 
 
 ## Mapping: Repo → Issue (belts + braces)
 
-Repo events that SHOULD reconcile issues:
+Repo events that SHOULD reconcile issues (minimal baseline):
 
-- PR opened / draft → Issue moves to `Implementation` (or similar)
-- PR ready-for-review → Issue moves to `Review`
-- PR merged → Issue moves to `Done` (or “Released candidate”)
-- PR closed without merge → Issue moves to `Blocked` / `Needs triage`
+- **PR opened** (linked to an Issue): work is underway
+- **PR merged**: work is accepted/official; linked Issue closes
+- **PR closed without merge**: work did not land; linked Issue stays open or closes as “not planned” (policy)
 
-Additionally:
-
-- On push to `main`, run a reconciliation workflow that detects drift and corrects Issue labels/fields.
+This keeps the core system compatible with “vanilla GitHub” where an Issue’s canonical states are simply **Open / Closed**.
 
 ## Signals (event bus)
 
@@ -261,7 +258,7 @@ Signals are parseable events used to route automation.
 
 Two ways to implement signals:
 
-1) **Repo signals**: committed files under `virric/signals/**` (auditable, repo-native)
+1) **Repo signals**: committed files under `virric/domains/<domain>/signals/**` (auditable, repo-native)
 2) **CI signals**: ephemeral signals derived from diffs / issue events (not committed)
 
 This draft assumes we will primarily use **CI signals**, and only commit repo signals when we need explicit auditability.
@@ -276,77 +273,30 @@ Source: github.issue
 Issue: #123
 ```
 
-## Minimal state machine (FR-centric)
+## Minimal state machine (vanilla GitHub + VIRRIC)
 
-### FR dossier states (repo)
+VIRRIC’s core state machine intentionally uses only GitHub’s universal primitives:
 
-```mermaid
-stateDiagram-v2
-  [*] --> PendingApproval
-  PendingApproval --> Approved
-  Approved --> InProgress
-  InProgress --> TestCoverage
-  TestCoverage --> Completed
-  Completed --> Passed
-  Completed --> Failed
-  Failed --> InProgress
-```
+- **Issue**: `Open` / `Closed`
+- **PR**: `Open` / `Merged` / `Closed`
 
-### Issue type machines (operational)
+Doc “state” is treated as:
 
-These are illustrative “shape” diagrams showing that each Issue type has its own workflow.
+- **Open / Closed** (semantic, domain-defined)
+- **In PR** (derived): a doc is “in PR” if there exists an open PR that changes it
 
-#### IDEA Issue
+### Canonicality rule (“PR gate”)
 
-```mermaid
-stateDiagram-v2
-  [*] --> Draft
-  Draft --> Shaping
-  Shaping --> Approved
-  Approved --> SpawnedFRs
-  SpawnedFRs --> Archived
-```
+- Doc creation/updates are considered **official only when merged via PR** to the default branch.
+- Direct local edits/commits/branch pushes are allowed, but are **not canonical** until merged.
 
-#### FR Issue
+### Signals + routing
 
-```mermaid
-stateDiagram-v2
-  [*] --> Draft
-  Draft --> Review
-  Review --> Approved
-  Approved --> InProgress
-  InProgress --> Done
-  Done --> Archived
-  Review --> Blocked
-  Blocked --> Review
-```
+Routing logic (GitHub Actions) should infer intent from:
 
-#### TASK Issue
+- changed paths under `virric/domains/**`
+- explicit, committed signals under `virric/domains/<domain>/signals/**`
 
-```mermaid
-stateDiagram-v2
-  [*] --> Todo
-  Todo --> InProgress
-  InProgress --> Review
-  Review --> Done
-  InProgress --> Blocked
-  Blocked --> InProgress
-```
-
-## Event table (first pass)
-
-| Trigger (Issue/PR) | Meaning | Router emits | Repo mirror update (Stance B) | Fan-out |
-|---|---|---|---|---|
-| FR Issue → `Approved` | Human says feature is ready to build | `Action: fr.approved` | Set `Status: Approved` in FR header; append history | Spawn TASK Issues; request design/review |
-| TASK Issue → `In Progress` | Work begins | `Action: task.start` | Optionally append task link into FR “Implementation Plan” section | Spawn coding agent job |
-| PR opened and linked to Issue | Work has tangible code | `Action: pr.opened` | Optionally set `PR:` field in FR header via sync PR | Run checks; post status |
-| PR merged | Code landed | `Action: pr.merged` | Set `Status: Completed` (or `Passed` if tests green) | Close Issue; trigger release workflows |
-
-## Open questions (to resolve next)
-
-1) What is the canonical mapping from **Issue type + status** to **repo doc type + header status** (configurable per repo)?
-2) Do we store `Issue:` / `PR:` linkage in FR headers, or only in Issue body?
-3) Do we want repo-committed signals, or only CI-derived signals?
-4) What is the minimum set of specialist workflows (design, tests, security, UI/UX, retros) and their doc outputs?
+The central planner (likely operating at product-strategy and below) is the only agent that performs cross-domain handoffs.
 
 

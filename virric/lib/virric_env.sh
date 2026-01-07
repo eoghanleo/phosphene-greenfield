@@ -2,7 +2,7 @@
 #
 # VIRRIC bash-only primitives:
 # - Project root discovery
-# - Config loading from .virric/config.env (sourced bash)
+# - Environment construction from canonical repo layout (hard requirement: ./virric at repo root)
 # - Simple key/value header parsing for FR markdown files
 #
 set -euo pipefail
@@ -12,7 +12,8 @@ virric__err() { echo "VIRRIC: $*" 1>&2; }
 virric_find_project_root() {
   local dir="${PWD}"
   while [[ "$dir" != "/" ]]; do
-    if [[ -f "$dir/.virric/config.env" ]]; then
+    # Hard requirement: VIRRIC drop-in folder must exist at repo root.
+    if [[ -d "$dir/virric" && -f "$dir/virric/AGENTS.md" ]]; then
       echo "$dir"
       return 0
     fi
@@ -24,52 +25,20 @@ virric_find_project_root() {
 virric_load_config() {
   local project_root
   project_root="$(virric_find_project_root)" || {
-    virric__err "Not in a VIRRIC project (missing .virric/config.env)."
-    virric__err "Initialize with: ./virric/install.sh --project-dir /path/to/project"
+    virric__err "Not in a VIRRIC project (missing ./virric at repo root)."
     return 1
   }
 
-  # shellcheck source=/dev/null
-  source "$project_root/.virric/config.env"
-
   export VIRRIC_PROJECT_ROOT="$project_root"
+  export VIRRIC_ROOT="$project_root/virric"
+  export VIRRIC_DOMAINS_ROOT="$VIRRIC_ROOT/domains"
 
-  # Canonical: feature-management directory (preferred). Back-compat: FR_management directory + fr_management_path.
-  # Auto-heal: if a repo was renamed from FR_management -> feature-management, tolerate stale config.env paths.
-  local default_feature_dir="$project_root/virric/domains/feature-management/docs"
+  # Canonical domain doc roots
+  export feature_management_path="$VIRRIC_DOMAINS_ROOT/feature-management/docs"
+  # Back-compat alias (older scripts may still read this name)
+  export fr_management_path="$feature_management_path"
 
-  : "${feature_management_path:=${fr_management_path:-}}"
-
-  # If config is missing/blank or points at a removed directory, prefer the canonical default if it exists.
-  if [[ -z "${feature_management_path:-}" && -d "$default_feature_dir" ]]; then
-    feature_management_path="$default_feature_dir"
-  elif [[ -n "${feature_management_path:-}" && ! -d "${feature_management_path:-}" && -d "$default_feature_dir" ]]; then
-    feature_management_path="$default_feature_dir"
-  fi
-
-  # If config points at the domain root, auto-step into docs/ when present.
-  if [[ -n "${feature_management_path:-}" && -d "${feature_management_path:-}/docs" && ! -d "${feature_management_path:-}/frs" ]]; then
-    feature_management_path="${feature_management_path%/}/docs"
-  fi
-
-  # Back-compat: previously feature-management lived at repo root (with docs directly under it).
-  if [[ -z "${feature_management_path:-}" && -d "$project_root/feature-management/frs" ]]; then
-    feature_management_path="$project_root/feature-management"
-  elif [[ -n "${feature_management_path:-}" && ! -d "${feature_management_path:-}" && -d "$project_root/feature-management/frs" ]]; then
-    feature_management_path="$project_root/feature-management"
-  fi
-
-  : "${fr_management_path:=${feature_management_path:-}}"
-
-  # If fr_management_path is stale (e.g. points at FR_management), keep it aligned to feature_management_path.
-  if [[ -n "${feature_management_path:-}" && -n "${fr_management_path:-}" && ! -d "$fr_management_path" && -d "$feature_management_path" ]]; then
-    fr_management_path="$feature_management_path"
-  fi
-
-  export feature_management_path fr_management_path
-
-  : "${feature_management_path:?missing feature_management_path in .virric/config.env}"
-  : "${scripts_path:?missing scripts_path in .virric/config.env}"
+  : "${feature_management_path:?missing feature_management_path (computed)}"
   : "${fr_layout:=single_dir}"
   : "${fr_format:=md}"
 }

@@ -1,6 +1,8 @@
-Signals for this domain live under the canonical signals namespace: `virric/signals/`.
+# Signals — test-management
+
+Signals for this domain live in this folder:
+- `virric/domains/test-management/signals/`
 
 Recommended convention:
-- `virric/signals/test-management/*`
-
-
+- one file per intent, committed as part of a PR
+- keep names stable and machine-parseable

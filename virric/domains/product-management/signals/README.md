@@ -1,6 +1,8 @@
-Signals for this domain live under the canonical signals namespace: `virric/signals/`.
+# Signals — product-management
+
+Signals for this domain live in this folder:
+- `virric/domains/product-management/signals/`
 
 Recommended convention:
-- `virric/signals/product-management/*`
-
-
+- one file per intent, committed as part of a PR
+- keep names stable and machine-parseable
