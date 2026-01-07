@@ -118,7 +118,9 @@ check_circular_dependencies() {
     done < "$dep_file"
   done
 
-  [[ ! -s "$adjacency" ]] && return 0
+  # Return non-zero when there is nothing to check (no edges => no cycles).
+  # This function's contract is: exit 0 => circular dependencies found.
+  [[ ! -s "$adjacency" ]] && return 1
 
   local circular="$TEMP_DIR/circular.txt"
   : > "$circular"

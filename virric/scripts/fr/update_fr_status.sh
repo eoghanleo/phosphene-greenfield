@@ -94,17 +94,22 @@ while [[ $# -gt 0 ]]; do
       ;;
   esac
 done
-set -- "${positional[@]:-}"
+# Bash 3.2 + `set -u`: expanding an empty array can error as "unbound variable".
+# Avoid `set -- "${positional[@]}"` and instead read indices with safe defaults.
+fr_file="${positional[0]-}"
+new_status="${positional[1]-}"
+extra_arg="${positional[2]-}"
 
-if [[ $# -ne 2 ]]; then
+if [[ -n "$extra_arg" ]]; then
+  print_usage
+  exit 1
+fi
+if [[ -z "$fr_file" || -z "$new_status" ]]; then
   print_usage
   exit 1
 fi
 
 check_required_tools
-
-fr_file="$1"
-new_status="$2"
 
 if [[ ! "$fr_file" = /* ]]; then
   fr_file="$PWD/$fr_file"

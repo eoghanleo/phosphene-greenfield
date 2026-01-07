@@ -152,7 +152,7 @@ main() {
   local quiet=false
   local target=""
 
-  local positional=()
+  local -a positional=()
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h|--help) print_usage; exit 0 ;;
@@ -163,12 +163,20 @@ main() {
       *) positional+=("$1"); shift ;;
     esac
   done
-  set -- "${positional[@]:-}"
 
   check_required_tools
 
-  if [[ $# -gt 0 ]]; then
-    target="$1"
+  # Bash 3.2 + `set -u`: empty arrays can behave like "unbound" when expanded.
+  # Avoid `set -- "${positional[@]}"` and read from indices with safe defaults.
+  local target_arg="${positional[0]-}"
+  local extra_arg="${positional[1]-}"
+  if [[ -n "$extra_arg" ]]; then
+    echo -e "${RED}Error: too many arguments (expected at most 1 target path)${RESET}"
+    print_usage
+    exit 1
+  fi
+  if [[ -n "$target_arg" ]]; then
+    target="$target_arg"
   else
     target="$BACKLOG_DIR"
   fi

@@ -89,7 +89,8 @@ fr_file="$FRS_DIR/${fr_id}-${slug}.md"
     for dep in "${DEPS[@]}"; do norm+=("$(normalize_dep_id "$dep")"); done
     echo "Dependencies: $(IFS=', '; echo "${norm[*]}")"
   else
-    echo "Dependencies:"
+    # Keep bash-parseable delimiter format even when empty (validator expects ": ").
+    echo "Dependencies: "
   fi
   echo ""
   echo "## Description"
