@@ -23,7 +23,7 @@ Quick start (run from repo root):
 
 ```bash
 ./virric/bin/virric banner
-./virric/domains/feature-management/scripts/fr/create_fr.sh --title "..." --description "..." --priority "High"
+./virric/domains/feature-management/scripts/create_fr.sh --title "..." --description "..." --priority "High"
 ```
 
 

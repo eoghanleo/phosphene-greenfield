@@ -20,11 +20,11 @@ Not all agents support `skill.md`. Treat this as **optional** context that compl
 
 ## Primary commands
 
-- `./virric/domains/feature-management/scripts/fr/create_fr.sh`
-- `./virric/domains/feature-management/scripts/fr/validate_fr.sh`
-- `./virric/domains/feature-management/scripts/fr/update_fr_status.sh`
-- `./virric/domains/feature-management/scripts/fr/approve_fr.sh`
-- `./virric/domains/feature-management/scripts/fr/update_backlog_tree.sh`
-- `./virric/domains/feature-management/scripts/fr/fr_dependency_tracker.sh`
+- `./virric/domains/feature-management/scripts/create_fr.sh`
+- `./virric/domains/feature-management/scripts/validate_fr.sh`
+- `./virric/domains/feature-management/scripts/update_fr_status.sh`
+- `./virric/domains/feature-management/scripts/approve_fr.sh`
+- `./virric/domains/feature-management/scripts/update_backlog_tree.sh`
+- `./virric/domains/feature-management/scripts/fr_dependency_tracker.sh`
 
 

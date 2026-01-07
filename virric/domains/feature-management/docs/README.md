@@ -11,9 +11,9 @@ Canonical locations:
 - Templates: `virric/domains/feature-management/templates/`
 
 Primary commands:
-- `./virric/domains/feature-management/scripts/fr/create_fr.sh`
-- `./virric/domains/feature-management/scripts/fr/validate_fr.sh`
-- `./virric/domains/feature-management/scripts/fr/approve_fr.sh --id FR-001`
-- `./virric/domains/feature-management/scripts/fr/update_fr_status.sh virric/domains/feature-management/docs/frs/FR-001-... \"In Progress\"`
+- `./virric/domains/feature-management/scripts/create_fr.sh`
+- `./virric/domains/feature-management/scripts/validate_fr.sh`
+- `./virric/domains/feature-management/scripts/approve_fr.sh --id FR-001`
+- `./virric/domains/feature-management/scripts/update_fr_status.sh virric/domains/feature-management/docs/frs/FR-001-... \"In Progress\"`
 
 
