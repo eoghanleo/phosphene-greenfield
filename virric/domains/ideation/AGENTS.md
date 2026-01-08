@@ -1,14 +1,17 @@
-# AGENTS.md (domain stub) — ideation
+# AGENTS.md (domain stub) — <ideation>
+
+Primary domain: `<ideation>`
 
 This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 
-## Your operating area
+## What you produce
 
-- Inventory: `virric/domains/ideation/docs/`
-- Templates: `virric/domains/ideation/templates/`
-- Scripts: `virric/domains/ideation/scripts/`
-- Signals: `virric/domains/ideation/signals/`
+- `idea` artifacts (seed concepts; minimal structure)
 
-Start here: `virric/domains/ideation/docs/README.md`
+## Operating boundary
+
+- Use the `<ideation>` tag to indicate scope/boundaries in handoffs.
+- Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
+- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
 
 

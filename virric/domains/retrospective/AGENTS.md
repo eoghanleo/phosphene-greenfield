@@ -1,14 +1,18 @@
-# AGENTS.md (domain stub) — retrospective
+# AGENTS.md (domain stub) — <retrospective>
+
+Primary domain: `<retrospective>`
 
 This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 
-## Your operating area
+## What you produce
 
-- Inventory: `virric/domains/retrospective/docs/`
-- Templates: `virric/domains/retrospective/templates/`
-- Scripts: `virric/domains/retrospective/scripts/`
-- Signals: `virric/domains/retrospective/signals/`
+- `postmortem` artifacts
+- `playbook` artifacts
 
-Start here: `virric/domains/retrospective/docs/README.md`
+## Operating boundary
+
+- Use the `<retrospective>` tag to indicate scope/boundaries in handoffs.
+- Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
+- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
 
 

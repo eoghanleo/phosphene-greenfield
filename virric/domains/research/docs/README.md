@@ -1,16 +1,32 @@
 # Research (Domain)
 
 Primary artifacts:
-- `research-assessment` — evidence + feasibility + recommendation.
+- `research-assessment` — reference-solution scan + competitive landscape + hypotheses + candidate product pitches (web-only).
 
-Canonical locations:
-- Templates: `virric/domains/research/templates/`
-- Working artifacts: `virric/domains/research/docs/research-assessments/`
+Domain tag: `<research>`
+
+## Research assessments (RA) are bundles
+
+Deep research output should be stored as a **bundle folder** (not a single giant markdown file). This enables:
+
+- deterministic validation (format compliance)
+- lightweight database-style cross-linking (EvidenceIDs, RS-IDs, PITCH-IDs)
+- fast downstream consumption (coversheet first; dive into annexes as needed)
+
+Bundle shape (required):
+- `00-coversheet.md` (short cover letter)
+- `10-reference-solutions.md` (RS table)
+- `20-competitive-landscape.md` (competitor matrix)
+- `30-pitches/` (`PITCH-*.md` files)
+- `40-hypotheses.md` (segments/personas/jobs/pains/gains)
+- `50-evidence-bank.md` (EvidenceID table)
+- `90-methods.md` (method/log/bias/assumptions/etc.)
 
 Naming convention (recommended):
-- `RA-0001-short-title.md`
+- Bundle folder: `RA-001-<slug>/`
+- RA ID format: `RA-001` (stable)
 
 Handoff (default):
-- **To Product Strategy** when the research yields a recommendation and constraints.
+- **To `<product-strategy>`** when the research yields a recommendation and constraints (and a pitch set).
 
 

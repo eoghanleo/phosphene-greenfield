@@ -1,10 +1,9 @@
-# skill.md (domain stub) — feature-management
+# skill.md (domain stub) — <feature-management>
 
 This is a lightweight pointer for agents that support `skill.md`.
 
 - Canonical skills: `virric/skill.md`
-- Domain inventory: `virric/domains/feature-management/docs/README.md`
-- Domain templates: `virric/domains/feature-management/templates/`
-- Domain scripts: `virric/domains/feature-management/scripts/`
+- Domain tag: `<feature-management>`
+- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<feature-management>` instead).
 
 

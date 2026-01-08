@@ -1,14 +1,17 @@
-# AGENTS.md (domain stub) — research
+# AGENTS.md (domain stub) — <research>
+
+Primary domain: `<research>`
 
 This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 
-## Your operating area
+## What you produce
 
-- Inventory: `virric/domains/research/docs/`
-- Templates: `virric/domains/research/templates/`
-- Scripts: `virric/domains/research/scripts/`
-- Signals: `virric/domains/research/signals/`
+- `research-assessment` (RA bundles: coversheet + annexes + evidence + pitches)
 
-Start here: `virric/domains/research/docs/README.md`
+## Operating boundary
+
+- Use the `<research>` tag to indicate scope/boundaries in handoffs.
+- Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
+- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
 
 

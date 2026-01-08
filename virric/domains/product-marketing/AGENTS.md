@@ -1,14 +1,18 @@
-# AGENTS.md (domain stub) — product-marketing
+# AGENTS.md (domain stub) — <product-marketing>
+
+Primary domain: `<product-marketing>`
 
 This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 
-## Your operating area
+## What you produce
 
-- Inventory: `virric/domains/product-marketing/docs/`
-- Templates: `virric/domains/product-marketing/templates/`
-- Scripts: `virric/domains/product-marketing/scripts/`
-- Signals: `virric/domains/product-marketing/signals/`
+- `persona` (PER-*) artifacts
+- `proposition` (PROP-*) artifacts
 
-Start here: `virric/domains/product-marketing/docs/README.md`
+## Operating boundary
+
+- Use the `<product-marketing>` tag to indicate scope/boundaries in handoffs.
+- Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
+- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
 
 

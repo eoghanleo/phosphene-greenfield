@@ -1,9 +1,9 @@
-# skill.md (domain stub) — ideation
+# skill.md (domain stub) — <ideation>
 
 This is a lightweight pointer for agents that support `skill.md`.
 
 - Canonical skills: `virric/skill.md`
-- Domain inventory: `virric/domains/ideation/docs/README.md`
-- Domain templates: `virric/domains/ideation/templates/`
+- Domain tag: `<ideation>`
+- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<ideation>` instead).
 
 

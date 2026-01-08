@@ -1,14 +1,17 @@
-# AGENTS.md (domain stub) — scrum-management
+# AGENTS.md (domain stub) — <scrum-management>
+
+Primary domain: `<scrum-management>`
 
 This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 
-## Your operating area
+## What you produce
 
-- Inventory: `virric/domains/scrum-management/docs/`
-- Templates: `virric/domains/scrum-management/templates/`
-- Scripts: `virric/domains/scrum-management/scripts/`
-- Signals: `virric/domains/scrum-management/signals/`
+- `issue` artifacts (work tracking; delegation scaffolds)
 
-Start here: `virric/domains/scrum-management/docs/README.md`
+## Operating boundary
+
+- Use the `<scrum-management>` tag to indicate scope/boundaries in handoffs.
+- Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
+- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
 
 

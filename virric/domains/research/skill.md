@@ -1,9 +1,9 @@
-# skill.md (domain stub) — research
+# skill.md (domain stub) — <research>
 
 This is a lightweight pointer for agents that support `skill.md`.
 
 - Canonical skills: `virric/skill.md`
-- Domain inventory: `virric/domains/research/docs/README.md`
-- Domain templates: `virric/domains/research/templates/`
+- Domain tag: `<research>`
+- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<research>` instead).
 
 
