@@ -8,16 +8,13 @@ Owner:
 
 ## Purpose + constraints (read first)
 
-This document is a **web-research-only research assessment**. It is a *cover letter* that distills key findings and **hypotheses** that downstream agents will refine in:
-
-- Product marketing (personas + propositions): `virric/domains/product-marketing/templates/`
-- Product strategy (roadmap): `virric/domains/product-strategy/templates/`
-- Product management (spec): `virric/domains/product-management/templates/`
+This document is a **web-research-only research assessment**. It is a *cover letter* that distills key findings and **hypotheses** for downstream work in `<product-marketing>`, `<product-strategy>`, and `<product-management>`.
 
 Hard constraints for the research agent:
 - No interviews; assume **only public web sources**.
+- Primary outputs are **reference solutions**, **competitive landscape**, and **candidate product pitches** grounded in public evidence.
 - Outputs are **candidate segments/personas/pains/gains** (theories) with evidence pointers and confidence grades.
-- Product definition detail should remain **light** here; capture only what is necessary to ground hypotheses.
+- Product definition and scope should remain **light** here; capture only what is necessary to frame pitches and hypotheses.
 
 ## Research coversheet (1–2 pages, must-have)
 
@@ -30,6 +27,9 @@ Checklist:
 - [ ] Downstream consumers (domains/agents) and what they need next
 
 Deliverables (expected):
+- Reference solutions scan (market + academic) with stable IDs and pointers
+- Competitive landscape summary (categories + key players + positioning)
+- 3–7 candidate product pitches (PITCH-*) with EvidenceIDs + confidence
 - Candidate segments (SEG-*) ranked, with rationale + out-of-scope list
 - Candidate personas (PER-*) per top segment (hypotheses)
 - Candidate jobs/pains/gains (IDs) per segment with severity/frequency (hypotheses)
@@ -61,18 +61,68 @@ Format for each finding:
 - Confidence (C1–C3):
 - Notes / caveats:
 
-### 5) Handoff pointers (do not finalize here)
+### 5) Candidate product pitches (stepping stones)
 
 Checklist:
-- [ ] For personas + propositions: create a brief using `virric/domains/product-marketing/templates/persona-proposition-generation-brief.md`
-- [ ] For strategy: seed bets in `virric/domains/product-strategy/templates/product-roadmap.md`
-- [ ] For product definition/spec: seed `virric/domains/product-management/templates/product-spec.md`
+- [ ] 3–7 pitches only (keep sharp)
+- [ ] Each pitch ties to a segment/persona hypothesis and a concrete pain→gain loop
+- [ ] Each pitch includes differentiation and “we lose when…” conditions
+- [ ] Each pitch includes EvidenceIDs + confidence (C1–C3)
+
+Pitch format:
+- PitchID: PITCH-0001
+- Name:
+- One-line pitch:
+- Target segment(s) (SEG-*):
+- Target persona(s) (PER-*):
+- Trigger / why-now:
+- Core pain → promised gain:
+- “So it works because…” (mechanism, not scope):
+- Differentiation vs reference solutions:
+- Likely objections + counters:
+- EvidenceIDs:
+- Confidence (C1–C3):
+- “We lose when…”:
+- Unknowns to validate next:
+
+### 6) Downstream handoff (do not finalize here)
+
+Checklist:
+- [ ] `<product-marketing>` consumes: candidate segments/personas + pitches + evidence bank
+- [ ] `<product-strategy>` consumes: competitive landscape + pitch set + key constraints/risks
+- [ ] `<product-management>` consumes: the top pitch(es) + evidence + assumptions/unknowns
 
 ---
 
 ## Full research-assessment (multi-page, must-have)
 
-### A) Research intent + method (web) + source profile + bias notes
+### A) Reference solution scan (market + academic) — first objective
+
+Checklist:
+- [ ] Scan for similar ideas in-market (products, startups, OSS)
+- [ ] Scan for similar ideas academically (papers, preprints, labs)
+- [ ] Capture each as a ReferenceSolution with a stable ID + pointer
+- [ ] Extract what to borrow vs avoid (patterns, claims, pitfalls)
+
+Table:
+| RefSolID | Type (Market/Academic) | Name | 1–2 line summary | What to borrow | What to avoid | Pointer |
+|---|---|---|---|---|---|---|
+| RS-0001 | Market | <...> | <...> | <...> | <...> | <link> |
+
+### B) Competitive landscape + relative competition — second objective
+
+Checklist:
+- [ ] Identify direct/adjacent competitors and category substitutes
+- [ ] Summarize positioning and differentiation axes
+- [ ] Capture win/lose patterns (“we lose when…”) as hypotheses
+- [ ] Note switching costs and inertia drivers
+
+Table:
+| Competitor | Category | ICP/segment | Positioning claim | Key strengths | Key weaknesses | “We lose when…” | Pointer |
+|---|---|---|---|---|---|---|---|
+| <...> | <...> | <...> | <...> | <...> | <...> | <...> | <link> |
+
+### C) Research intent + method (web) + source profile + bias notes
 
 Checklist:
 - [ ] Research intent (what decision(s) this supports)
@@ -82,7 +132,7 @@ Checklist:
 - [ ] Bias notes (selection bias, survivorship, availability)
 - [ ] Confidence grading per key claim (C1–C3) + evidence strength (E0–E4)
 
-### A.1) Research log (queries + source trail)
+### C.1) Research log (queries + source trail)
 
 Checklist:
 - [ ] Search queries used (and why)
@@ -94,7 +144,7 @@ Table (optional):
 |---|---|---|---|
 | YYYY-MM-DD | <...> | <...> | <...> |
 
-### B) Segmentation prioritization logic (incl. deprioritized segments)
+### D) Segmentation prioritization logic (incl. deprioritized segments)
 
 Checklist:
 - [ ] Prioritization logic (scoring or narrative)
@@ -102,7 +152,7 @@ Checklist:
 - [ ] Deprioritized segments + rationale
 - [ ] Explicit out-of-scope segments (repeat from coversheet if needed)
 
-### C) Core workflows (3–7)
+### E) Core workflows (3–7)
 
 Checklist:
 - [ ] 3–7 workflows only (keep sharp)
@@ -110,7 +160,7 @@ Checklist:
 - [ ] Identify who performs each step (role tags)
 - [ ] Identify integration/data prerequisites where relevant
 
-### D) Ranked jobs / pains / gains per segment (with metrics + inertia)
+### F) Ranked jobs / pains / gains per segment (with metrics + inertia)
 
 Checklist:
 - [ ] Per segment: ranked JTBD, pains, gains
@@ -118,7 +168,7 @@ Checklist:
 - [ ] Success metrics (how they measure “done”)
 - [ ] Inertia sources (why they don’t change)
 
-### E) Candidate persona dossiers (hypotheses; with evidence pointers)
+### G) Candidate persona dossiers (hypotheses; with evidence pointers)
 
 Checklist:
 - [ ] Persona stable ID (PER-XXXX) and segment stable ID (SEG-XXXX)
@@ -126,7 +176,7 @@ Checklist:
 - [ ] Quotes + incident stories + workarounds
 - [ ] Evidence IDs attached to each major claim
 
-### F) Evidence pack (references + rubrics)
+### H) Evidence pack (references + rubrics)
 
 Checklist:
 - [ ] Evidence bank includes quotes + incidents tagged to jobs/pains/gains
@@ -134,7 +184,7 @@ Checklist:
 - [ ] Evidence pointer (link/path) + context (who/when)
 - [ ] Evidence strength (E0–E4) + confidence (C1–C3)
 
-### G) Quantification anchors (value ranges)
+### I) Quantification anchors (value ranges)
 
 Checklist:
 - [ ] Unit of value (time saved, risk reduced, revenue, compliance)
@@ -142,7 +192,7 @@ Checklist:
 - [ ] Time-to-value bands (ranges)
 - [ ] Any quantified anchors (even rough ranges) + what would firm them up
 
-### H) Alternatives, switching costs, win/lose patterns
+### J) Alternatives, switching costs, win/lose patterns
 
 Checklist:
 - [ ] Do-nothing baseline and inertia
@@ -150,7 +200,7 @@ Checklist:
 - [ ] Competitor comparisons (if any)
 - [ ] Explicit “we lose when…” conditions
 
-### I) Messaging ingredients (candidate; usable by product-marketing)
+### K) Messaging ingredients (candidate; usable by `<product-marketing>`)
 
 Checklist:
 - [ ] Resonant phrases (quotes preferred)
@@ -158,14 +208,14 @@ Checklist:
 - [ ] Narrative frames that worked
 - [ ] Claim constraints (must/must-not)
 
-### J) Prioritized use-case catalog (mapped)
+### L) Prioritized use-case catalog (mapped)
 
 Checklist:
 - [ ] Use cases mapped to personas + triggers
 - [ ] Integration/data prerequisites
 - [ ] Dependencies and constraints per use case
 
-### K) Capability constraints + non-negotiables
+### M) Capability constraints + non-negotiables
 
 Checklist:
 - [ ] Latency / performance requirements
@@ -173,7 +223,7 @@ Checklist:
 - [ ] Data residency / security posture
 - [ ] Support model expectations (if relevant)
 
-### L) Assumption register + gaps + validation plan
+### N) Assumption register + gaps + validation plan
 
 Checklist:
 - [ ] Assumptions (explicit)

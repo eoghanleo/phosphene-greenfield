@@ -15,30 +15,29 @@ VIRRIC is a **bash-first SDLC control plane**: it provides a **multi-domain prod
 
 Incoming agents should be told a single string:
 
-- **Primary domain**: one of the nine domains listed below.
+- **Primary domain**: one of the nine domains listed below (referenced as `<domain>`).
 
 If you have that domain, do this:
 
 - Read **this file** (`virric/AGENTS.md`) for the contract and default handoffs.
 - If you support `skill.md`, also read `virric/skill.md`.
-- Go to the domain folder under the drop-in:
-  - Inventory: `virric/domains/<domain>/docs/`
-  - Templates: `virric/domains/<domain>/templates/`
-  - Scripts: `virric/domains/<domain>/scripts/`
-  - Signals: `virric/domains/<domain>/signals/`
-  - Example: domain = `research` → open `virric/domains/research/docs/README.md` and `virric/domains/research/templates/`.
+
+Domain reference convention:
+
+- Use angle brackets when referring to domains: `<ideation>`, `<research>`, `<product-marketing>`, etc.
+- Avoid embedding “go to this directory” pointers in handoff/spec docs; use the domain tag and let the agent decide navigation.
 
 ### Nine domains (canonical)
 
-- **ideation** → artifacts: `idea` → `virric/domains/ideation/`
-- **research** → artifacts: `research-assessment` → `virric/domains/research/`
-- **product-marketing** → artifacts: `persona`, `proposition` → `virric/domains/product-marketing/`
-- **product-strategy** → artifacts: `product-roadmap` → `virric/domains/product-strategy/`
-- **product-management** → artifacts: `product-spec` → `virric/domains/product-management/`
-- **feature-management** → artifacts: `feature-request` → `virric/domains/feature-management/`
-- **scrum-management** → artifacts: `issue` → `virric/domains/scrum-management/`
-- **test-management** → artifacts: `test-plan` → `virric/domains/test-management/`
-- **retrospective** → artifacts: `postmortem`, `playbook` → `virric/domains/retrospective/`
+- `<ideation>` → artifacts: `idea`
+- `<research>` → artifacts: `research-assessment`
+- `<product-marketing>` → artifacts: `persona`, `proposition`
+- `<product-strategy>` → artifacts: `product-roadmap`
+- `<product-management>` → artifacts: `product-spec`
+- `<feature-management>` → artifacts: `feature-request`
+- `<scrum-management>` → artifacts: `issue`
+- `<test-management>` → artifacts: `test-plan`
+- `<retrospective>` → artifacts: `postmortem`, `playbook`
 
 ## Canonical work items
 

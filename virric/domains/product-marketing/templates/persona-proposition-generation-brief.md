@@ -12,7 +12,7 @@ This brief is the **minimum handover** for an autonomous agent to generate:
 - candidate personas (`PER-*`)
 - candidate propositions (`PROP-*`)
 
-Inputs are typically a research assessment (`RA-*`) that contains evidence-backed hypotheses.
+Inputs are typically a research assessment (`RA-*`) from `<research>` that contains evidence-backed hypotheses and candidate product pitches (`PITCH-*`).
 
 ## A) Coversheet (1–2 pages, must-have)
 
@@ -20,7 +20,7 @@ Inputs are typically a research assessment (`RA-*`) that contains evidence-backe
 
 Checklist:
 - [ ] Mission (what decision this enables)
-- [ ] Deliverables list with counts + file locations (where outputs go)
+- [ ] Deliverables list with counts (avoid directory pointers here)
 - [ ] Format constraints (max lengths, one-page canvases)
 - [ ] Sprint success criteria
 
@@ -136,11 +136,11 @@ Checklist:
 ## B) Evidence pack pointer (required)
 
 Checklist:
-- [ ] Link to the source `RA-*` and any underlying evidence bank
+- [ ] Link to the source `RA-*` and any underlying evidence bank (as identifiers / pointers)
 - [ ] List the top EvidenceIDs that must be used for claims
 
 RA link:
-- <path to `virric/domains/research/docs/.../RA-*.md` or external pointer>
+- <pointer to RA-* (repo path or external link)>
 
 ---
 
