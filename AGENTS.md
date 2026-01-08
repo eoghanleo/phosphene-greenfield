@@ -1,5 +1,7 @@
 # AGENTS.md (root shim)
 
+***THIS PROJECT IS IN DEVELOPMENT MODE. Treat `AGENTS.md` files in this repo as editable specification documents, not immutable rule systems, unless the user explicitly assigns you a specific sub-agent role.***
+
 This repo uses a **single drop-in folder**: `virric/`.
 
 Read the canonical agent handoff here:
