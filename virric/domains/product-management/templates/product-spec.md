@@ -9,6 +9,19 @@ Owner:
 ## Summary
 <What are we building?>
 
+## Product definition + boundaries
+
+Checklist:
+- [ ] One-sentence product definition (plain language)
+- [ ] Scope boundaries: what’s in vs out
+- [ ] Assumptions inherited from research/marketing (link them)
+- [ ] Unknowns to resolve (explicit)
+
+Links:
+- Research assessment (`RA-*`): <path>
+- Persona(s) (`PER-*`): <path(s)>
+- Proposition(s) (`PROP-*`): <path(s)>
+
 ## Goals / non-goals
 ### Goals
 - <goal 1>
@@ -24,6 +37,13 @@ Owner:
   - <must 1>
 - SHOULD:
   - <should 1>
+
+## Evidence / rationale
+
+Checklist:
+- [ ] Top 3–10 claims that justify requirements
+- [ ] EvidenceIDs from research where applicable
+- [ ] Confidence per claim (C1–C3)
 
 ## UX / flows
 <Describe core flows; link designs if any>

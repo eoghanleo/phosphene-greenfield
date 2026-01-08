@@ -6,6 +6,8 @@ Dependencies:
 Owner: 
 
 ## Snapshot
+- SegmentID: <SEG-...>
+- Role tags: <economic buyer / champion / end user / implementer / approver / blocker>
 - Role:
 - Context:
 - Primary goals:
@@ -23,6 +25,9 @@ Owner:
 - <success 1>
 
 ## Notes / evidence
-- <interview note / data>
+- EvidenceIDs: <E-0001, E-0002, ...>
+- Confidence: <C1/C2/C3>
+- Source notes (web-only):
+  - <key excerpt or paraphrase + pointer>
 
 

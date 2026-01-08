@@ -7,6 +7,7 @@ Owner:
 
 ## Target persona(s)
 - <link to PER-... or name>
+- SegmentID: <SEG-...>
 
 ## Value proposition
 <One sentence promise>
@@ -16,6 +17,8 @@ Owner:
 
 ## Proof / reasons to believe
 - <proof 1>
+- EvidenceIDs: <E-0001, E-0002, ...>
+- Confidence: <C1/C2/C3>
 
 ## Positioning constraints
 - Must:
