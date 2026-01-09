@@ -1,5 +1,5 @@
 ID: RA-001
-Title: Monetizing Idle WebGPU Simulation Games (Ant Colony Case Study) — Competitive Landscape
+Title: Ant Colony Idle Game — Competitive Landscape
 Status: Draft
 Updated: 2026-01-09
 Dependencies: 
@@ -17,12 +17,12 @@ Checklist:
 
 | Competitor | Category | ICP/segment | Positioning claim | Key strengths | Key weaknesses | “We lose when…” | Pointer |
 |---|---|---|---|---|---|---|---|
-| Idle Ants (Madbox) | Idle / hypercasual | SEG-0001 | “Pure fun idle: watch ants eat everything.” | Accessible; viral visuals; strong UA. | Shallow loop; not a sim; ad fatigue. | We lose casual attention if onboarding is heavy or visuals underwhelm. | `https://play.google.com/` |
-| Idle Ant Colony (Bling) | Idle / mid-core | SEG-0001/2 | “Build an ant empire” with more systems. | More strategic content; ongoing updates; community. | Mobile-first; pacing complaints; onboarding overload. | We lose if we ship “sandbox only” without goals or if differentiation is weak. | `https://play.google.com/` |
-| Mainstream idle tycoons | Idle / economy | SEG-0001 | “Manage X and get rich.” | Tuned progression; polish; huge content cadence. | Generic themes; aggressive monetization norms. | We lose if novelty doesn’t outweigh inertia and tuning quality. | `https://play.google.com/` |
-| Empires of the Undergrowth | PC strategy/sim | SEG-0002 | “Ant colony warfare with realism.” | Depth; realism; premium/fairness perception. | Paid/PC barrier; no idle/offline loop. | We lose enthusiasts if our sim feels toy-like or dishonest. | `https://store.steampowered.com/` |
-| AntWar.io | Browser PvP (.io) | SEG-0001 subset | “Real-time ant colony battles.” | Low barrier; competitive hook. | Not idle; not sim; low depth/LTV. | We lose users seeking PvP if we misposition as “war.” | `https://antwar.io/` |
-| Educational sims | Sandbox/edu | SEG-0003 adjacent | “Learn by observing.” | Credibility; curriculum alignment. | Not sticky; low polish; low distribution. | We lose edu usage if seen as too gamey/monetized. | `https://graphics.cs.uh.edu/` |
+| Idle Ants (Madbox) | Hypercasual idle | SEG-0001 | “Watch ants eat everything” novelty idle. | Ultra-accessible; viral visuals; proven UA scale. | Shallow; ad-heavy patterns; not a “real” sim. | If our onboarding is too heavy or visuals less delightful for a 5-minute try. | `play.google.com` |
+| Idle Ant Colony (Bling) | Mid-core idle tycoon | SEG-0001/SEG-0002 | “Build an ant empire across the world” w/ research + maps. | Multi-track progression; active updates/community; moderate goodwill. | Pacing/grind complaints; onboarding overload; mobile-centric. | If our sim depth doesn’t translate into clear goals/progression (they retain better). | `play.google.com` |
+| Empires of the Undergrowth | Premium PC ant RTS/sim | SEG-0002 | Realistic ant species + missions on PC. | Depth; production value; established community. | Paid barrier; time/complexity; not idle. | If our “realism” is superficial or we lack credibility with sim enthusiasts. | `store.steampowered.com` |
+| Swarm Simulator: Evolution | Incremental on Steam | SEG-0001/SEG-0002 | Deep incremental progression with “swarm” theme. | Proven long-tail idle systems; prestige mastery. | Monetization/QoL backlash risk; complexity onboarding. | If our idle economy is too thin (no long-term systems), they win on retention depth. | `store.steampowered.com` |
+| Mainstream idle tycoons (Idle Miner Tycoon, Egg, Inc.) | Mainstream idle economy | SEG-0001 | “Manage X and get rich” refined idle loops. | Highly optimized retention + monetization; polish. | Generic themes; low educational/sim novelty. | If we fail to match basic polish/clarity in the first session. | `blog.founders.illinois.edu` |
+| ChatGPT app ecosystem (early apps) | Distribution channel substitute | SEG-0003 | “Don’t switch tabs; run apps in chat.” | Huge installed base; conversational invocation; planned in-chat checkout. | Discovery unproven; policy/review gates; webgpu constraints. | If ChatGPT users don’t adopt games in-chat, or we rely solely on this channel. | `openai.com` |
 
 ## Notes
 

@@ -1,51 +1,54 @@
 ID: PITCH-0003
-RA: RA-001
 Title: Sim Colony Builder (Series)
 Status: Draft
 Updated: 2026-01-09
-Confidence: C2
-EvidenceIDs: E-0002, E-0006, E-0011, E-0012
+Dependencies:
+Owner:
 
 ## One-line pitch
 
-A series of detailed idle simulations (Ants, Bees, Termites, …) on a shared WebGPU engine — reuse tech, vary themes, and get multiple “at-bats” for distribution and marketing.
+Build a reusable WebGPU idle-simulation engine and ship a series of themed “colony builder” sims (Ants, Bees, Termites, etc.) to maximize reuse and get multiple acquisition angles.
 
 ## Target
 
-- Target segment(s): SEG-0002 (primary), SEG-0001 (per-theme casual wedges)
-- Target persona(s): PER-0002 (and “nature-curious” variants)
+- Target segment(s): SEG-0002 (primary), SEG-0001 (theme-dependent secondary)
+- Target persona(s): PER-0002 (primary); theme-driven casual variants (future)
 
 ## Trigger / why-now
 
-- Nature themes are resonant; a high-quality first title can justify reusing the core engine.
+- If the ant sim works, the core simulation + idle economy can be reused to create multiple “at-bats”.
+- Nature/sandbox themes have persistent interest; each theme targets a different niche community.
 
 ## Core pain → promised gain
 
-- Pain: single-game content drought; hard to achieve scale with one niche theme.
-- Gain: portfolio strategy; cumulative reach; re-skin capability for new audiences.
+- Player pain: content exhaustion in one sim; desire for new ecosystems.
+- Business pain: high cost of new products; gain: reuse tech + shared learnings; cumulative audience for monetization.
 
-## So it works because… (mechanism, not scope)
+## “So it works because…” (mechanism hypothesis)
 
-- The expensive part (agent-based simulation + rendering + progression skeleton) is reusable.
-- Each new theme becomes a “marketing wedge” while sharing infrastructure.
+- Common engine handles agent simulation + idle progression; content packs swap assets/parameters.
+- Cross-promotion and shared account/community can increase LTV across titles.
 
-## Differentiation vs reference solutions
+## Differentiation
 
-- Rather than competing head-on with one massive idle tycoon, this is a portfolio compounding bet.
+- Portfolio strategy vs single-title competitors; “known for high-quality nature sims” brand.
 
-## Likely objections + counters
+## EvidenceIDs
 
-- “Spreading focus dilutes quality.” → only pursue after first title shows traction; stagger releases.
-- “Players won’t care about other themes.” → test cross-theme interest in-product before investing.
+E-0002, E-0011, E-0012
 
-## We lose when…
+## Confidence
 
-- Follow-up titles are low-polish or too similar (cannibalization + reputation damage).
-- Engine doesn’t generalize (tech debt explodes).
+C2 — reuse logic is sound; cross-title demand/cannibalization is uncertain.
+
+## “We lose when…”
+
+- We ship follow-ups that feel copy-pasted or dilute quality.
+- Themes cannibalize rather than expand audience.
+- Engine doesn’t generalize well across ecosystems without major rework.
 
 ## Unknowns to validate next
 
-- Cross-theme demand (survey/telemetry).
-- Engine generalizability (prototype second theme quickly).
-- Distribution constraints for cross-promo across platforms.
-
+- Cross-theme interest: what other ecosystems do players want after ants?
+- Whether shared accounts/community materially improves retention.
+- Operational capacity to deliver multiple titles without quality loss.
