@@ -257,11 +257,11 @@ Checklist:
 |---|---|---:|---|---|---|---|
 | SEG-0001 | <...> | 1 | Yes | <...> | P-... | G-... |
 
-### 2) Canonical persona table (stable IDs)
+### 2) Candidate persona index (stable IDs)
 
-| PersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
+| CandidatePersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| PER-0001 | <...> | SEG-0001 | <...> | P-... | G-... | <...> |
+| CPE-0001 | <...> | SEG-0001 | <...> | P-... | G-... | <...> |
 
 ### 3) Glossary + naming table
 
@@ -271,7 +271,7 @@ Checklist:
 
 ### 4) Quote + incident evidence bank
 
-| EvidenceID | Type | PersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
+| EvidenceID | Type | CandidatePersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| E-0001 | Quote | PER-0001 | SEG-0001 | P-... | "<...>" | <link/path> | E2 | C2 |
+| E-0001 | Quote | CPE-0001 | SEG-0001 | P-... | "<...>" | <link/path> | E2 | C2 |
 

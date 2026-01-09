@@ -32,10 +32,14 @@ Checklist:
 ## G) Candidate persona dossiers (hypotheses)
 
 Checklist:
-- Persona stable ID (PER-XXXX) and segment stable ID (SEG-XXXX)
+- Candidate persona stable ID (CPE-XXXX) and segment stable ID (SEG-XXXX)
 - Objections, decision criteria, terminology/lexicon
 - Quotes + incident stories + workarounds
 - Evidence IDs attached to each major claim
+
+Note:
+- Candidate Personas (CPE-*) are **authoritative in <research>** as 1:1 proposals for downstream personas.
+- Canonical Personas (PER-*) are **authoritative in <product-marketing> only**.
 
 ## Appendix: Canonical segment table (stable IDs)
 
@@ -43,9 +47,9 @@ Checklist:
 |---|---|---:|---|---|---|---|
 | SEG-XXXX | <...> | 1 | Yes | <...> | P-... | G-... |
 
-## Appendix: Canonical persona table (stable IDs)
+## Appendix: Candidate persona index (stable IDs)
 
-| PersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
+| CandidatePersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| PER-XXXX | <...> | SEG-XXXX | <...> | P-... | G-... | <...> |
+| CPE-XXXX | <...> | SEG-XXXX | <...> | P-... | G-... | <...> |
 

@@ -128,9 +128,9 @@ Checklist:
 - Dependencies and constraints per use case
 
 Use cases (initial):
-- Casual: start + check-in loop (PER-0001, trigger = downtime).
-- Enthusiast: “run experiments” sandbox mode (PER-0002, trigger = curiosity/strategy).
-- ChatGPT: “ask why” explanations + natural-language controls (PER-0003, trigger = in-chat novelty).
+- Casual: start + check-in loop (CPE-0001, trigger = downtime).
+- Enthusiast: “run experiments” sandbox mode (CPE-0002, trigger = curiosity/strategy).
+- ChatGPT: “ask why” explanations + natural-language controls (CPE-0003, trigger = in-chat novelty).
 
 ## M) Capability constraints + non-negotiables
 

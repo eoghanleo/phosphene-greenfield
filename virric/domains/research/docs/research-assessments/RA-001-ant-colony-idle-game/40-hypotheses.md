@@ -69,31 +69,20 @@ SEG-0003 (ChatGPT power-users) — hypothesis summary:
 - Top gains: G-0007 (in-chat launch, E-0009), G-0008 (AI explanations), G-0009 (quick play).
 - Success metrics: activation from ChatGPT directory; repeat usage; question/answer interactions.
 
-## G) Candidate persona dossiers (hypotheses)
+## G) Candidate persona dossiers (CPE; hypotheses)
 
 Checklist:
-- Persona stable ID (PER-XXXX) and segment stable ID (SEG-XXXX)
+- Candidate persona stable ID (CPE-####) and segment stable ID (SEG-####)
 - Objections, decision criteria, terminology/lexicon
-- Quotes + incident stories + workarounds
 - Evidence IDs attached to each major claim
 
-PER-0001 “Idle Ingrid” (SEG-0001):
-- Profile: busy casual player; wants relaxing progress.
-- Decision criteria: good ratings + fun screenshots; quick uninstall if annoyed/bored.
-- Objections: “ants are gross”; “simulation sounds complex”.
-- Evidence anchors: monetization fairness preference (E-0001), overwhelm/pacing risk (E-0003), stress-free play framing (E-0012).
+Canonical personas (PER-####) are authoritative in `<product-marketing>` only.
+In `<research>`, we keep 1:1 proposals as Candidate Personas under `60-candidate-personas/`.
 
-PER-0002 “Strategic Sam” (SEG-0002):
-- Profile: sim/strategy enthusiast; values depth and authenticity.
-- Decision criteria: niche buzz + “surprisingly deep”; will spend modestly as “support dev” if fair.
-- Objections: “idle will be shallow”; “F2P will have a catch”.
-- Evidence anchors: desire for sim/progression integration (E-0005), distribution realism (E-0007), monetization/competition logic (E-0013).
-
-PER-0003 “AI Alex” (SEG-0003):
-- Profile: heavy ChatGPT user; curious early adopter; values novelty + seamless UX.
-- Decision criteria: novelty in-app; must feel “AI actually adds value”.
-- Objections: gimmick risk; privacy; state persistence.
-- Evidence anchors: in-chat UX “no tab switching” (E-0009), planned in-chat purchase infra (E-0010).
+Candidate persona files (authoritative in this bundle):
+- CPE-0001 — “Idle Ingrid” (SEG-0001)
+- CPE-0002 — “Strategic Sam” (SEG-0002)
+- CPE-0003 — “AI Alex” (SEG-0003)
 
 ## Appendix: Canonical segment table (stable IDs)
 
@@ -103,11 +92,11 @@ PER-0003 “AI Alex” (SEG-0003):
 | SEG-0002 | Simulation/Strategy Enthusiasts | 2 | Yes | End-user; influenced by community/forums/reviews | P-0004, P-0005, P-0006 | G-0004, G-0005, G-0006 |
 | SEG-0003 | ChatGPT Power-Users / Edutainment | 3 | Yes | End-user + platform gatekeeper | P-0007, P-0008, P-0009 | G-0007, G-0008, G-0009 |
 
-## Appendix: Canonical persona table (stable IDs)
+## Appendix: Candidate persona index (stable IDs)
 
-| PersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
+| CandidatePersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| PER-0001 | Idle Ingrid | SEG-0001 | end-user | P-0001, P-0002, P-0003 | G-0001, G-0002, G-0003 | “gross ants”, “too complex”, “pay-to-win” |
-| PER-0002 | Strategic Sam | SEG-0002 | end-user | P-0004, P-0005, P-0006 | G-0004, G-0005, G-0006 | “shallow idle”, “F2P catch”, “fake realism” |
-| PER-0003 | AI Alex | SEG-0003 | end-user | P-0008, P-0009 | G-0007, G-0008, G-0009 | “gimmick”, “privacy”, “state loss” |
+| CPE-0001 | Idle Ingrid | SEG-0001 | end-user | P-0001, P-0002, P-0003 | G-0001, G-0002, G-0003 | “gross ants”, “too complex”, “pay-to-win” |
+| CPE-0002 | Strategic Sam | SEG-0002 | end-user | P-0004, P-0005, P-0006 | G-0004, G-0005, G-0006 | “shallow idle”, “F2P catch”, “fake realism” |
+| CPE-0003 | AI Alex | SEG-0003 | end-user | P-0008, P-0009 | G-0007, G-0008, G-0009 | “gimmick”, “privacy”, “state loss” |
 

@@ -1,6 +1,6 @@
 ---
 name: research
-description: Produce <research> artifacts (RA bundles) using VIRRIC scripts and global unique IDs (E-/RS-/PITCH-/SEG-/PER-).
+description: Produce <research> artifacts (RA bundles) using VIRRIC scripts and global unique IDs (E-/RS-/PITCH-/SEG-/CPE-/PER-).
 metadata:
   short-description: Research assessments (RA bundles)
 ---
@@ -36,13 +36,14 @@ All object IDs must be globally unique across `virric/domains/**/docs/**`:
 - RefSolIDs: `RS-####`
 - PitchIDs: `PITCH-####`
 - SegmentIDs: `SEG-####`
-- PersonaIDs: `PER-####`
+- CandidatePersonaIDs (research → marketing candidates): `CPE-####`
+- PersonaIDs (canonical; <product-marketing> only): `PER-####`
 
 Use the registry:
 
 - Build: `./virric/domains/research/scripts/research_id_registry.sh build`
 - Validate: `./virric/domains/research/scripts/research_id_registry.sh validate`
-- Allocate: `./virric/domains/research/scripts/research_id_registry.sh next --type ra|pitch|evidence|refsol|segment|persona`
+- Allocate: `./virric/domains/research/scripts/research_id_registry.sh next --type ra|pitch|evidence|refsol|segment|cpe|persona`
 
 ## Script-first workflow (preferred)
 
@@ -56,6 +57,8 @@ Use the registry:
   - `./virric/domains/research/scripts/create_product_pitch.sh <bundle_dir>`
   - `./virric/domains/research/scripts/add_evidence_record.sh <bundle_dir>`
   - `./virric/domains/research/scripts/add_reference_solution.sh <bundle_dir>`
+- Create candidate personas (1:1 proposals for <product-marketing> personas):
+  - `./virric/domains/research/scripts/create_candidate_persona.sh --bundle <bundle_dir> --name "..." --segment SEG-0001`
 
 ## Receipts (recommended)
 

@@ -94,6 +94,20 @@ OUT="$BUNDLE_DIR/${RA_ID}.md"
   cat "$BUNDLE_DIR/40-hypotheses.md"
 
   echo ""
+  echo "## Candidate personas (CPE)"
+  echo ""
+  if compgen -G "$BUNDLE_DIR/60-candidate-personas/CPE-*.md" >/dev/null; then
+    for f in "$BUNDLE_DIR"/60-candidate-personas/CPE-*.md; do
+      echo ""
+      echo "### $(basename "$f" .md)"
+      echo ""
+      cat "$f"
+    done
+  else
+    echo "_No candidate persona files found in 60-candidate-personas/ yet._"
+  fi
+
+  echo ""
   echo "## Evidence bank"
   echo ""
   cat "$BUNDLE_DIR/50-evidence-bank.md"

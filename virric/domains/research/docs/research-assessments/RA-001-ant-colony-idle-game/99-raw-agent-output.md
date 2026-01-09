@@ -225,7 +225,7 @@ One-line pitch: A free-to-play ant colony simulator that lets you grow and evolv
 
 Target segment(s): SEG-0001 (Casual Idle Gamers) primarily, with secondary appeal to SEG-0002 (Simulation Enthusiasts who don’t mind a lighter experience).
 
-Target persona(s): PER-0001 “Idle Ingrid” (a busy casual gamer who enjoys stress-free progress) and PER-0002 “Strategy Sam” (a curious sim fan who might play casually on the side).
+Target persona(s): CPE-0001 “Idle Ingrid” (a busy casual gamer who enjoys stress-free progress) and CPE-0002 “Strategy Sam” (a curious sim fan who might play casually on the side).
 
 Trigger / why-now: Idle Ingrid might see a fun video or portal feature about “a game where you raise an ant colony” and try it on a whim. Strategy Sam might click because of the science angle (“real ant behavior”). The novelty of the theme in an oversaturated idle market is key – this pitch capitalizes on content differentiation (ants vs. the usual mines, cities, etc.).
 
@@ -269,7 +269,7 @@ One-line pitch: An interactive ant colony simulation inside ChatGPT – part gam
 
 Target segment(s): Primarily SEG-0003 (ChatGPT Power-Users / Edutainment seekers), and potentially a subset of SEG-0002 (education-minded sim enthusiasts) and even parents/educators who use ChatGPT. This is more niche, aiming at those already using ChatGPT regularly and open to new use cases in that environment.
 
-Target persona(s): PER-0003 “AI Alex” – a tech-savvy user who likes to experiment with GPT for various tasks and would enjoy a built-in pastime with learning value. Possibly also a teacher persona (not enumerated above) who might run the simulation in class to demonstrate ecosystem concepts via ChatGPT.
+Target persona(s): CPE-0003 “AI Alex” – a tech-savvy user who likes to experiment with GPT for various tasks and would enjoy a built-in pastime with learning value. Possibly also a teacher persona (not enumerated above) who might run the simulation in class to demonstrate ecosystem concepts via ChatGPT.
 
 Trigger / why-now: ChatGPT just launched app capabilities, and early adopters are exploring fun apps. AI Alex might stumble on this by asking ChatGPT about ant colonies and getting a suggestion: “I can show you an interactive ant colony simulation, want to try it?” (OpenAI has mentioned app suggestions based on conversation context)
 synergylabs.co
@@ -319,7 +319,7 @@ One-line pitch: A series of detailed idle simulations (Ants, Bees, Termites, etc
 
 Target segment(s): This pitch is more product-strategic – target includes SEG-0002 (enthusiasts who might enjoy multiple nature sims) and also broad casual players per theme (some might love ants, others might click on bees). It’s about creating a platform/engine that can be reskinned or repurposed, to maximize ROI and reach. If a player likes one, they might try others (increasing LTV across our portfolio).
 
-Target persona(s): Personas similar to PER-0002 (“Strategy Sam”) who loves simulation and would explore various ecosystems. Also a casual persona who just picks their favorite theme (e.g. someone fascinated by bees might play a bee sim even if ants didn’t attract them). Possibly a persona like “Nature Nate” – a hobbyist who enjoys learning about different species through interactive experiences (halfway between a game and a virtual ant farm hobby).
+Target persona(s): Personas similar to CPE-0002 (“Strategy Sam”) who loves simulation and would explore various ecosystems. Also a casual persona who just picks their favorite theme (e.g. someone fascinated by bees might play a bee sim even if ants didn’t attract them). Possibly a persona like “Nature Nate” – a hobbyist who enjoys learning about different species through interactive experiences (halfway between a game and a virtual ant farm hobby).
 
 Trigger / why-now: From a timing perspective, environmental and nature themes are resonating (many popular documentaries, kids education apps, etc.). Also, if we succeed with the ant sim, there’s a template to replicate: we can be ready to quickly spin off “Idle Beehive” or “Idle Aquarium” using the core idle-simulation framework. This is essentially an expansion strategy pitch, triggered by the insight that the underlying tech (e.g. pathfinding, resource gathering AI, etc.) could be reused with different content.
 
@@ -944,7 +944,7 @@ G) Candidate persona dossiers (hypotheses; with evidence pointers)
 
 We developed persona hypotheses for our top segments to humanize their needs. Each persona is given a label and some attributes. These are not real people but composites grounded in research insights.
 
-PER-0001: “Idle Ingrid”
+CPE-0001: “Idle Ingrid”
 
 Segment: SEG-0001 Casual Idle Gamers.
 
@@ -975,7 +975,7 @@ blog.founders.illinois.edu
 reddit.com
 .
 
-PER-0002: “Strategic Sam”
+CPE-0002: “Strategic Sam”
 
 Segment: SEG-0002 Simulation/Strategy Enthusiasts.
 
@@ -1007,7 +1007,7 @@ Incident story: When Sam first tries our game, he might be skeptical because of 
 
 Objections & Skepticism: Sam’s biggest skepticism at the start: “Idle game… will it hold my interest? Or is it just click-click and numbers?” Also, “Free-to-play – okay, where’s the catch? Will I hit a wall where I must pay?” We address these in how we onboard him: by quickly demonstrating there is indeed a layer of strategy (maybe via a scenario where an inefficient approach fails but a strategic approach succeeds), and by having clear indicators that spending is optional (for instance, an in-game note like “All upgrades can be earned by playing, purchasing is optional for impatient colonists” – some games do this messaging). Once he’s convinced the game has depth and isn’t out to fleece him, he’ll lower his guard and invest time/energy. Another potential objection: “Are the ant behaviors actually realistic or just cosmetic?” We should be prepared to highlight our research (maybe dev blog notes about pheromone logic, or in-game glossary describing how our simulation aligns with real life). That transparency can win over someone like Sam.
 
-PER-0003: “AI Alex”
+CPE-0003: “AI Alex”
 
 Segment: SEG-0003 ChatGPT Enthusiast / AI Power-User.
 
@@ -1044,13 +1044,13 @@ H) Evidence pack (references + rubrics)
 We compile key evidence items gathered, tagging them to relevant jobs, pains, or gains (or context). Each evidence is given an ID for reference. We grade evidence strength (E0 = very weak/anecdotal, up to E4 = strong data or multiple sources) and our confidence in how it informs our product (C1 = low, C3 = high, aligning somewhat with previous claim confidences).
 
 EvidenceID	Type	PersonaID (if applicable)	SegmentID	Tag (job/pain/gain)	Excerpt (source quote or summary)	Pointer/Source	E-strength	Confidence use (C1–C3)
-E-0001	Quote (forum)	PER-0001, PER-0002	SEG-0001/2	Pain – Monetization frustration	“One time purchases are the fairest way to monetize… When you have x crystals for up to $99.99 it’s obvious you’re just milking whales.”	Reddit incremental_games thread
+E-0001	Quote (forum)	CPE-0001, CPE-0002	SEG-0001/2	Pain – Monetization frustration	“One time purchases are the fairest way to monetize… When you have x crystals for up to $99.99 it’s obvious you’re just milking whales.”	Reddit incremental_games thread
 reddit.com
 	E2 (community consensus, but subjective)	C3 – Indicates strong player preference for fair monetization (we will implement accordingly).
 E-0002	Data (app store)	–	SEG-0001	Market size (job: entertain many)	Idle Ants reached 10M+ downloads on Google Play (with 90k reviews, 4.3★). Implies huge casual reach for ant-themed idle concept.	Google Play (Idle Ants)
 play.google.com
 	E3 (official store data)	C3 – Confirms large potential audience, validating pursuing the theme for casuals.
-E-0003	Review summary	PER-0001	SEG-0001	Pain – Overwhelm & pacing	“I think the very start… felt a little overwhelming at first… Great game otherwise.” and “started to slow down and I lost interest around the third area.”	User review Idle Ant Colony
+E-0003	Review summary	CPE-0001	SEG-0001	Pain – Overwhelm & pacing	“I think the very start… felt a little overwhelming at first… Great game otherwise.” and “started to slow down and I lost interest around the third area.”	User review Idle Ant Colony
 play.google.com
 	E1 (single review, but aligns with typical feedback)	C2 – Points to need for careful onboarding (avoid overwhelm) and mid-game content to prevent drop-off.
 E-0004	Table (blog)	–	SEG-0001	Monetization models (jobs)	Idle games use various monetization: IAP (can feel pay-to-win if not balanced), Ads (can annoy if excessive), Subscriptions (stable revenue but needs content) – with pros/cons
@@ -1060,31 +1060,31 @@ blog.founders.illinois.edu
 blog.founders.illinois.edu
 blog.founders.illinois.edu
 	E3 (synthesized analysis)	C3 – We use this to design a hybrid monetization approach (e.g., optional ads for rewards + one-time IAP, avoid heavy pay-to-win).
-E-0005	Quote (forum)	PER-0002	SEG-0002	Pain – Lack of integration of sim & progress	“Maybe you earn upgrades not by waiting, but by increasing your colony size… so managing the colony and managing upgrades are intertwined, instead of mutually exclusive.”	Reddit WebGames feedback
+E-0005	Quote (forum)	CPE-0002	SEG-0002	Pain – Lack of integration of sim & progress	“Maybe you earn upgrades not by waiting, but by increasing your colony size… so managing the colony and managing upgrades are intertwined, instead of mutually exclusive.”	Reddit WebGames feedback
 reddit.com
 	E2 (individual feedback, but insightful)	C2 – We’ll ensure colony growth feeds into progression mechanics, addressing this suggestion (e.g., achievements or upgrades tied to colony metrics).
 E-0006	Stat (industry)	–	SEG-0001/2	Gain – IAP potential in genre	“Games in the Simulation and Strategy genres account for 15.4% of developers using IAP… these genres see substantial revenue from IAP” (RPG was 53.8%).	Xsolla blog
 xsolla.com
 	E3 (company data, likely reliable aggregated)	C3 – Supports that a sim game can monetize with IAP (we’ll plan an IAP strategy, not just ads). Also tells us sim fans do spend if engaged.
-E-0007	Insight (dev forum)	PER-0002	SEG-0002	Pain – Web distribution friction	“Unless the site has an established user base of millions… it isn’t worth the time to create games for it. We’re out of the Flash era…people expect more.”	Reddit gamedev
+E-0007	Insight (dev forum)	CPE-0002	SEG-0002	Pain – Web distribution friction	“Unless the site has an established user base of millions… it isn’t worth the time to create games for it. We’re out of the Flash era…people expect more.”	Reddit gamedev
 reddit.com
 	E2 (experienced dev, anecdotal but logical)	C3 – Warns us to solve distribution (we will via ChatGPT Apps and/or piggyback portals). Also means our game must meet higher quality expectations (can’t be as simplistic as old Flash games).
 E-0008	Stat (Wikipedia)	–	All segments (context)	“The percentage of people that spend money in F2P games ranges from 0.5% to 6%... 50% of revenue often comes from 10% of players.”	Wikipedia F2P
 en.wikipedia.org
 	E4 (sourced compendium)	C3 – We’ll use this to model monetization: huge user base needed, and design respecting whales vs. free players balance. (Also underscores why fairness matters – most won’t pay, they are content for the paying minority).	
-E-0009	Feature (OpenAI)	PER-0003	SEG-0003	Gain – No tab switching	“You mention an app by name, and it appears in your conversation with its own interactive UI… You’re no longer switching between tabs.”	Medium (Joe Njenga)
+E-0009	Feature (OpenAI)	CPE-0003	SEG-0003	Gain – No tab switching	“You mention an app by name, and it appears in your conversation with its own interactive UI… You’re no longer switching between tabs.”	Medium (Joe Njenga)
 medium.com
 	E3 (factual description with some flourish)	C2 – Reinforces convenience as a selling point in messaging to ChatGPT users (e.g., Alex persona value). We assume it’s a real benefit, though need user confirmation.
-E-0010	Roadmap info	PER-0003	SEG-0003	Gain/Pain – In-chat purchases support	“OpenAI is introducing an Agentic Commerce Protocol for instant checkout within ChatGPT… developers can implement IAP or subscriptions without users leaving the chat.”	Synergy Labs
+E-0010	Roadmap info	CPE-0003	SEG-0003	Gain/Pain – In-chat purchases support	“OpenAI is introducing an Agentic Commerce Protocol for instant checkout within ChatGPT… developers can implement IAP or subscriptions without users leaving the chat.”	Synergy Labs
 synergylabs.co
 	E3 (clear statement of OpenAI plans)	C3 – We factor this in our business model (monetization in ChatGPT is feasible). Also a potential gain: seamless conversion for players – we’ll design monetization with minimal friction accordingly.
 E-0011	Macro stat	–	Company/strategy context	“85% of all gaming revenue comes from free-to-play games.” (Implying F2P dominates industry.)	Reddit TIL (citing industry reports)
 reddit.com
 	E2 (unverified but likely referencing a known figure circa 2019)	C2 – Underlines that F2P is a viable approach commercially. Good for strategy justification (though not directly user-facing).	
-E-0012	Engagement feedback	PER-0001	SEG-0001	Gain – Stress-free play	“Stress-Free Experience: unlike action games, idle games offer a relaxing experience, free from intense competition.”	Illinois blog
+E-0012	Engagement feedback	CPE-0001	SEG-0001	Gain – Stress-free play	“Stress-Free Experience: unlike action games, idle games offer a relaxing experience, free from intense competition.”	Illinois blog
 blog.founders.illinois.edu
 	E2 (assertion in blog, matches player sentiments)	C2 – We ensure our game remains largely stress-free for casuals (aside from optional challenges). This is a selling point in marketing (“relax and watch your colony thrive”).
-E-0013	Feature request	PER-0002	SEG-0002	Pain – Lack of challenge for multi-players	“Once you have competition inside the game… any sort of direct power purchases become much less justifiable.”	Reddit conversation
+E-0013	Feature request	CPE-0002	SEG-0002	Pain – Lack of challenge for multi-players	“Once you have competition inside the game… any sort of direct power purchases become much less justifiable.”	Reddit conversation
 reddit.com
 	E2 (logic from a player about multiplayer)	C1 – If we ever consider PvP or competitive leaderboards, we should heed this: monetization must be cosmetic or else core players object strongly. For now, we keep game PvE to avoid this issue.
 
@@ -1269,7 +1269,7 @@ We identify key use cases for our product, linking them to personas and triggers
 
 Use Case: Quick Relaxation Break
 
-Persona & Segment: Idle Ingrid (PER-0001, SEG-0001) mainly, also Alex (PER-0003) at work.
+Persona & Segment: Idle Ingrid (CPE-0001, SEG-0001) mainly, also Alex (CPE-0003) at work.
 
 Trigger: User has a 5-minute break (e.g., waiting in line, short break from tasks) and wants a low-effort diversion.
 
@@ -1289,7 +1289,7 @@ Priority: High. This is the core loop for casual retention. Many sessions will b
 
 Use Case: Deep-dive Gaming Session
 
-Persona & Segment: Strategic Sam (PER-0002, SEG-0002). Possibly also a curious casual on a lazy Sunday.
+Persona & Segment: Strategic Sam (CPE-0002, SEG-0002). Possibly also a curious casual on a lazy Sunday.
 
 Trigger: User sets aside a longer period (30 minutes to an hour or more) specifically to play/experiment with the game, maybe in the evening or weekend.
 

@@ -14,4 +14,8 @@ Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.
 - **To Product Management** with positioning that must be reflected in the spec.
 
+Upstream input (common):
+- `<research>` bundles may include **Candidate Personas** (`CPE-####`) under `60-candidate-personas/`.
+  - Treat creating `PER-####` as a promotion step from one or more CPE candidates.
+
 

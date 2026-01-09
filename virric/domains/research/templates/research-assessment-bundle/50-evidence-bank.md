@@ -27,7 +27,7 @@ Rubrics:
 
 ## Evidence bank table
 
-| EvidenceID | Type | PersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
+| EvidenceID | Type | CandidatePersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| E-XXXX | Quote | PER-XXXX | SEG-XXXX | P-XXXX | "<...>" | <link> | E1 | C1 |
+| E-XXXX | Quote | CPE-XXXX | SEG-XXXX | P-XXXX | "<...>" | <link> | E1 | C1 |
 

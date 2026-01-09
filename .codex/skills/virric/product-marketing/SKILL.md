@@ -16,9 +16,12 @@ Primary domain: `<product-marketing>`
 
 ## How to work
 
-- Start from `<research>` outputs (segments/personas hypotheses, EvidenceIDs, pitch set).
+- Start from `<research>` outputs:
+  - Candidate Personas: `CPE-*` docs inside the RA bundle (`60-candidate-personas/`)
+  - Segments/persona hypotheses, EvidenceIDs, and the pitch set
 - Use templates under `virric/domains/product-marketing/templates/`.
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
+- When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 
 ## Receipts (recommended)
 

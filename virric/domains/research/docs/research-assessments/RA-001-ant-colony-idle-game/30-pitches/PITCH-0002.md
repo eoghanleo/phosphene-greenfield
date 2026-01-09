@@ -12,7 +12,7 @@ An interactive ant colony simulation inside ChatGPT — part game, part educatio
 ## Target
 
 - Target segment(s): SEG-0003 (primary), SEG-0002 (secondary niche)
-- Target persona(s): PER-0003 (primary)
+- Target candidate persona(s): CPE-0003 (primary)
 
 ## Trigger / why-now
 

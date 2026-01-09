@@ -12,7 +12,7 @@ Build a reusable WebGPU idle-simulation engine and ship a series of themed “co
 ## Target
 
 - Target segment(s): SEG-0002 (primary), SEG-0001 (theme-dependent secondary)
-- Target persona(s): PER-0002 (primary); theme-driven casual variants (future)
+- Target candidate persona(s): CPE-0002 (primary); theme-driven casual variants (future)
 
 ## Trigger / why-now
 

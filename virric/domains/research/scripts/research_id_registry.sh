@@ -10,8 +10,9 @@ set -euo pipefail
 #   - Pitch IDs: files named PITCH-*.md (ID: PITCH-#### recommended)
 #   - Evidence IDs: 50-evidence-bank.md table first column (E-####)
 #   - RefSol IDs: 10-reference-solutions.md table first column (RS-####)
-#   - Segment IDs: 40-hypotheses.md segment table first column (SEG-####)
-#   - Persona IDs: 40-hypotheses.md persona table first column (PER-####)
+#   - Segment IDs: 40-hypotheses.md segment table first column (SEG-####) (research hypotheses; stable IDs)
+#   - Candidate Persona IDs: files named CPE-*.md (ID: CPE-####) (research → marketing handoff candidates)
+#   - Persona IDs: files named PER-*.md (ID: PER-####) (canonical personas live in <product-marketing>)
 #
 # This avoids false “duplicates” from assembled views (RA-###.md) and raw dumps.
 #
@@ -38,7 +39,7 @@ Usage:
   ./virric/domains/research/scripts/research_id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
-  ra | pitch | evidence | refsol | segment | persona
+  ra | pitch | evidence | refsol | segment | cpe | persona
 EOF
 }
 
@@ -88,11 +89,29 @@ build_index() {
             gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2);
             print "segment\t" $2 "\t" path;
           }
-          $0 ~ /^[|][[:space:]]*PER-[0-9]{4}[[:space:]]*[|]/ {
-            gsub(/^[[:space:]]+|[[:space:]]+$/, "", $2);
-            print "persona\t" $2 "\t" path;
-          }
         ' "$f" >> "$tmp"
+        ;;
+      CPE-*.md)
+        # Candidate personas: prefer ID line; fall back to filename.
+        cpe_id="$(grep -E '^ID:[[:space:]]*CPE-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        if [[ -z "${cpe_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(CPE-[0-9]{4}) ]]; then cpe_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${cpe_id:-}" ]]; then
+          printf "candidate_persona\t%s\t%s\n" "$cpe_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      PER-*.md)
+        # Canonical personas (product-marketing): prefer ID line; fall back to filename.
+        per_id="$(grep -E '^ID:[[:space:]]*PER-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        if [[ -z "${per_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^PER-[0-9]{4}$ ]]; then per_id="$base"; fi
+        fi
+        if [[ -n "${per_id:-}" ]]; then
+          printf "persona\t%s\t%s\n" "$per_id" "$rel" >> "$tmp"
+        fi
         ;;
       PITCH-*.md)
         # Prefer ID line; fall back to filename.
@@ -176,6 +195,11 @@ next_id() {
       max="$(awk -F'\t' '$1=="segment"{ sub(/^SEG-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
       next=$((max + 1))
       printf "SEG-%04d\n" "$next"
+      ;;
+    cpe|candidate_persona)
+      max="$(awk -F'\t' '$1=="candidate_persona"{ sub(/^CPE-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "CPE-%04d\n" "$next"
       ;;
     persona)
       max="$(awk -F'\t' '$1=="persona"{ sub(/^PER-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"

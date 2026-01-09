@@ -12,7 +12,7 @@ A free-to-play ant colony simulator that lets you grow and evolve a “living”
 ## Target
 
 - Target segment(s): SEG-0001 (primary), SEG-0002 (secondary)
-- Target persona(s): PER-0001 (primary), PER-0002 (secondary)
+- Target candidate persona(s): CPE-0001 (primary), CPE-0002 (secondary)
 
 ## Trigger / why-now
 
@@ -74,7 +74,7 @@ A free-to-play ant colony simulator that lets you grow and evolve a realistic an
 ## Target
 
 - Target segment(s): SEG-0001 (primary), SEG-0002 (secondary)
-- Target persona(s): PER-0001 (“Idle Ingrid”), PER-0002 (“Strategic Sam”)
+- Target candidate persona(s): CPE-0001 (“Idle Ingrid”), CPE-0002 (“Strategic Sam”)
 
 ## Trigger / why-now
 

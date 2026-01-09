@@ -17,11 +17,16 @@ Deep research output should be stored as a **bundle folder** (not a single giant
 
 All object IDs (EvidenceIDs `E-####`, RefSolIDs `RS-####`, PitchIDs `PITCH-####`, etc.) must be **globally unique** across repo artifacts under `virric/domains/**/docs/**`.
 
+Authoritative ownership rule (important):
+- `<research>` produces **Candidate Personas** `CPE-####` (authoritative in research bundles).
+- `<product-marketing>` produces **Personas** `PER-####` (authoritative in product-marketing only).
+- Candidate Personas are **1:1 proposals** intended to be promoted into canonical personas downstream.
+
 This repo enforces that via an index + allocator script:
 
 - Build/refresh index: `./virric/domains/research/scripts/research_id_registry.sh build`
 - Validate uniqueness: `./virric/domains/research/scripts/research_id_registry.sh validate`
-- Allocate next ID: `./virric/domains/research/scripts/research_id_registry.sh next --type evidence|pitch|refsol|ra`
+- Allocate next ID: `./virric/domains/research/scripts/research_id_registry.sh next --type evidence|pitch|refsol|ra|segment|cpe|persona`
 
 Creation scripts call the allocator so new artifacts start compliant.
 
@@ -32,6 +37,7 @@ Bundle shape (required):
 - `30-pitches/` (`PITCH-*.md` files)
 - `40-hypotheses.md` (segments/personas/jobs/pains/gains)
 - `50-evidence-bank.md` (EvidenceID table)
+- `60-candidate-personas/` (`CPE-*.md` candidate persona files; 1:1 proposals)
 - `90-methods.md` (method/log/bias/assumptions/etc.)
 
 Naming convention (recommended):

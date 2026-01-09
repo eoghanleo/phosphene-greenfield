@@ -25,6 +25,7 @@ Creates:
     30-pitches/ (empty)
     40-hypotheses.md
     50-evidence-bank.md
+    60-candidate-personas/ (empty; CPE-*.md)
     90-methods.md
     RA-001.md (assembled view; re-runnable)
 EOF
@@ -92,6 +93,7 @@ if [[ -e "$BUNDLE_DIR" ]]; then
 fi
 
 mkdir -p "$BUNDLE_DIR/30-pitches"
+mkdir -p "$BUNDLE_DIR/60-candidate-personas"
 
 DATE="$(date +%F)"
 
@@ -117,6 +119,13 @@ render_template "$TEMPLATE_DIR/90-methods.md" "$BUNDLE_DIR/90-methods.md"
 echo "# Pitches folder" > "$BUNDLE_DIR/30-pitches/README.md"
 echo "" >> "$BUNDLE_DIR/30-pitches/README.md"
 echo "Create pitch files here (e.g. \`PITCH-0001.md\`) and reference EvidenceIDs from \`50-evidence-bank.md\`." >> "$BUNDLE_DIR/30-pitches/README.md"
+
+echo "# Candidate personas folder (CPE)" > "$BUNDLE_DIR/60-candidate-personas/README.md"
+echo "" >> "$BUNDLE_DIR/60-candidate-personas/README.md"
+echo "Create Candidate Persona (CPE-*) files here as 1:1 proposals for canonical personas in <product-marketing>." >> "$BUNDLE_DIR/60-candidate-personas/README.md"
+echo "" >> "$BUNDLE_DIR/60-candidate-personas/README.md"
+echo "Preferred:" >> "$BUNDLE_DIR/60-candidate-personas/README.md"
+echo "  ./virric/domains/research/scripts/create_candidate_persona.sh --bundle \"$BUNDLE_DIR\" --name \"...\" --segment SEG-0001" >> "$BUNDLE_DIR/60-candidate-personas/README.md"
 
 echo "Created RA bundle: $BUNDLE_DIR"
 echo "Next:"
