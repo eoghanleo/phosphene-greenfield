@@ -57,32 +57,32 @@ Domain reference convention:
 ### Create an FR
 
 ```bash
-./virric/domains/feature-management/scripts/create_fr.sh --title "..." --description "..." --priority "High"
+./virric/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
 ```
 
 ### Validate FRs
 
 ```bash
-./virric/domains/feature-management/scripts/validate_fr.sh
+./virric/domains/feature-management/scripts/validate_feature_request.sh
 ```
 
 ### Approve an FR
 
 ```bash
-./virric/domains/feature-management/scripts/approve_fr.sh --id FR-001
+./virric/domains/feature-management/scripts/approve_feature_request.sh --id FR-001
 ```
 
 ### Update FR status
 
 ```bash
-./virric/domains/feature-management/scripts/update_fr_status.sh /path/to/FR-001-some-title.md "In Progress"
+./virric/domains/feature-management/scripts/update_feature_request_status.sh /path/to/FR-001-some-title.md "In Progress"
 ```
 
 ### Refresh project overviews
 
 ```bash
 ./virric/domains/feature-management/scripts/update_backlog_tree.sh
-./virric/domains/feature-management/scripts/fr_dependency_tracker.sh
+./virric/domains/feature-management/scripts/feature_request_dependency_tracker.sh
 ```
 
 ## Automation (GitHub Actions)

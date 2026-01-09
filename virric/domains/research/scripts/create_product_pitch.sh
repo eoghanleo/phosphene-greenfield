@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# create_pitch.sh
+# create_product_pitch.sh
 # Creates a new pitch file in an RA bundle, allocating the next legal PITCH ID.
 #
 # Usage:
-#   ./virric/domains/research/scripts/create_pitch.sh --bundle <bundle_dir> --title "..."
+#   ./virric/domains/research/scripts/create_product_pitch.sh --bundle <bundle_dir> --title "..."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/create_pitch.sh --bundle <bundle_dir> --title "..."
+  ./virric/domains/research/scripts/create_product_pitch.sh --bundle <bundle_dir> --title "..."
 EOF
 }
 
@@ -38,8 +38,8 @@ if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 [[ -d "$BUNDLE/30-pitches" ]] || { echo "Error: bundle missing 30-pitches/: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_index.sh" validate >/dev/null
-PITCH_ID="$("$ROOT/virric/domains/research/scripts/research_id_index.sh" next --type pitch)"
+"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+PITCH_ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type pitch)"
 RA_ID="$(grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$BUNDLE/00-coversheet.md" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
 [[ -n "$RA_ID" ]] || { echo "Error: could not read RA ID from 00-coversheet.md" >&2; exit 1; }
 

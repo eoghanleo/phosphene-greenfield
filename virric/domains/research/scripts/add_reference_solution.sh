@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# add_refsol.sh
+# add_reference_solution.sh
 # Allocates the next legal RefSolID and appends a placeholder row to 10-reference-solutions.md
 #
 # Usage:
-#   ./virric/domains/research/scripts/add_refsol.sh --bundle <bundle_dir> --name "..." [--type Market] [--pointer "https://..."]
+#   ./virric/domains/research/scripts/add_reference_solution.sh --bundle <bundle_dir> --name "..." [--type Market] [--pointer "https://..."]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/add_refsol.sh --bundle <bundle_dir> --name "..." [--type Market|Academic] [--pointer "https://..."]
+  ./virric/domains/research/scripts/add_reference_solution.sh --bundle <bundle_dir> --name "..." [--type Market|Academic] [--pointer "https://..."]
 EOF
 }
 
@@ -41,8 +41,8 @@ ROOT="$(virric_find_project_root)"
 if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_index.sh" validate >/dev/null
-RSID="$("$ROOT/virric/domains/research/scripts/research_id_index.sh" next --type refsol)"
+"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+RSID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type refsol)"
 
 FILE="$BUNDLE/10-reference-solutions.md"
 [[ -f "$FILE" ]] || { echo "Error: missing $FILE" >&2; exit 1; }

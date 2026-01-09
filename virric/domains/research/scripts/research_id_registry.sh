@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# research_id_index.sh
+# research_id_registry.sh
 # Builds and queries a global ID index for VIRRIC artifacts (authoritative definitions only).
 #
 # Scope:
@@ -35,7 +35,7 @@ INDEX_TSV="$ROOT/virric/domains/research/docs/id_index.tsv"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/research_id_index.sh [build|validate|where <ID>|next --type <type>]
+  ./virric/domains/research/scripts/research_id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
   ra | pitch | evidence | refsol | segment | persona

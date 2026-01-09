@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# assemble_ra_bundle.sh
+# assemble_research_assessment_bundle.sh
 # Concatenates an RA bundle into a single assembled view file (<ID>.md) for convenience.
 #
 # Usage:
-#   ./virric/domains/research/scripts/assemble_ra_bundle.sh /abs/or/rel/path/to/RA-001-some-slug
+#   ./virric/domains/research/scripts/assemble_research_assessment_bundle.sh /abs/or/rel/path/to/RA-001-some-slug
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/assemble_ra_bundle.sh <bundle_dir>
+  ./virric/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>
 
 Writes:
   <bundle_dir>/<RA-ID>.md

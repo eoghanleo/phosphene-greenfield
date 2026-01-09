@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# create_ra_bundle.sh
+# create_research_assessment_bundle.sh
 # Creates a Research Assessment (RA) bundle folder populated from templates.
 #
 # Usage (run from repo root):
-#   ./virric/domains/research/scripts/create_ra_bundle.sh --title "..." [--id RA-001] [--owner ""] [--priority Medium]
+#   ./virric/domains/research/scripts/create_research_assessment_bundle.sh --title "..." [--id RA-001] [--owner ""] [--priority Medium]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/create_ra_bundle.sh --title "..." [--id RA-001] [--owner "..."] [--priority Medium]
+  ./virric/domains/research/scripts/create_research_assessment_bundle.sh --title "..." [--id RA-001] [--owner "..."] [--priority Medium]
 
 Creates:
   virric/domains/research/docs/research-assessments/RA-001-<slug>/
@@ -63,9 +63,9 @@ fi
 ROOT="$(virric_find_project_root)"
 
 if [[ -z "${ID}" ]]; then
-  "$ROOT/virric/domains/research/scripts/research_id_index.sh" validate >/dev/null
+  "$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
   # Allocate next legal RA id from global index
-  ID="$("$ROOT/virric/domains/research/scripts/research_id_index.sh" next --type ra)"
+  ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type ra)"
 fi
 
 if ! [[ "$ID" =~ ^RA-[0-9]{3}$ ]]; then
@@ -120,6 +120,6 @@ echo "Create pitch files here (e.g. \`PITCH-0001.md\`) and reference EvidenceIDs
 
 echo "Created RA bundle: $BUNDLE_DIR"
 echo "Next:"
-echo "  - validate: ./virric/domains/research/scripts/validate_ra_bundle.sh \"$BUNDLE_DIR\""
-echo "  - assemble: ./virric/domains/research/scripts/assemble_ra_bundle.sh \"$BUNDLE_DIR\""
+echo "  - validate: ./virric/domains/research/scripts/validate_research_assessment_bundle.sh \"$BUNDLE_DIR\""
+echo "  - assemble: ./virric/domains/research/scripts/assemble_research_assessment_bundle.sh \"$BUNDLE_DIR\""
 

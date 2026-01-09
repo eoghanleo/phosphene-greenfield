@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# validate_ra_bundle.sh
+# validate_research_assessment_bundle.sh
 # Validates an RA bundle for basic structural and cross-reference compliance.
 #
 # Usage:
-#   ./virric/domains/research/scripts/validate_ra_bundle.sh <bundle_dir>
+#   ./virric/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/validate_ra_bundle.sh <bundle_dir>
+  ./virric/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>
 
 Checks:
   - required files exist

@@ -19,9 +19,9 @@ All object IDs (EvidenceIDs `E-####`, RefSolIDs `RS-####`, PitchIDs `PITCH-####`
 
 This repo enforces that via an index + allocator script:
 
-- Build/refresh index: `./virric/domains/research/scripts/research_id_index.sh build`
-- Validate uniqueness: `./virric/domains/research/scripts/research_id_index.sh validate`
-- Allocate next ID: `./virric/domains/research/scripts/research_id_index.sh next --type evidence|pitch|refsol|ra`
+- Build/refresh index: `./virric/domains/research/scripts/research_id_registry.sh build`
+- Validate uniqueness: `./virric/domains/research/scripts/research_id_registry.sh validate`
+- Allocate next ID: `./virric/domains/research/scripts/research_id_registry.sh next --type evidence|pitch|refsol|ra`
 
 Creation scripts call the allocator so new artifacts start compliant.
 

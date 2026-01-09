@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# add_evidence.sh
+# add_evidence_record.sh
 # Allocates the next legal EvidenceID and appends a placeholder row to 50-evidence-bank.md
 #
 # Usage:
-#   ./virric/domains/research/scripts/add_evidence.sh --bundle <bundle_dir> [--type "Quote"] [--pointer "https://..."]
+#   ./virric/domains/research/scripts/add_evidence_record.sh --bundle <bundle_dir> [--type "Quote"] [--pointer "https://..."]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/add_evidence.sh --bundle <bundle_dir> [--type "Quote"] [--pointer "https://..."]
+  ./virric/domains/research/scripts/add_evidence_record.sh --bundle <bundle_dir> [--type "Quote"] [--pointer "https://..."]
 EOF
 }
 
@@ -39,8 +39,8 @@ ROOT="$(virric_find_project_root)"
 if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_index.sh" validate >/dev/null
-EVID="$("$ROOT/virric/domains/research/scripts/research_id_index.sh" next --type evidence)"
+"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+EVID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type evidence)"
 
 FILE="$BUNDLE/50-evidence-bank.md"
 [[ -f "$FILE" ]] || { echo "Error: missing $FILE" >&2; exit 1; }

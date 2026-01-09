@@ -4,9 +4,9 @@ Use the bundle templates:
 - `virric/domains/research/templates/research-assessment-bundle/`
 
 Use the bundle scripts (run from repo root):
-- `./virric/domains/research/scripts/create_ra_bundle.sh`
-- `./virric/domains/research/scripts/validate_ra_bundle.sh`
-- `./virric/domains/research/scripts/assemble_ra_bundle.sh`
+- `./virric/domains/research/scripts/create_research_assessment_bundle.sh`
+- `./virric/domains/research/scripts/validate_research_assessment_bundle.sh`
+- `./virric/domains/research/scripts/assemble_research_assessment_bundle.sh`
 
 High-level: an RA is a folder containing a short coversheet plus structured annexes (reference solutions, competition, hypotheses, evidence, methods) and optional pitch files.
 

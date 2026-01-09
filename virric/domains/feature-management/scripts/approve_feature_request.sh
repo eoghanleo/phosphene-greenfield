@@ -49,6 +49,6 @@ if [[ -z "$fr_file" || ! -f "$fr_file" ]]; then
   exit 1
 fi
 
-"$SCRIPT_DIR/update_fr_status.sh" "$fr_file" "Approved"
+"$SCRIPT_DIR/update_feature_request_status.sh" "$fr_file" "Approved"
 
 
