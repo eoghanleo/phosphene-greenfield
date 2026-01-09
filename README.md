@@ -57,6 +57,10 @@ Virric expects a single source of truth for agent behavior:
 - Design note: `VIRRIC_STATE_MACHINE_WORKING.md`
 - Skills (mandatory): `.codex/skills/**` (index: `virric/skill.md`)
 
+Human-friendly skills index:
+
+- `skills/README.md`
+
 ## Completion receipts: `DONE.json` (recommended, not a signal)
 
 `DONE.json` is a **completion receipt** written by the assigned agent at the end of work as:
