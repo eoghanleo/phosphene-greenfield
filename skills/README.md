@@ -43,14 +43,14 @@ In this repo, we treat per-skill licensing as **optional** unless/until we intro
 
 ### VIRRIC skills
 
-- **Core harness**: `.codex/skills/virric-core/SKILL.md`
-- **<ideation>**: `.codex/skills/virric-ideation/SKILL.md`
-- **<research>**: `.codex/skills/virric-research/SKILL.md`
-- **<product-marketing>**: `.codex/skills/virric-product-marketing/SKILL.md`
-- **<product-strategy>**: `.codex/skills/virric-product-strategy/SKILL.md`
-- **<product-management>**: `.codex/skills/virric-product-management/SKILL.md`
-- **<feature-management>**: `.codex/skills/virric-feature-management/SKILL.md`
-- **<scrum-management>**: `.codex/skills/virric-scrum-management/SKILL.md`
-- **<test-management>**: `.codex/skills/virric-test-management/SKILL.md`
-- **<retrospective>**: `.codex/skills/virric-retrospective/SKILL.md`
+- **Core harness**: `.codex/skills/virric/core/SKILL.md`
+- **<ideation>**: `.codex/skills/virric/ideation/SKILL.md`
+- **<research>**: `.codex/skills/virric/research/SKILL.md`
+- **<product-marketing>**: `.codex/skills/virric/product-marketing/SKILL.md`
+- **<product-strategy>**: `.codex/skills/virric/product-strategy/SKILL.md`
+- **<product-management>**: `.codex/skills/virric/product-management/SKILL.md`
+- **<feature-management>**: `.codex/skills/virric/feature-management/SKILL.md`
+- **<scrum-management>**: `.codex/skills/virric/scrum-management/SKILL.md`
+- **<test-management>**: `.codex/skills/virric/test-management/SKILL.md`
+- **<retrospective>**: `.codex/skills/virric/retrospective/SKILL.md`
 

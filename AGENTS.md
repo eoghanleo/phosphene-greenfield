@@ -14,8 +14,8 @@ Working design note (state machine + contracts):
 
 Skills (mandatory):
 
-- Canonical Codex skills (standard location): `.codex/skills/**`
-- Human-readable index: `virric/skill.md`
+- Canonical Codex skills (standard location): `.codex/skills/virric/**`
+- Human-friendly index: `skills/README.md`
 
 Codex skills standard (summary):
 
