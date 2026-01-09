@@ -5,7 +5,9 @@ This repository contains a drop-in **`virric/`** folder that provides determinis
 ## Read this first
 
 - **Primary workflow doc**: this file (`virric/AGENTS.md`)
-- **Optional skills inventory**: `virric/skill.md` (not all agents support it; treat as supplemental)
+- **Skills (mandatory)**:
+  - Canonical Codex skills: `.codex/skills/**`
+  - Human-readable index: `virric/skill.md`
 
 ## What VIRRIC is (in one sentence)
 
@@ -20,7 +22,7 @@ Incoming agents should be told a single string:
 If you have that domain, do this:
 
 - Read **this file** (`virric/AGENTS.md`) for the contract and default handoffs.
-- If you support `skill.md`, also read `virric/skill.md`.
+- Also read `virric/skill.md` (skills are mandatory in this repo).
 
 Domain reference convention:
 

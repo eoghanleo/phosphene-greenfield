@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <ideation>
+---
+name: virric-skill-ideation-shim
+description: Skill shim for <ideation>. Canonical Codex skill lives at .codex/skills/virric-ideation/SKILL.md.
+metadata:
+  short-description: <ideation> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<ideation>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<ideation>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<ideation>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-ideation/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/ideation/docs/`
+- `virric/domains/ideation/templates/`
+- `virric/domains/ideation/scripts/`
+- `virric/domains/ideation/signals/`
 
 

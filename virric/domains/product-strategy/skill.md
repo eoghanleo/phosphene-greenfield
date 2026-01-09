@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <product-strategy>
+---
+name: virric-skill-product-strategy-shim
+description: Skill shim for <product-strategy>. Canonical Codex skill lives at .codex/skills/virric-product-strategy/SKILL.md.
+metadata:
+  short-description: <product-strategy> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<product-strategy>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<product-strategy>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<product-strategy>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-product-strategy/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/product-strategy/docs/`
+- `virric/domains/product-strategy/templates/`
+- `virric/domains/product-strategy/scripts/`
+- `virric/domains/product-strategy/signals/`
 
 

@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <research>
+---
+name: virric-skill-research-shim
+description: Skill shim for <research>. Canonical Codex skill lives at .codex/skills/virric-research/SKILL.md.
+metadata:
+  short-description: <research> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<research>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<research>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<research>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-research/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/research/docs/`
+- `virric/domains/research/templates/`
+- `virric/domains/research/scripts/`
+- `virric/domains/research/signals/`
 
 

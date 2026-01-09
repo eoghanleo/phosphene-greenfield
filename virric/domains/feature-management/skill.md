@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <feature-management>
+---
+name: virric-skill-feature-management-shim
+description: Skill shim for <feature-management>. Canonical Codex skill lives at .codex/skills/virric-feature-management/SKILL.md.
+metadata:
+  short-description: <feature-management> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<feature-management>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<feature-management>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<feature-management>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-feature-management/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/feature-management/docs/`
+- `virric/domains/feature-management/templates/`
+- `virric/domains/feature-management/scripts/`
+- `virric/domains/feature-management/signals/`
 
 

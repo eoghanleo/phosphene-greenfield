@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <scrum-management>
+---
+name: virric-skill-scrum-management-shim
+description: Skill shim for <scrum-management>. Canonical Codex skill lives at .codex/skills/virric-scrum-management/SKILL.md.
+metadata:
+  short-description: <scrum-management> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<scrum-management>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<scrum-management>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<scrum-management>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-scrum-management/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/scrum-management/docs/`
+- `virric/domains/scrum-management/templates/`
+- `virric/domains/scrum-management/scripts/`
+- `virric/domains/scrum-management/signals/`
 
 

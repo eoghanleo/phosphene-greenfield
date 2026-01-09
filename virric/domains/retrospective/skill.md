@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <retrospective>
+---
+name: virric-skill-retrospective-shim
+description: Skill shim for <retrospective>. Canonical Codex skill lives at .codex/skills/virric-retrospective/SKILL.md.
+metadata:
+  short-description: <retrospective> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<retrospective>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<retrospective>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<retrospective>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-retrospective/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/retrospective/docs/`
+- `virric/domains/retrospective/templates/`
+- `virric/domains/retrospective/scripts/`
+- `virric/domains/retrospective/signals/`
 
 

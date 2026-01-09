@@ -1,6 +1,17 @@
-# VIRRIC — Skills (supplemental)
+---
+name: virric-skill-index
+description: VIRRIC skills index (mandatory). Canonical Codex skill definitions live under .codex/skills/**.
+metadata:
+  short-description: VIRRIC skills (index)
+---
 
-Not all agents support `skill.md`. Treat this as **optional** context that complements `virric/AGENTS.md`.
+## Skills are mandatory in this repo
+
+Canonical Codex skill definitions live under:
+
+- `.codex/skills/**`
+
+This file is a human-readable index and reminder of what the skills cover.
 
 ## Capabilities
 
@@ -26,5 +37,20 @@ Not all agents support `skill.md`. Treat this as **optional** context that compl
 - `./virric/domains/feature-management/scripts/approve_feature_request.sh`
 - `./virric/domains/feature-management/scripts/update_backlog_tree.sh`
 - `./virric/domains/feature-management/scripts/feature_request_dependency_tracker.sh`
+
+## Available Codex skills (canonical)
+
+- Core harness: `.codex/skills/virric-core/SKILL.md`
+- `<ideation>`: `.codex/skills/virric-ideation/SKILL.md`
+- `<research>`: `.codex/skills/virric-research/SKILL.md`
+- `<product-marketing>`: `.codex/skills/virric-product-marketing/SKILL.md`
+- `<product-strategy>`: `.codex/skills/virric-product-strategy/SKILL.md`
+- `<product-management>`: `.codex/skills/virric-product-management/SKILL.md`
+- `<feature-management>`: `.codex/skills/virric-feature-management/SKILL.md`
+- `<scrum-management>`: `.codex/skills/virric-scrum-management/SKILL.md`
+- `<test-management>`: `.codex/skills/virric-test-management/SKILL.md`
+- `<retrospective>`: `.codex/skills/virric-retrospective/SKILL.md`
+
+Codex skill standard reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
 

@@ -55,7 +55,7 @@ Virric expects a single source of truth for agent behavior:
 - Root shim: `AGENTS.md`
 - Canonical handoff: `virric/AGENTS.md`
 - Design note: `VIRRIC_STATE_MACHINE_WORKING.md`
-- Skills inventory (optional): `virric/skill.md`
+- Skills (mandatory): `.codex/skills/**` (index: `virric/skill.md`)
 
 ## Completion receipts: `DONE.json` (recommended, not a signal)
 

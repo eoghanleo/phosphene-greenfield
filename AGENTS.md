@@ -12,9 +12,23 @@ Working design note (state machine + contracts):
 
 - `VIRRIC_STATE_MACHINE_WORKING.md`
 
-Optional skills inventory (not all agents support `skill.md`):
+Skills (mandatory):
 
-- `virric/skill.md`
+- Canonical Codex skills (standard location): `.codex/skills/**`
+- Human-readable index: `virric/skill.md`
+
+Codex skills standard (summary):
+
+- A skill is a folder containing a required `SKILL.md` file with YAML front matter:
+  - `name` (required)
+  - `description` (required)
+  - optional `metadata` (e.g. `short-description`)
+- A skill folder may also include:
+  - `scripts/` (optional: executable code)
+  - `references/` (optional: documentation)
+  - `assets/` (optional: templates/resources)
+
+Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
 Execution model (high-level):
 

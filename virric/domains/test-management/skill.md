@@ -1,9 +1,21 @@
-# skill.md (domain stub) — <test-management>
+---
+name: virric-skill-test-management-shim
+description: Skill shim for <test-management>. Canonical Codex skill lives at .codex/skills/virric-test-management/SKILL.md.
+metadata:
+  short-description: <test-management> skill (shim)
+---
 
-This is a lightweight pointer for agents that support `skill.md`.
+Primary domain: `<test-management>`
 
-- Canonical skills: `virric/skill.md`
-- Domain tag: `<test-management>`
-- This domain contains `docs/`, `templates/`, `scripts/`, and `signals/` inventories (avoid path pointers in handoffs; use `<test-management>` instead).
+Canonical Codex skill:
+
+- `.codex/skills/virric-test-management/SKILL.md`
+
+Domain structure (canonical):
+
+- `virric/domains/test-management/docs/`
+- `virric/domains/test-management/templates/`
+- `virric/domains/test-management/scripts/`
+- `virric/domains/test-management/signals/`
 
 
