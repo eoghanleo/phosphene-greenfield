@@ -78,15 +78,15 @@ Include 5–15 claims. Each should cite EvidenceIDs.
 
 - Claim:
   - Why it matters:
-  - EvidenceIDs: E-0001, E-0002
+  - EvidenceIDs: E-XXXX, E-YYYY
   - Confidence (C1–C3):
   - Notes / caveats:
 
 ### 5) Candidate product pitches (stepping stones)
 
 List the pitch set here (details live in `30-pitches/`):
-- PITCH-0001: <name> — Confidence: C2 — EvidenceIDs: E-0002, E-0005
-- PITCH-0002: <name> — Confidence: C1 — EvidenceIDs: E-0009, E-0010
+- PITCH-XXXX: <name> — Confidence: C2 — EvidenceIDs: E-XXXX, E-YYYY
+- PITCH-YYYY: <name> — Confidence: C1 — EvidenceIDs: E-XXXX, E-YYYY
 
 ### 6) Downstream handoff (do not finalize here)
 

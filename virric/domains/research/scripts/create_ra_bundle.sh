@@ -5,7 +5,7 @@ set -euo pipefail
 # Creates a Research Assessment (RA) bundle folder populated from templates.
 #
 # Usage (run from repo root):
-#   ./virric/domains/research/scripts/create_ra_bundle.sh --id RA-001 --title "..." [--owner ""] [--priority Medium]
+#   ./virric/domains/research/scripts/create_ra_bundle.sh --title "..." [--id RA-001] [--owner ""] [--priority Medium]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/research/scripts/create_ra_bundle.sh --id RA-001 --title "..." [--owner "..."] [--priority Medium]
+  ./virric/domains/research/scripts/create_ra_bundle.sh --title "..." [--id RA-001] [--owner "..."] [--priority Medium]
 
 Creates:
   virric/domains/research/docs/research-assessments/RA-001-<slug>/
@@ -54,10 +54,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -z "${ID}" || -z "${TITLE}" ]]; then
-  echo "Error: --id and --title are required." >&2
+if [[ -z "${TITLE}" ]]; then
+  echo "Error: --title is required." >&2
   usage
   exit 2
+fi
+
+ROOT="$(virric_find_project_root)"
+
+if [[ -z "${ID}" ]]; then
+  "$ROOT/virric/domains/research/scripts/research_id_index.sh" validate >/dev/null
+  # Allocate next legal RA id from global index
+  ID="$("$ROOT/virric/domains/research/scripts/research_id_index.sh" next --type ra)"
 fi
 
 if ! [[ "$ID" =~ ^RA-[0-9]{3}$ ]]; then
@@ -65,7 +73,6 @@ if ! [[ "$ID" =~ ^RA-[0-9]{3}$ ]]; then
   exit 2
 fi
 
-ROOT="$(virric_find_project_root)"
 DOCS_DIR="$ROOT/virric/domains/research/docs/research-assessments"
 TEMPLATE_DIR="$ROOT/virric/domains/research/templates/research-assessment-bundle"
 

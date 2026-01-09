@@ -41,11 +41,11 @@ Checklist:
 
 | SegmentID | Segment name | Rank | In-scope? | Buyer map notes | Top pains (IDs) | Top gains (IDs) |
 |---|---|---:|---|---|---|---|
-| SEG-0001 | <...> | 1 | Yes | <...> | P-... | G-... |
+| SEG-XXXX | <...> | 1 | Yes | <...> | P-... | G-... |
 
 ## Appendix: Canonical persona table (stable IDs)
 
 | PersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| PER-0001 | <...> | SEG-0001 | <...> | P-... | G-... | <...> |
+| PER-XXXX | <...> | SEG-XXXX | <...> | P-... | G-... | <...> |
 

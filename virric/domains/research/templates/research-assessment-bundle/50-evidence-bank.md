@@ -29,5 +29,5 @@ Rubrics:
 
 | EvidenceID | Type | PersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| E-0001 | Quote | PER-0001 | SEG-0001 | P-0001 | "<...>" | <link> | E2 | C2 |
+| E-XXXX | Quote | PER-XXXX | SEG-XXXX | P-XXXX | "<...>" | <link> | E1 | C1 |
 
