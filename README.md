@@ -55,13 +55,11 @@ Virric expects a single source of truth for agent behavior:
 - Root shim: `AGENTS.md`
 - Canonical handoff: `virric/AGENTS.md`
 - Design note: `VIRRIC_STATE_MACHINE_WORKING.md`
-- Skills (mandatory): `.codex/skills/virric/**` (index: `skills/README.md`)
+- Skills (mandatory): `.codex/skills/virric/**`
 
-Human-friendly skills index:
+To browse skills, open the relevant `SKILL.md` under `.codex/skills/virric/**`.
 
-- `skills/README.md`
-
-The skills index also notes how Codex discovers/installs skills (e.g., `$skill-installer`) and the public skills library conventions.
+Codex skill reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
 ## Completion receipts: `DONE.json` (recommended, not a signal)
 

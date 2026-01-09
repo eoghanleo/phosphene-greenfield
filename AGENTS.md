@@ -15,7 +15,7 @@ Working design note (state machine + contracts):
 Skills (mandatory):
 
 - Canonical Codex skills (standard location): `.codex/skills/virric/**`
-- Human-friendly index: `skills/README.md`
+- Skills live in-repo under `.codex/skills/virric/**` (no separate index folder).
 
 Codex skills standard (summary):
 
