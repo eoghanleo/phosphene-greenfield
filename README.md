@@ -61,6 +61,8 @@ Human-friendly skills index:
 
 - `skills/README.md`
 
+The skills index also notes how Codex discovers/installs skills (e.g., `$skill-installer`) and the public skills library conventions.
+
 ## Completion receipts: `DONE.json` (recommended, not a signal)
 
 `DONE.json` is a **completion receipt** written by the assigned agent at the end of work as:
