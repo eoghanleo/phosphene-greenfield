@@ -1,5 +1,5 @@
 ---
-name: virric-product-management
+name: product-management
 description: Produce <product-management> artifacts (SPEC-*) that translate strategy into requirements, acceptance criteria, and validation plans.
 metadata:
   short-description: Product specs (requirements)

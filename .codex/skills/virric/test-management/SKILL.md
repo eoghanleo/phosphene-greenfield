@@ -1,5 +1,5 @@
 ---
-name: virric-test-management
+name: test-management
 description: Produce <test-management> test plans (TP-*) and verification strategies aligned to specs/FRs.
 metadata:
   short-description: Test plans

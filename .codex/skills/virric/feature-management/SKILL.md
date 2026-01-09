@@ -1,5 +1,5 @@
 ---
-name: virric-feature-management
+name: feature-management
 description: Produce and manage <feature-management> Feature Requests (FR dossiers) using bash-only VIRRIC scripts (create/validate/approve/status/deps).
 metadata:
   short-description: Feature Requests (FR dossiers)

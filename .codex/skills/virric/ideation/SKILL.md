@@ -1,5 +1,5 @@
 ---
-name: virric-ideation
+name: ideation
 description: Produce <ideation> artifacts (IDEA-*) as seed concepts for downstream domains; keep inputs minimal and hypotheses explicit.
 metadata:
   short-description: Ideation (IDEA artifacts)

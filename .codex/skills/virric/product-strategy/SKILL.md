@@ -1,5 +1,5 @@
 ---
-name: virric-product-strategy
+name: product-strategy
 description: Produce <product-strategy> artifacts (ROADMAP-*) by selecting bets/pitches, constraints, and sequencing from research + marketing inputs.
 metadata:
   short-description: Roadmaps + strategic bets

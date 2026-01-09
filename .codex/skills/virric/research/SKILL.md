@@ -1,5 +1,5 @@
 ---
-name: virric-research
+name: research
 description: Produce <research> artifacts (RA bundles) using VIRRIC scripts and global unique IDs (E-/RS-/PITCH-/SEG-/PER-).
 metadata:
   short-description: Research assessments (RA bundles)

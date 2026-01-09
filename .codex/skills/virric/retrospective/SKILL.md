@@ -1,5 +1,5 @@
 ---
-name: virric-retrospective
+name: retrospective
 description: Produce <retrospective> artifacts (postmortems, playbooks) capturing lessons, root causes, and guardrails for future work.
 metadata:
   short-description: Postmortems + playbooks

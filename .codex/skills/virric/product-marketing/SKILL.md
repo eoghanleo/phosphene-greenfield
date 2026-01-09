@@ -1,5 +1,5 @@
 ---
-name: virric-product-marketing
+name: product-marketing
 description: Produce <product-marketing> artifacts (PER-* personas, PROP-* propositions) from research hypotheses and evidence IDs.
 metadata:
   short-description: Personas + propositions

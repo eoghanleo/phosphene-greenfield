@@ -1,5 +1,5 @@
 ---
-name: virric-scrum-management
+name: scrum-management
 description: Produce <scrum-management> issue mirrors and lightweight operational artifacts; keep routing/status portable via labels.
 metadata:
   short-description: Operational issues + mirrors
