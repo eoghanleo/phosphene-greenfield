@@ -4,10 +4,14 @@ This is a **living sketch** of the machine-optimized VIRRIC workflow.
 
 ## First principles
 
-- **Repo is canonical knowledge**: SDLC documents live in the repo as parseable Markdown.
-- **GitHub Issues are canonical operational state + human intent**: humans move cards, edit statuses, and talk to agents in comments.
-- **Stance B**: repo documents **mirror** key operational state in a lightweight way (headers + history) so agents can operate locally without polling GitHub.
-- **PR is the hard synchronization point** between work-in-flight and truth being merged.
+- **Repo is canonical knowledge**: SDLC artifacts live in the repo as parseable, reviewable files.
+- **GitHub Actions is the scheduler**: it watches repo + PR events and routes deterministically.
+- **Agents are workers**: they do not message each other; they write artifacts.
+- **PR is the hard synchronization point** between work-in-flight and truth being merged (officialization).
+- **Issues are optional but useful**: GitHub Issues can hold human intent, discussion, and delegation, but VIRRIC must work on “vanilla GitHub” primitives even without Projects/Linear.
+
+Optional “mirror stance” (useful when Issues are used):
+- Repo documents may **mirror** selected operational state (headers + history) via PRs so agents can operate locally without polling GitHub APIs.
 
 ## Nine-domain execution model (scaffold)
 
@@ -15,21 +19,21 @@ VIRRIC assumes work is organized into **nine domains of product execution**. Inc
 
 Domains:
 
-- **ideation** (idea)
-- **research** (research-assessment)
-- **product-marketing** (persona, proposition)
-- **product-strategy** (product-roadmap)
-- **product-management** (product-spec)
-- **feature-management** (feature-request)
-- **scrum-management** (issue)
-- **test-management** (test-plan)
-- **retrospective** (postmortem, playbook)
+- `<ideation>` (idea)
+- `<research>` (research-assessment)
+- `<product-marketing>` (persona, proposition)
+- `<product-strategy>` (product-roadmap)
+- `<product-management>` (product-spec)
+- `<feature-management>` (feature-request)
+- `<scrum-management>` (issue)
+- `<test-management>` (test-plan)
+- `<retrospective>` (postmortem, playbook)
 
 Default handoff spine (subject to refinement):
 
-`ideation → research → product-strategy → product-management → feature-management → scrum-management → test-management → retrospective`
+`<ideation> → <research> → <product-strategy> → <product-management> → <feature-management> → <scrum-management> → <test-management> → <retrospective>`
 
-`product-marketing` runs alongside strategy/spec and constrains messaging and personas for downstream artifacts.
+`<product-marketing>` runs alongside strategy/spec and constrains messaging and personas for downstream artifacts.
 
 ## Platform capability reality-check (GitHub Issues / GitHub Projects / GitHub Actions / Linear)
 
@@ -97,7 +101,10 @@ Implication for VIRRIC:
 ## Entities (documents + system objects)
 
 - **IDEATION**: `virric/domains/ideation/docs/ideas/IDEA-*.md` *(scaffold)*
-- **RESEARCH**: `virric/domains/research/docs/research-assessments/RA-*.md` *(scaffold)*
+- **RESEARCH**: `virric/domains/research/docs/research-assessments/RA-###-<slug>/` *(bundle; canonical)*
+  - Required bundle files: `00-coversheet.md`, `10-reference-solutions.md`, `20-competitive-landscape.md`, `30-pitches/PITCH-*.md`, `40-hypotheses.md`, `50-evidence-bank.md`, `90-methods.md`
+  - Optional: `99-raw-agent-output.md` (verbatim raw dump; non-authoritative)
+  - Generated view (do not treat as authoritative definitions): `RA-###.md` (assembled)
 - **PRODUCT MARKETING**:
   - Personas: `virric/domains/product-marketing/docs/personas/PER-*.md` *(scaffold)*
   - Propositions: `virric/domains/product-marketing/docs/propositions/PROP-*.md` *(scaffold)*
@@ -252,16 +259,49 @@ Repo events that SHOULD reconcile issues (minimal baseline):
 
 This keeps the core system compatible with “vanilla GitHub” where an Issue’s canonical states are simply **Open / Closed**.
 
+## Receipts (completion manifests) — `DONE.json` (recommended)
+
+`DONE.json` is a **completion receipt** written by the assigned agent at the end of work as:
+
+- a final checklist / hallucination check
+- a machine-checkable “I believe I’m done” handshake
+- a compact audit manifest (inputs, outputs, checks run)
+
+Important:
+- `DONE.json` is **not a signal**. Signals are optional add-ons; receipts attest completion of the core work.
+
+Placement (recommended):
+- For bundles (e.g. RA bundles): in the bundle root (next to `00-coversheet.md`)
+- For single-doc artifacts: adjacent to the doc
+
+Minimal shape (baseline):
+
+```json
+{
+  "receipt_version": 1,
+  "work_id": "RA-001",
+  "domain": "research",
+  "artifact_type": "research-assessment",
+  "ok": true,
+  "inputs": ["..."],
+  "outputs": ["..."],
+  "checks": ["..."],
+  "inputs_hash": "sha256:...",
+  "timestamp_utc": "2026-01-09T00:00:00Z",
+  "commit_sha": "..."
+}
+```
+
 ## Signals (event bus)
 
-Signals are parseable events used to route automation.
+Signals are parseable events used to route automation. They are **additional** to the core PR-gated flow (get work → do work → finish work → PR work).
 
 Two ways to implement signals:
 
 1) **Repo signals**: committed files under `virric/domains/<domain>/signals/**` (auditable, repo-native)
 2) **CI signals**: ephemeral signals derived from diffs / issue events (not committed)
 
-This draft assumes we will primarily use **CI signals**, and only commit repo signals when we need explicit auditability.
+This draft assumes we can use either; repo signals are preferred when we need explicit auditability or explicit intent that cannot be inferred from diffs.
 
 Signal shape (example):
 
