@@ -8,7 +8,7 @@ set -euo pipefail
 #   ./virric/domains/research/scripts/assemble_research_assessment_bundle.sh /abs/or/rel/path/to/RA-001-some-slug
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../../../virric-core/lib" && pwd)"
 # shellcheck source=/dev/null
 source "$LIB_DIR/virric_env.sh"
 

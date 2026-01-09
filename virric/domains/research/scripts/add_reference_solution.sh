@@ -8,7 +8,7 @@ set -euo pipefail
 #   ./virric/domains/research/scripts/add_reference_solution.sh --bundle <bundle_dir> --name "..." [--type Market] [--pointer "https://..."]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../../../virric-core/lib" && pwd)"
 # shellcheck source=/dev/null
 source "$LIB_DIR/virric_env.sh"
 

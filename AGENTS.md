@@ -48,7 +48,7 @@ Script naming convention:
 Quick start (run from repo root):
 
 ```bash
-./virric/bin/virric banner
+./virric/virric-core/bin/virric banner
 ./virric/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
 ```
 

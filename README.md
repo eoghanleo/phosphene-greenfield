@@ -169,7 +169,7 @@ Example signal payload (shape is a convention, not enforced yet):
 ## Quick start (run from repo root)
 
 ```bash
-./virric/bin/virric banner
+./virric/virric-core/bin/virric banner
 ```
 
 Create an FR:

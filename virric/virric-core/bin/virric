@@ -91,7 +91,7 @@ help() {
 VIRRIC (drop-in)
 
 Usage:
-  ./virric/bin/virric <command>
+  ./virric/virric-core/bin/virric <command>
 
 Commands:
   banner   Print the VIRRIC neon banner

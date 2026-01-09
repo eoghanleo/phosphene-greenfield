@@ -6,7 +6,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-LIB_DIR="$(cd "$SCRIPT_DIR/../../../lib" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../../../virric-core/lib" && pwd)"
 # shellcheck source=/dev/null
 source "$LIB_DIR/virric_env.sh"
 virric_load_config
