@@ -20,6 +20,11 @@ Primary domain: `<ideation>`
 - Keep the artifact short: problem/opportunity framing, target user hypotheses, and what to research next.
 - Avoid over-committing to product definitions; treat as hypotheses for `<research>`.
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the IDEA artifact listing:

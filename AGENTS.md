@@ -45,6 +45,13 @@ Script naming convention:
 - Scripts should use **fully spelled-out, self-describing names** (avoid abbreviations in filenames).
   - Example: `add_reference_solution.sh` (not `add_refsol.sh`).
 
+In-doc script hints (mnemonic):
+
+- Some templates/artifacts include fenced code blocks beginning with:
+  - `[V-SCRIPT]:`
+- These blocks list **script entrypoints** relevant to the nearby section.
+- When exploring an unfamiliar artifact, search for `[V-SCRIPT]` to quickly discover the right control scripts.
+
 ID uniqueness convention (central tenet):
 
 - Prefer **long, stable, human-readable natural keys**.

@@ -69,6 +69,19 @@ Optional hardening (future-friendly):
 - file hash for versioning/receipts: `sha256(file_contents)`
 - Merkle-style nesting can be built by rolling file hashes up into bundle/work hashes.
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with:
+
+```text
+[V-SCRIPT]:
+<script_name.sh>
+```
+
+These blocks are a mnemonic for agents and reviewers:
+- They list the relevant **control scripts** for that section.
+- Search for `[V-SCRIPT]` when scanning an artifact to find the correct script entrypoints quickly.
+
 ## Day-to-day commands (bash)
 
 ### Create an FR

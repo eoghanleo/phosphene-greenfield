@@ -60,6 +60,11 @@ Use the registry:
 - Create candidate personas (1:1 proposals for <product-marketing> personas):
   - `./virric/domains/research/scripts/create_candidate_persona.sh --bundle <bundle_dir> --name "..." --segment SEG-0001`
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 When done, write `DONE.json` in the bundle root (receipt, not signal) enumerating:

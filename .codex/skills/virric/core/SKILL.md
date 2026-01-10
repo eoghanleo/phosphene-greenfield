@@ -27,6 +27,17 @@ Operate inside the VIRRIC harness using repo-native artifacts as the system’s 
 - Scripts live under: `virric/domains/<domain>/scripts/`
 - Scripts should have **fully spelled-out, self-describing names** (avoid abbreviations).
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with:
+
+```text
+[V-SCRIPT]:
+<script_name.sh>
+```
+
+Search for `[V-SCRIPT]` when scanning an artifact to discover the relevant control scripts for that section.
+
 ## Skills are mandatory in this repo
 
 This repo treats skills as a **required execution contract**, not optional context.

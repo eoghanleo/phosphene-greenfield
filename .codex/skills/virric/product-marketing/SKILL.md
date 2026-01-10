@@ -23,6 +23,11 @@ Primary domain: `<product-marketing>`
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Persona templates include fenced code blocks that begin with `[V-SCRIPT]:` listing the relevant script entrypoints for that section.
+Search for `[V-SCRIPT]` when scanning a persona artifact to discover the right control scripts quickly.
+
 JTBD IDs convention (natural keys):
 - Jobs/Pains/Gains use IDs of the form: `JTBD-<TYPE>-####-<PersonaID>`
   - `<TYPE>` is `JOB|PAIN|GAIN`

@@ -48,6 +48,17 @@ Script naming convention:
 - Scripts should use **fully spelled-out, self-describing names** (avoid abbreviations in filenames).
   - Example: `add_reference_solution.sh` (not `add_refsol.sh`).
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with:
+
+```text
+[V-SCRIPT]:
+<script_name.sh>
+```
+
+Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the relevant control scripts for that section.
+
 ## The contract lives in `AGENTS.md`
 
 Virric expects a single source of truth for agent behavior:

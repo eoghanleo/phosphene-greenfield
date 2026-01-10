@@ -17,6 +17,11 @@ To maximize repeatable performance and reduce formatting faults:
 - Use the domain scripts under `virric/domains/product-marketing/scripts/` to create and modify artifacts.
 - Always run validators after mutations (most scripts do this automatically).
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Persona/proposition templates may include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the relevant script entrypoints.
+
 ## Operating boundary
 
 - Use the `<product-marketing>` tag to indicate scope/boundaries in handoffs.

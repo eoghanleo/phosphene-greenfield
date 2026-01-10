@@ -19,6 +19,11 @@ Primary domain: `<scrum-management>`
 - If mirroring state into repo headers, do so via PR (audit trail).
 - Use templates under `virric/domains/scrum-management/templates/`.
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the ISSUE mirror artifact listing:

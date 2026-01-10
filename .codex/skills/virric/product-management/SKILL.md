@@ -20,6 +20,11 @@ Primary domain: `<product-management>`
 - Use templates under `virric/domains/product-management/templates/`.
 - Keep acceptance criteria and validation experiments explicit.
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the SPEC artifact listing:

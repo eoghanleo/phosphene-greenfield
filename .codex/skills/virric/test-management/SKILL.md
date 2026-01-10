@@ -19,6 +19,11 @@ Primary domain: `<test-management>`
 - Use templates under `virric/domains/test-management/templates/`.
 - Keep test scope explicit (unit/integration/e2e) and the “definition of done” checkable.
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the TP artifact listing:

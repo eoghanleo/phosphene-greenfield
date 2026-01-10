@@ -32,6 +32,11 @@ Auto-generated (do not edit by hand):
   - `./virric/domains/feature-management/scripts/update_backlog_tree.sh`
   - `./virric/domains/feature-management/scripts/feature_request_dependency_tracker.sh`
 
+## In-doc script hints (`[V-SCRIPT]`)
+
+Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
+
 ## Receipts (recommended)
 
 When completing an FR change, add a `DONE.json` receipt adjacent to the FR dossier enumerating:
