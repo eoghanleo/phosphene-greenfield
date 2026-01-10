@@ -131,6 +131,31 @@ Minimum viable fields (per doc):
 - `Updated: YYYY-MM-DD`
 - `Dependencies: <comma separated stable IDs>` (optional but recommended)
 
+## Identity and uniqueness: concatenated natural keys (central tenet)
+
+VIRRIC’s default stance is to prefer **long, stable, human-readable natural keys** for IDs.
+
+Why:
+- Enables deterministic scripts (grep/awk) without a database.
+- Supports nesting (sub-entities inside a file/bundle) while still guaranteeing global uniqueness.
+
+Mechanism:
+- Ensure top-level artifacts have a globally unique header ID (`ID: PER-0003`, `ID: RA-001`, etc.).
+- For nested items, concatenate a local counter/name with the parent artifact ID.
+
+Example:
+- `JTBD-PAIN-0001-PER-0003` (a pain item inside persona `PER-0003`)
+
+### Hash overlays (optional; future hardening)
+
+This is compatible with trivial hashing layers:
+- `sha256(<natural_key>)` for compact routing/index keys
+- `sha256(file_contents)` for version receipts and tamper detection
+
+It also supports Merkle-style rollups if desired:
+- file hashes roll up into bundle hashes
+- bundle hashes roll up into work-item hashes
+
 Linkage fields (recommended):
 
 - `Issue: #123` *(or full URL)*

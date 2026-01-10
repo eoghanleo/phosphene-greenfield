@@ -45,6 +45,15 @@ Script naming convention:
 - Scripts should use **fully spelled-out, self-describing names** (avoid abbreviations in filenames).
   - Example: `add_reference_solution.sh` (not `add_refsol.sh`).
 
+ID uniqueness convention (central tenet):
+
+- Prefer **long, stable, human-readable natural keys**.
+- Achieve global uniqueness for nested items by **concatenating** with a globally unique parent artifact ID.
+  - Example (JTBD item inside a persona): `JTBD-PAIN-0001-PER-0003`
+- Hash overlays (optional/future):
+  - `sha256(<natural_key>)` as a compact routing/index key
+  - `sha256(file_contents)` for version receipts or Merkle-style rollups
+
 Quick start (run from repo root):
 
 ```bash

@@ -166,6 +166,33 @@ Example signal payload (shape is a convention, not enforced yet):
 }
 ```
 
+## Identity and uniqueness: concatenated natural keys (central tenet)
+
+Virric strongly prefers **long, stable, human-readable natural keys** for identifiers.
+
+Core idea:
+- If an artifact has a globally unique ID (e.g., `PER-0003`), then any nested identifiers can be made globally unique by **concatenation**.
+- This supports **scriptable nesting** without requiring a centralized allocator for every sub-entity.
+
+Example (nested JTBD items inside a Persona):
+- `JTBD-PAIN-0001-PER-0003`
+  - `JTBD-PAIN-0001` is the local counter within that persona
+  - `PER-0003` is the globally unique parent key
+
+Implications:
+- IDs can be safely “namespaced” by their parent artifact ID (and even grandparent IDs if needed).
+- Scripts can validate structure locally (within one file/bundle) while still guaranteeing global uniqueness across the repo.
+
+### Optional hardening: hash overlays (future-friendly)
+
+Natural keys are enough for uniqueness, but Virric can layer hashes trivially:
+- **Hashed natural key**: `sha256(<natural_key>)` (useful for compact routing keys / indexing)
+- **Full file hash**: `sha256(file_contents)` (useful for version receipts / tamper detection)
+
+This also supports Merkle-style composition if desired:
+- file hashes roll up into bundle hashes
+- bundle hashes roll up into work-item hashes
+
 ## Quick start (run from repo root)
 
 ```bash

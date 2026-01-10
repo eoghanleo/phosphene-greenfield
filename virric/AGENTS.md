@@ -53,6 +53,22 @@ Domain reference convention:
 - `virric/` must exist at the **repo root**.
 - Scripts assume canonical paths under `virric/domains/**`.
 
+## Identity and uniqueness (natural keys; central tenet)
+
+VIRRIC prefers **long, stable natural keys** over opaque IDs for anything that needs to be grepable and scriptable.
+
+Rule of thumb:
+- Top-level artifacts should have a stable ID in the header (e.g., `ID: PER-0003`).
+- Nested objects can guarantee global uniqueness by **concatenating** a local counter with the parent ID.
+
+Example (JTBD item inside a persona):
+- `JTBD-PAIN-0001-PER-0003`
+
+Optional hardening (future-friendly):
+- hashed natural key: `sha256(<natural_key>)`
+- file hash for versioning/receipts: `sha256(file_contents)`
+- Merkle-style nesting can be built by rolling file hashes up into bundle/work hashes.
+
 ## Day-to-day commands (bash)
 
 ### Create an FR
