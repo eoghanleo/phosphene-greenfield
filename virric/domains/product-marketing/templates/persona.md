@@ -33,12 +33,21 @@ Each item has:
 
 ## Evidence and links
 
-Store supporting IDs and pointers here (no prose argumentation—just traceability):
-- EvidenceIDs: <E-0001, E-0002, ...>
-- CandidatePersonaIDs (source CPEs): <CPE-0001, CPE-0002, ...>
-- Upstream bundles / docs: <RA-001, PITCH-0001, RS-0001, ...>
-- Links:
-  - <url or repo path>
+Store supporting IDs and pointers here (no prose argumentation—just traceability).
+
+### EvidenceIDs
+- E-0001
+
+### CandidatePersonaIDs
+- CPE-0001
+
+### DocumentIDs
+- RA-001
+- PITCH-0001
+- RS-0001
+
+### Links
+- <url or repo path>
 
 ## Notes
 

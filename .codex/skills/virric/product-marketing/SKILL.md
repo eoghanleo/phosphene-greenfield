@@ -40,6 +40,27 @@ JTBD IDs convention (natural keys):
 - Add a JOB/PAIN/GAIN JTBD row (auto-allocates the next local #### and appends `-PER-####`):
   - `./virric/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona virric/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
 
+## Control scripts (preferred; avoid hand-editing)
+
+For repeatability, prefer using these scripts instead of manual edits:
+
+- Create a new persona:
+  - `./virric/domains/product-marketing/scripts/create_new_persona.sh --title "..." --dependencies "CPE-0001,RA-001"`
+- Update snapshot summary:
+  - `./virric/domains/product-marketing/scripts/update_persona_summary.sh --persona virric/domains/product-marketing/docs/personas/PER-0001-*.md --summary-file /path/to/summary.md`
+- Add/update JTBD rows:
+  - `./virric/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona ... --type JOB|PAIN|GAIN --text "..." --importance 3`
+  - `./virric/domains/product-marketing/scripts/update_persona_jtbd_item.sh --persona ... --jtbd-id JTBD-PAIN-0001-PER-0001 --text "..." --importance 5`
+- Add/remove supporting IDs (EvidenceIDs/CPE IDs/other DocumentIDs):
+  - `./virric/domains/product-marketing/scripts/add_persona_evidence_link.sh --persona ... --id E-0001`
+  - `./virric/domains/product-marketing/scripts/remove_persona_evidence_link.sh --persona ... --id E-0001`
+- Add/remove related links:
+  - `./virric/domains/product-marketing/scripts/add_persona_related_link.sh --persona ... --link "https://example.com"`
+  - `./virric/domains/product-marketing/scripts/remove_persona_related_link.sh --persona ... --link "https://example.com"`
+- Notes:
+  - `./virric/domains/product-marketing/scripts/add_persona_note.sh --persona ... --note "..." `
+  - `./virric/domains/product-marketing/scripts/overwrite_persona_notes.sh --persona ... --notes-file /path/to/notes.md`
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to each produced artifact listing:

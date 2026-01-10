@@ -31,6 +31,11 @@ Checks:
   - Jobs/Pains/Gains include a table with JTBD-ID + Importance
   - IDs follow: JTBD-JOB-####-PER-#### / JTBD-PAIN-####-PER-#### / JTBD-GAIN-####-PER-#### (suffix must match the persona ID)
   - Importance is integer 1..5
+  - Evidence and links includes sub-sections:
+      ### EvidenceIDs
+      ### CandidatePersonaIDs
+      ### DocumentIDs
+      ### Links
 EOF
 }
 
@@ -67,6 +72,19 @@ validate_file() {
   do
     grep -qF "$h" "$f" || fail "$(basename "$f"): missing section '$h'"
   done
+
+  # Evidence sub-sections (within ## Evidence and links block)
+  local evidence_block
+  evidence_block="$(awk '
+    BEGIN { inside=0; }
+    $0 == "## Evidence and links" { inside=1; next; }
+    inside && $0 ~ /^## / { exit; }
+    inside { print; }
+  ' "$f")"
+  echo "$evidence_block" | grep -qF "### EvidenceIDs" || fail "$(basename "$f"): missing '### EvidenceIDs' under '## Evidence and links'"
+  echo "$evidence_block" | grep -qF "### CandidatePersonaIDs" || fail "$(basename "$f"): missing '### CandidatePersonaIDs' under '## Evidence and links'"
+  echo "$evidence_block" | grep -qF "### DocumentIDs" || fail "$(basename "$f"): missing '### DocumentIDs' under '## Evidence and links'"
+  echo "$evidence_block" | grep -qF "### Links" || fail "$(basename "$f"): missing '### Links' under '## Evidence and links'"
 
   # Extract table rows per section, then validate ID patterns + Importance.
   # We parse as:

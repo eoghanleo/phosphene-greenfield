@@ -21,6 +21,10 @@ JTBD IDs convention (natural keys):
 Helper (optional):
 - `./virric/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona virric/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
 
+Workflow policy (preferred):
+- For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).
+- See `.codex/skills/virric/product-marketing/SKILL.md` for the full control script list.
+
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.
 - **To Product Management** with positioning that must be reflected in the spec.

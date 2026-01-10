@@ -9,6 +9,14 @@ This domain uses the canonical VIRRIC handoff at `virric/AGENTS.md`.
 - `persona` (PER-*) artifacts
 - `proposition` (PROP-*) artifacts
 
+## Workflow policy (script-first; no manual edits)
+
+To maximize repeatable performance and reduce formatting faults:
+
+- **Do not hand-edit** `<product-marketing>` artifacts.
+- Use the domain scripts under `virric/domains/product-marketing/scripts/` to create and modify artifacts.
+- Always run validators after mutations (most scripts do this automatically).
+
 ## Operating boundary
 
 - Use the `<product-marketing>` tag to indicate scope/boundaries in handoffs.
