@@ -8,8 +8,9 @@ VIRRIC is a lightweight agentic harness built on a simple premise:
 - **The repo is shared memory**
 - **PR merge is the officialization point**
 
-If you’re unclear on the deeper model, read the working design note:
+If you need the deeper model (state machine + contracts), read:
 - `VIRRIC_STATE_MACHINE_WORKING.md`
+
 
 ### How to work (agent checklist)
 
