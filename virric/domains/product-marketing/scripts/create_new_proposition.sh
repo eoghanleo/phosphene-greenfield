@@ -76,6 +76,32 @@ TEMPLATE="$ROOT/virric/domains/product-marketing/templates/proposition.md"
 
 cp "$TEMPLATE" "$OUT"
 
+# Strip template sample rows from all markdown tables (keep header + separator only).
+PROP_PATH="$OUT" python3 - <<'PY'
+import os, re
+from pathlib import Path
+
+p = Path(os.environ["PROP_PATH"])
+lines = p.read_text(encoding="utf-8").splitlines(True)
+
+sep = re.compile(r"^\|\s*:?-{3,}.*\|\s*$")
+out = []
+i = 0
+while i < len(lines):
+  if lines[i].lstrip().startswith("|") and i + 1 < len(lines) and sep.match(lines[i + 1]):
+    out.append(lines[i])
+    out.append(lines[i + 1])
+    i += 2
+    # Drop all data rows for this table.
+    while i < len(lines) and lines[i].lstrip().startswith("|"):
+      i += 1
+    continue
+  out.append(lines[i])
+  i += 1
+
+p.write_text("".join(out), encoding="utf-8")
+PY
+
 # Update header + example suffixed IDs (python for portability)
 PROP_ID="$ID" PROP_TITLE="$TITLE" PROP_STATUS="$STATUS" PROP_UPDATED="$DATE" PROP_DEPS="$DEPENDENCIES" PROP_OWNER="$OWNER" PROP_PATH="$OUT" python3 - <<'PY'
 import os, re

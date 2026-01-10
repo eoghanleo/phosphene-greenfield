@@ -76,6 +76,32 @@ TEMPLATE="$ROOT/virric/domains/product-marketing/templates/persona.md"
 
 cp "$TEMPLATE" "$OUT"
 
+# Strip template sample rows from all markdown tables (keep header + separator only).
+PERSONA_PATH="$OUT" python3 - <<'PY'
+import os, re
+from pathlib import Path
+
+p = Path(os.environ["PERSONA_PATH"])
+lines = p.read_text(encoding="utf-8").splitlines(True)
+
+sep = re.compile(r"^\|\s*:?-{3,}.*\|\s*$")
+out = []
+i = 0
+while i < len(lines):
+  if lines[i].lstrip().startswith("|") and i + 1 < len(lines) and sep.match(lines[i + 1]):
+    out.append(lines[i])
+    out.append(lines[i + 1])
+    i += 2
+    # Drop all data rows for this table.
+    while i < len(lines) and lines[i].lstrip().startswith("|"):
+      i += 1
+    continue
+  out.append(lines[i])
+  i += 1
+
+p.write_text("".join(out), encoding="utf-8")
+PY
+
 # Update header + example JTBD suffixes (python for portability)
 PER_ID="$ID" PER_TITLE="$TITLE" PER_STATUS="$STATUS" PER_UPDATED="$DATE" PER_DEPS="$DEPENDENCIES" PER_OWNER="$OWNER" PERSONA_PATH="$OUT" python3 - <<'PY'
 import os, re
