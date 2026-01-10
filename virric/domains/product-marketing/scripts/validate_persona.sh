@@ -60,6 +60,7 @@ validate_file() {
   echo "$head" | grep -qE '^Updated:[[:space:]]*([0-9]{4}-[0-9]{2}-[0-9]{2}|YYYY-MM-DD)[[:space:]]*$' || fail "$(basename "$f"): missing/invalid 'Updated:'"
   echo "$head" | grep -qE '^Dependencies:' || fail "$(basename "$f"): missing 'Dependencies:'"
   echo "$head" | grep -qE '^Owner:' || fail "$(basename "$f"): missing 'Owner:'"
+  echo "$head" | grep -qE '^EditPolicy:[[:space:]]*DO_NOT_EDIT_DIRECTLY' || fail "$(basename "$f"): missing 'EditPolicy: DO_NOT_EDIT_DIRECTLY ...' (script-first policy)"
 
   # Section checks
   for h in \
