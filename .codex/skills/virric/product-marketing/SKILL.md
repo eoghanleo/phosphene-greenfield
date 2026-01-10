@@ -23,12 +23,22 @@ Primary domain: `<product-marketing>`
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 
+JTBD IDs convention (natural keys):
+- Jobs/Pains/Gains use IDs of the form: `JTBD-<TYPE>-####-<PersonaID>`
+  - `<TYPE>` is `JOB|PAIN|GAIN`
+  - `<PersonaID>` is the persona `PER-####` from the file header
+
 ## Validation (recommended)
 
 - Validate a persona:
   - `./virric/domains/product-marketing/scripts/validate_persona.sh virric/domains/product-marketing/docs/personas/PER-0001.md`
 - Validate all personas:
   - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
+
+## Script helpers (optional)
+
+- Add a JOB/PAIN/GAIN JTBD row (auto-allocates the next local #### and appends `-PER-####`):
+  - `./virric/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona virric/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
 
 ## Receipts (recommended)
 

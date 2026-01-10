@@ -13,6 +13,14 @@ Canonical locations:
 Validation (recommended):
 - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
 
+JTBD IDs convention (natural keys):
+- In persona Jobs/Pains/Gains tables, use: `JTBD-<TYPE>-####-<PersonaID>`
+  - `<TYPE>` is `JOB|PAIN|GAIN`
+  - `<PersonaID>` is the persona `PER-####` from the file header
+
+Helper (optional):
+- `./virric/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona virric/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
+
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.
 - **To Product Management** with positioning that must be reflected in the spec.

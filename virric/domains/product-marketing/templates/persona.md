@@ -12,24 +12,24 @@ Owner:
 ## Jobs
 
 Each item has:
-- ID: `JTBD-<TYPE>-####` where `<TYPE>` is `JOB|PAIN|GAIN`
+- ID: `JTBD-<TYPE>-####-<PersonaID>` where `<TYPE>` is `JOB|PAIN|GAIN`
 - Importance: 1–5 (5 = most important)
 
 | JTBD-ID | Job | Importance |
 |---|---|---:|
-| JTBD-JOB-0001 | <job> | 3 |
+| JTBD-JOB-0001-PER-0001 | <job> | 3 |
 
 ## Pains
 
 | JTBD-ID | Pain | Importance |
 |---|---|---:|
-| JTBD-PAIN-0001 | <pain> | 4 |
+| JTBD-PAIN-0001-PER-0001 | <pain> | 4 |
 
 ## Gains
 
 | JTBD-ID | Gain | Importance |
 |---|---|---:|
-| JTBD-GAIN-0001 | <gain> | 4 |
+| JTBD-GAIN-0001-PER-0001 | <gain> | 4 |
 
 ## Evidence and links
 
