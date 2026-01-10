@@ -24,7 +24,7 @@ set -euo pipefail
 #   where <ID>           Print authoritative path(s) for an ID (any type)
 #
 # Output:
-#   virric/domains/research/docs/id_index.tsv
+#   virric/id_index.tsv (repo-wide global index)
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../virric-core/lib" && pwd)"
@@ -32,7 +32,7 @@ LIB_DIR="$(cd "$SCRIPT_DIR/../../../virric-core/lib" && pwd)"
 source "$LIB_DIR/virric_env.sh"
 
 ROOT="$(virric_find_project_root)"
-INDEX_TSV="$ROOT/virric/domains/research/docs/id_index.tsv"
+INDEX_TSV="$ROOT/virric/id_index.tsv"
 
 usage() {
   cat <<'EOF'
@@ -51,9 +51,17 @@ build_index() {
   trap 'rm -f "$tmp"' RETURN
 
   # Scan docs only (authoritative artifacts), across all domains.
-  # We intentionally exclude templates by scanning only docs/.
-  while IFS= read -r -d '' f; do
-    rel="${f#$ROOT/}"
+  # IMPORTANT: index should reflect the repo's official state, so we scan only *tracked* files.
+  while IFS= read -r -d '' rel; do
+    case "$rel" in
+      virric/domains/*/docs/*.md|virric/domains/*/docs/*/*.md|virric/domains/*/docs/*/*/*.md|virric/domains/*/docs/*/*/*/*.md)
+        ;;
+      *)
+        continue
+        ;;
+    esac
+    f="$ROOT/$rel"
+    [[ -f "$f" ]] || continue
 
     case "$(basename "$f")" in
       00-coversheet.md)
@@ -139,7 +147,7 @@ build_index() {
       *)
         ;;
     esac
-  done < <(find "$ROOT/virric/domains" -type f -path "*/docs/*" -name "*.md" -print0)
+  done < <(git -C "$ROOT" ls-files -z -- "virric/domains")
 
   # Sort for stable diff
   sort -t $'\t' -k1,1 -k2,2 -k3,3 "$tmp" > "$INDEX_TSV"

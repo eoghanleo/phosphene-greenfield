@@ -1,75 +1,74 @@
-# VIRRIC — Agent Handoff (drop-in)
+## VIRRIC — Agent entrypoint (canonical)
 
-This repository contains a drop-in **`virric/`** folder that provides deterministic SDLC workflows via bash scripts and structured FR artifacts.
+This file is the **first thing an agent should read** when operating inside VIRRIC.
 
-## Read this first
+VIRRIC is a lightweight agentic harness built on a simple premise:
+- **GitHub Actions is the scheduler**
+- **Agents are workers**
+- **The repo is shared memory**
+- **PR merge is the officialization point**
 
-- **Primary workflow doc**: this file (`virric/AGENTS.md`)
-- **Skills (mandatory)**:
-  - Canonical Codex skills: `.codex/skills/virric/**`
+If you’re unclear on the deeper model, read the working design note:
+- `VIRRIC_STATE_MACHINE_WORKING.md`
 
-## What VIRRIC is (in one sentence)
+### How to work (agent checklist)
 
-VIRRIC is a **bash-first SDLC control plane**: it provides a **multi-domain product execution scaffold** (documents + contracts) and deterministic bash tooling for the **feature-management** domain (FR lifecycle, validation, status transitions, dependency reporting).
+- **Know your primary domain** (exactly one): `<research>`, `<product-marketing>`, etc.
+- Read the domain skill (mandatory): `.codex/skills/virric/<domain>/SKILL.md`
+- Use **control scripts** (don’t hand-edit script-managed artifacts).
+- Run the domain validator(s).
+- Write a **receipt** (`DONE.json`) next to the artifact you produced.
+- Open a PR. Nothing is canonical until merged.
 
-## Domain assignment (primary operating mode)
+### Repo layout (canonical)
 
-Incoming agents should be told a single string:
+- Domains live under: `virric/domains/<domain>/{docs,templates,scripts,signals}/`
+- Skills live under: `.codex/skills/virric/<domain>/`
+- Templates are authoritative under: `virric/domains/<domain>/templates/`
 
-- **Primary domain**: one of the nine domains listed below (referenced as `<domain>`).
+### Domains (nine-domain execution model)
 
-If you have that domain, do this:
+Refer to domains using angle brackets:
+- `<ideation>` → IDEA
+- `<research>` → research-assessment (RA bundles)
+- `<product-marketing>` → personas (PER) + propositions (PROP)
+- `<product-strategy>` → roadmaps (ROADMAP)
+- `<product-management>` → specs (SPEC)
+- `<feature-management>` → feature requests (FR)
+- `<scrum-management>` → issue mirrors (ISSUE) (optional)
+- `<test-management>` → test plans (TP)
+- `<retrospective>` → postmortems (PM) + playbooks (PB)
 
-- Read **this file** (`virric/AGENTS.md`) for the contract and default handoffs.
-- Optionally skim the relevant skill under `.codex/skills/virric/<domain>/SKILL.md`.
+### Receipts vs signals (important)
 
-Domain reference convention:
+- `DONE.json` is a **receipt** (completion manifest + hallucination check). It is **not** a signal.
+- Signals are optional add-ons for routing automation:
+  - `virric/domains/<domain>/signals/**`
 
-- Use angle brackets when referring to domains: `<ideation>`, `<research>`, `<product-marketing>`, etc.
-- Avoid embedding “go to this directory” pointers in handoff/spec docs; use the domain tag and let the agent decide navigation.
+### Identity and uniqueness (central tenet)
 
-### Nine domains (canonical)
+VIRRIC prefers **long, stable natural keys**.
 
-- `<ideation>` → artifacts: `idea`
-- `<research>` → artifacts: `research-assessment`
-- `<product-marketing>` → artifacts: `persona`, `proposition`
-- `<product-strategy>` → artifacts: `product-roadmap`
-- `<product-management>` → artifacts: `product-spec`
-- `<feature-management>` → artifacts: `feature-request`
-- `<scrum-management>` → artifacts: `issue`
-- `<test-management>` → artifacts: `test-plan`
-- `<retrospective>` → artifacts: `postmortem`, `playbook`
+- Top-level artifacts must have stable IDs (e.g. `ID: PER-0003`, `ID: RA-001`).
+- Nested objects achieve global uniqueness by concatenating with parent IDs.
 
-## Canonical work items
-
-- **Source of truth**: repo-native SDLC docs across the nine domains (see domain folders at repo root).
-- **Feature-management source of truth**: `virric/domains/feature-management/docs/**/*.md` (FR dossiers; bash-parseable Markdown)
-- **Auto-generated** (do not edit):
-  - `virric/domains/feature-management/docs/backlog_tree.md`
-  - `virric/domains/feature-management/docs/fr_dependencies.md`
-
-## Hard requirements (for now)
-
-- `virric/` must exist at the **repo root**.
-- Scripts assume canonical paths under `virric/domains/**`.
-
-## Identity and uniqueness (natural keys; central tenet)
-
-VIRRIC prefers **long, stable natural keys** over opaque IDs for anything that needs to be grepable and scriptable.
-
-Rule of thumb:
-- Top-level artifacts should have a stable ID in the header (e.g., `ID: PER-0003`).
-- Nested objects can guarantee global uniqueness by **concatenating** a local counter with the parent ID.
-
-Example (JTBD item inside a persona):
+Example:
 - `JTBD-PAIN-0001-PER-0003`
 
-Optional hardening (future-friendly):
-- hashed natural key: `sha256(<natural_key>)`
-- file hash for versioning/receipts: `sha256(file_contents)`
-- Merkle-style nesting can be built by rolling file hashes up into bundle/work hashes.
+### Global ID index (repo-wide)
 
-## In-doc script hints (`[V-SCRIPT]`)
+VIRRIC maintains a repo-wide ID index at:
+- `virric/id_index.tsv`
+
+Build / validate / query:
+
+```bash
+./virric/domains/research/scripts/research_id_registry.sh build
+./virric/domains/research/scripts/research_id_registry.sh validate
+./virric/domains/research/scripts/research_id_registry.sh where PER-0003
+```
+
+### In-doc script hints (`[V-SCRIPT]`)
 
 Some templates/artifacts include fenced code blocks that begin with:
 
@@ -78,49 +77,6 @@ Some templates/artifacts include fenced code blocks that begin with:
 <script_name.sh>
 ```
 
-These blocks are a mnemonic for agents and reviewers:
-- They list the relevant **control scripts** for that section.
-- Search for `[V-SCRIPT]` when scanning an artifact to find the correct script entrypoints quickly.
-
-## Day-to-day commands (bash)
-
-### Create an FR
-
-```bash
-./virric/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
-```
-
-### Validate FRs
-
-```bash
-./virric/domains/feature-management/scripts/validate_feature_request.sh
-```
-
-### Approve an FR
-
-```bash
-./virric/domains/feature-management/scripts/approve_feature_request.sh --id FR-001
-```
-
-### Update FR status
-
-```bash
-./virric/domains/feature-management/scripts/update_feature_request_status.sh /path/to/FR-001-some-title.md "In Progress"
-```
-
-### Refresh project overviews
-
-```bash
-./virric/domains/feature-management/scripts/update_backlog_tree.sh
-./virric/domains/feature-management/scripts/feature_request_dependency_tracker.sh
-```
-
-## Automation (GitHub Actions)
-
-Routing and validation are intended to be implemented as GitHub Actions that:
-
-- infer domain scope from changed paths under `virric/domains/**`
-- consume explicit signals under `virric/domains/<domain>/signals/**`
-- gate “official” doc changes on PR events (merge to the default branch)
+Search for `[V-SCRIPT]` inside an artifact to discover the correct control scripts quickly.
 
 
