@@ -18,6 +18,8 @@ usage() {
 Usage:
   ./virric/domains/product-marketing/scripts/validate_proposition.sh <proposition_file>
   ./virric/domains/product-marketing/scripts/validate_proposition.sh --all
+  ./virric/domains/product-marketing/scripts/validate_proposition.sh --strict <proposition_file>
+  ./virric/domains/product-marketing/scripts/validate_proposition.sh --all --strict
 
 Checks:
   - required headers exist (ID/Title/Status/Updated/Dependencies/Owner/EditPolicy)
@@ -36,6 +38,11 @@ Checks:
       CapabilityID: CAP-####-PROP-####
   - CapabilityType is one of: feature|function|standard|experience
   - mapped JTBD arrays are comma-separated lists of JTBD-(GAIN|PAIN)-####-PER-#### (whitespace ok around commas)
+  - strict mode additionally enforces:
+      - balanced fenced code blocks (code fence count must be even)
+      - Formal Pitch contains the expected [V-SCRIPT] block for update_proposition_formal_pitch.sh
+      - any PER-#### listed in Target Persona(s) must appear in Dependencies
+      - all mapped JTBD IDs must exist in the referenced persona docs, and must belong to a target persona
 EOF
 }
 
@@ -43,6 +50,42 @@ fail() { echo "FAIL: $*" >&2; exit 1; }
 warn() { echo "WARN: $*" >&2; }
 
 ROOT="$(virric_find_project_root)"
+STRICT=0
+
+code_fences_balanced() {
+  local f="$1"
+  local n
+  n="$(grep -cE '^```' "$f" || true)"
+  [[ $((n % 2)) -eq 0 ]]
+}
+
+extract_bullets_under_h2() {
+  local f="$1"
+  local heading="$2" # exact '## ...'
+  awk -v heading="$heading" '
+    BEGIN { inside=0; }
+    $0 == heading { inside=1; next; }
+    inside && $0 ~ /^## / { exit; }
+    inside && $0 ~ /^-[[:space:]]+/ {
+      sub(/^-+[[:space:]]+/, "", $0);
+      gsub(/[[:space:]]+$/, "", $0);
+      print $0;
+    }
+  ' "$f"
+}
+
+dependencies_ids() {
+  local f="$1"
+  local dep
+  dep="$(head -n 30 "$f" | grep -E '^Dependencies:' | head -n 1 | sed -E 's/^Dependencies:[[:space:]]*//')"
+  echo "$dep" | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' | grep -v '^$' || true
+}
+
+persona_has_jtbd_id() {
+  local per_file="$1"
+  local jtbd="$2"
+  grep -qE "^[|][[:space:]]*${jtbd}[[:space:]]*[|]" "$per_file"
+}
 
 validate_file() {
   local f="$1"
@@ -61,6 +104,13 @@ validate_file() {
   echo "$head" | grep -qE '^Dependencies:' || fail "$(basename "$f"): missing 'Dependencies:'"
   echo "$head" | grep -qE '^Owner:' || fail "$(basename "$f"): missing 'Owner:'"
   echo "$head" | grep -qE '^EditPolicy:[[:space:]]*DO_NOT_EDIT_DIRECTLY' || fail "$(basename "$f"): missing 'EditPolicy: DO_NOT_EDIT_DIRECTLY ...' (script-first policy)"
+
+  if [[ "$STRICT" -eq 1 ]]; then
+    code_fences_balanced "$f" || fail "$(basename "$f"): unbalanced fenced code blocks (code fence count must be even)"
+    fp="$(extract_block "## Formal Pitch")"
+    echo "$fp" | grep -qF '[V-SCRIPT]:' || fail "$(basename "$f"): Formal Pitch missing [V-SCRIPT] block (use update_proposition_formal_pitch.sh)"
+    echo "$fp" | grep -qE 'update_proposition_formal_pitch\.sh' || fail "$(basename "$f"): Formal Pitch [V-SCRIPT] block missing update_proposition_formal_pitch.sh"
+  fi
 
   for h in \
     "## Formal Pitch" \
@@ -174,6 +224,43 @@ validate_file() {
     END { exit bad; }
   ' || fail "$(basename "$f"): Capabilities table has invalid rows"
 
+  if [[ "$STRICT" -eq 1 ]]; then
+    # Internal consistency: Target personas must be listed in Dependencies.
+    dep_ids="$(dependencies_ids "$f" | tr '\n' ' ')"
+    target_pers="$(extract_bullets_under_h2 "$f" "## Target Persona(s)" | grep -E '^PER-[0-9]{4}$' | tr '\n' ' ')"
+    for per in $target_pers; do
+      if ! echo " $dep_ids " | grep -qF " $per "; then
+        fail "$(basename "$f"): target persona $per missing from Dependencies header"
+      fi
+    done
+
+    # Cross-doc JTBD integrity: mapped JTBD IDs must exist and belong to a target persona.
+    # Build a map of PER-#### -> file path.
+    while IFS= read -r per; do
+      [[ -n "$per" ]] || continue
+      per_path="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" where "$per" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
+      [[ -n "${per_path:-}" ]] || fail "$(basename "$f"): persona not found in registry: $per"
+      [[ "$per_path" = /* ]] || per_path="$ROOT/$per_path"
+      [[ -f "$per_path" ]] || fail "$(basename "$f"): persona path not found: $per_path"
+      export "PER_PATH_${per//-/_}=$per_path"
+    done < <(printf "%s\n" $target_pers)
+
+    # Collect mapped JTBD IDs from boosters/relievers blocks (column 3).
+    mapped_ids="$( (echo "$gb"; echo "$pr") | grep -oE 'JTBD-(GAIN|PAIN)-[0-9]{4}-PER-[0-9]{4}' | sort -u )"
+    while IFS= read -r jtbd; do
+      [[ -n "$jtbd" ]] || continue
+      per="${jtbd##*-PER-}"
+      per="PER-$per"
+      if ! echo " $target_pers " | grep -qF " $per "; then
+        fail "$(basename "$f"): mapped JTBD ID belongs to non-target persona ($per): $jtbd"
+      fi
+      key="PER_PATH_${per//-/_}"
+      per_file="${!key:-}"
+      [[ -n "$per_file" ]] || fail "$(basename "$f"): internal error resolving persona path for $per"
+      persona_has_jtbd_id "$per_file" "$jtbd" || fail "$(basename "$f"): mapped JTBD ID not found in $per: $jtbd"
+    done <<< "$mapped_ids"
+  fi
+
   echo "OK: $f"
 }
 
@@ -182,7 +269,13 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" || -z "${1:-}" ]]; then
   exit 0
 fi
 
+if [[ "${1:-}" == "--strict" ]]; then
+  STRICT=1
+  shift
+fi
+
 if [[ "${1:-}" == "--all" ]]; then
+  if [[ "${2:-}" == "--strict" ]]; then STRICT=1; fi
   dir="$ROOT/virric/domains/product-marketing/docs/propositions"
   [[ -d "$dir" ]] || fail "Missing propositions dir: $dir"
   found=0
