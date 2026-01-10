@@ -24,6 +24,11 @@ Primary domain: `<scrum-management>`
 Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+No domain scripts yet (templates-first):
+- Use `virric/domains/scrum-management/templates/issue.md` for ISSUE mirror docs when/if you mirror operational state into the repo.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the ISSUE mirror artifact listing:

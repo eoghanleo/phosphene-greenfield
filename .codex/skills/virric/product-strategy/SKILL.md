@@ -25,6 +25,11 @@ Primary domain: `<product-strategy>`
 Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+No domain scripts yet (templates-first):
+- Use `virric/domains/product-strategy/templates/product-roadmap.md` and write ROADMAP artifacts directly (then add a `DONE.json` receipt if desired).
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to the ROADMAP artifact listing:

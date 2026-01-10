@@ -38,6 +38,13 @@ Some templates/artifacts include fenced code blocks that begin with:
 
 Search for `[V-SCRIPT]` when scanning an artifact to discover the relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+This core skill does not define a large control-script surface itself; it defines **conventions** and points you to domain skills.
+
+Useful core entrypoint:
+- `virric/virric-core/bin/virric`: small CLI helper (banner/help) for orientation in the harness.
+
 ## Skills are mandatory in this repo
 
 This repo treats skills as a **required execution contract**, not optional context.

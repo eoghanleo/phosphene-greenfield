@@ -37,6 +37,15 @@ Auto-generated (do not edit by hand):
 Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+- `create_feature_request.sh`: Create a new FR dossier from the template (allocates folder + file).
+- `validate_feature_request.sh`: Validate FR dossier structure and repo-level FR invariants.
+- `approve_feature_request.sh`: Approve an FR by ID (status transition).
+- `update_feature_request_status.sh`: Update the status field in an FR dossier.
+- `update_backlog_tree.sh`: Regenerate `docs/backlog_tree.md` (auto-generated view).
+- `feature_request_dependency_tracker.sh`: Regenerate `docs/fr_dependencies.md` (auto-generated dependency report).
+
 ## Receipts (recommended)
 
 When completing an FR change, add a `DONE.json` receipt adjacent to the FR dossier enumerating:

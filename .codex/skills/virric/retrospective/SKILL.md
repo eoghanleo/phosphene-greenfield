@@ -25,6 +25,11 @@ Primary domain: `<retrospective>`
 Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+No domain scripts yet (templates-first):
+- Use `virric/domains/retrospective/templates/postmortem.md` and `virric/domains/retrospective/templates/playbook.md`.
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to each produced artifact listing:

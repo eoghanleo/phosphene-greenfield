@@ -65,6 +65,17 @@ Use the registry:
 Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
+## Scripts (entrypoints and purpose)
+
+- `create_research_assessment_bundle.sh`: Create a new RA bundle folder from templates; allocates the next `RA-###` if omitted.
+- `validate_research_assessment_bundle.sh`: Validate RA bundle structure, headings, cross-references, and required folders.
+- `assemble_research_assessment_bundle.sh`: Generate the assembled `RA-###.md` view from bundle parts (non-authoritative).
+- `research_id_registry.sh`: Build/validate/query the global `id_index.tsv`, and allocate the next IDs (`ra|pitch|evidence|refsol|segment|cpe|persona|proposition`).
+- `create_product_pitch.sh`: Create a new `PITCH-####` file in an RA bundle (allocates ID).
+- `add_evidence_record.sh`: Append a new EvidenceID row (`E-####`) to `50-evidence-bank.md` (allocates ID).
+- `add_reference_solution.sh`: Append a new RefSol row (`RS-####`) to `10-reference-solutions.md` (allocates ID).
+- `create_candidate_persona.sh`: Create a new Candidate Persona (`CPE-####`) doc inside an RA bundle (allocates ID).
+
 ## Receipts (recommended)
 
 When done, write `DONE.json` in the bundle root (receipt, not signal) enumerating:

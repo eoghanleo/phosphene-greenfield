@@ -44,6 +44,42 @@ JTBD IDs convention (natural keys):
 - Validate all propositions:
   - `./virric/domains/product-marketing/scripts/validate_proposition.sh --all`
 
+## Scripts (entrypoints and purpose)
+
+All scripts are **control scripts** (script-first; avoid hand-editing). Most scripts re-run validators after applying changes.
+
+### Personas (PER-*)
+
+- `create_new_persona.sh`: Create a new persona doc from the template; allocates the next `PER-####`.
+- `validate_persona.sh`: Validate persona headers/sections/JTBD tables and ID conventions.
+- `update_persona_summary.sh`: Replace the `## Snapshot summary` section.
+- `add_persona_jtbd_item.sh`: Append a new JOB/PAIN/GAIN row with the next `JTBD-<TYPE>-####-<PersonaID>`.
+- `update_persona_jtbd_item.sh`: Update an existing JTBD row by JTBD ID.
+- `add_persona_evidence_link.sh`: Add a supporting ID into EvidenceIDs / CandidatePersonaIDs / DocumentIDs (routes by prefix).
+- `remove_persona_evidence_link.sh`: Remove a supporting ID from those buckets.
+- `add_persona_related_link.sh`: Add a link under `### Links`.
+- `remove_persona_related_link.sh`: Remove a link under `### Links`.
+- `add_persona_note.sh`: Append a timestamped note entry under `## Notes`.
+- `overwrite_persona_notes.sh`: Replace the entire `## Notes` section.
+
+### Propositions (PROP-*)
+
+- `create_new_proposition.sh`: Create a new proposition doc from the template; allocates the next `PROP-####`.
+- `validate_proposition.sh`: Validate proposition headers/sections/tables and ID conventions.
+- `update_proposition_formal_pitch.sh`: Replace the `## Formal Pitch` section (keeps the `[V-SCRIPT]` block).
+- `add_proposition_target_persona.sh`: Add a `PER-####` bullet under `## Target Persona(s)`.
+- `remove_proposition_target_persona.sh`: Remove a `PER-####` bullet from that list.
+- `add_proposition_related_segment.sh`: Add a `SEG-####` bullet under `## Related Segment(s)`.
+- `remove_proposition_related_segment.sh`: Remove a `SEG-####` bullet from that list.
+- `add_proposition_gain_booster.sh`: Add a `BOOST-####-PROP-####` row and mapped `JTBD-GAIN-####-PER-####` list.
+- `update_proposition_gain_booster.sh`: Update a booster row by BoosterID.
+- `add_proposition_pain_reliever.sh`: Add a `REL-####-PROP-####` row and mapped `JTBD-PAIN-####-PER-####` list.
+- `update_proposition_pain_reliever.sh`: Update a reliever row by RelieverID.
+- `add_proposition_capability.sh`: Add a `CAP-####-PROP-####` row with type `feature|function|standard|experience`.
+- `update_proposition_capability.sh`: Update a capability row by CapabilityID.
+- `add_proposition_note.sh`: Append a timestamped note entry under `## Notes`.
+- `overwrite_proposition_notes.sh`: Replace the entire `## Notes` section.
+
 ## Script helpers (optional)
 
 - Add a JOB/PAIN/GAIN JTBD row (auto-allocates the next local #### and appends `-PER-####`):
