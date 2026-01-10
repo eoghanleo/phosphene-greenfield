@@ -10,6 +10,9 @@ Canonical locations:
   - `virric/domains/product-marketing/docs/personas/`
   - `virric/domains/product-marketing/docs/propositions/`
 
+Validation (recommended):
+- `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
+
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.
 - **To Product Management** with positioning that must be reflected in the spec.

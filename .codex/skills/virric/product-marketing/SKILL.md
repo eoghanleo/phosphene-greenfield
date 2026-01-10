@@ -23,6 +23,13 @@ Primary domain: `<product-marketing>`
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 
+## Validation (recommended)
+
+- Validate a persona:
+  - `./virric/domains/product-marketing/scripts/validate_persona.sh virric/domains/product-marketing/docs/personas/PER-0001.md`
+- Validate all personas:
+  - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
+
 ## Receipts (recommended)
 
 Write a `DONE.json` receipt adjacent to each produced artifact listing:
