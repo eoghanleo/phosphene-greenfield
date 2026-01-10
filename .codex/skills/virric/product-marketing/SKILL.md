@@ -37,8 +37,12 @@ JTBD IDs convention (natural keys):
 
 - Validate a persona:
   - `./virric/domains/product-marketing/scripts/validate_persona.sh virric/domains/product-marketing/docs/personas/PER-0001.md`
+- Validate a proposition:
+  - `./virric/domains/product-marketing/scripts/validate_proposition.sh virric/domains/product-marketing/docs/propositions/PROP-0001.md`
 - Validate all personas:
   - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
+- Validate all propositions:
+  - `./virric/domains/product-marketing/scripts/validate_proposition.sh --all`
 
 ## Script helpers (optional)
 
@@ -65,6 +69,29 @@ For repeatability, prefer using these scripts instead of manual edits:
 - Notes:
   - `./virric/domains/product-marketing/scripts/add_persona_note.sh --persona ... --note "..." `
   - `./virric/domains/product-marketing/scripts/overwrite_persona_notes.sh --persona ... --notes-file /path/to/notes.md`
+
+### Propositions (PROP-*)
+
+- Create a new proposition:
+  - `./virric/domains/product-marketing/scripts/create_new_proposition.sh --title "..." --dependencies "PER-0001,RA-001"`
+- Formal pitch:
+  - `./virric/domains/product-marketing/scripts/update_proposition_formal_pitch.sh --proposition ... --pitch "Our <capabilities> help ..."`
+- Target personas / related segments:
+  - `./virric/domains/product-marketing/scripts/add_proposition_target_persona.sh --proposition ... --persona PER-0001`
+  - `./virric/domains/product-marketing/scripts/remove_proposition_target_persona.sh --proposition ... --persona PER-0001`
+  - `./virric/domains/product-marketing/scripts/add_proposition_related_segment.sh --proposition ... --segment SEG-0001`
+  - `./virric/domains/product-marketing/scripts/remove_proposition_related_segment.sh --proposition ... --segment SEG-0001`
+- Gain boosters / pain relievers:
+  - `./virric/domains/product-marketing/scripts/add_proposition_gain_booster.sh --proposition ... --booster "..." --mapped-gains "JTBD-GAIN-0001-PER-0001"`
+  - `./virric/domains/product-marketing/scripts/update_proposition_gain_booster.sh --proposition ... --booster-id BOOST-0001-PROP-0001 --mapped-gains "..."`
+  - `./virric/domains/product-marketing/scripts/add_proposition_pain_reliever.sh --proposition ... --reliever "..." --mapped-pains "JTBD-PAIN-0001-PER-0001"`
+  - `./virric/domains/product-marketing/scripts/update_proposition_pain_reliever.sh --proposition ... --reliever-id REL-0001-PROP-0001 --mapped-pains "..."`
+- Capabilities:
+  - `./virric/domains/product-marketing/scripts/add_proposition_capability.sh --proposition ... --type feature --capability "..."`
+  - `./virric/domains/product-marketing/scripts/update_proposition_capability.sh --proposition ... --capability-id CAP-0001-PROP-0001 --type experience --capability "..."`
+- Notes:
+  - `./virric/domains/product-marketing/scripts/add_proposition_note.sh --proposition ... --note "..." `
+  - `./virric/domains/product-marketing/scripts/overwrite_proposition_notes.sh --proposition ... --notes-file /path/to/notes.md`
 
 ## Receipts (recommended)
 

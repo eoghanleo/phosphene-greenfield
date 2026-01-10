@@ -12,6 +12,7 @@ Canonical locations:
 
 Validation (recommended):
 - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
+- `./virric/domains/product-marketing/scripts/validate_proposition.sh --all`
 
 JTBD IDs convention (natural keys):
 - In persona Jobs/Pains/Gains tables, use: `JTBD-<TYPE>-####-<PersonaID>`

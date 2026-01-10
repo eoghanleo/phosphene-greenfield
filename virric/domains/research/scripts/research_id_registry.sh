@@ -13,13 +13,14 @@ set -euo pipefail
 #   - Segment IDs: 40-hypotheses.md segment table first column (SEG-####) (research hypotheses; stable IDs)
 #   - Candidate Persona IDs: files named CPE-*.md (ID: CPE-####) (research → marketing handoff candidates)
 #   - Persona IDs: files named PER-*.md (ID: PER-####) (canonical personas live in <product-marketing>)
+#   - Proposition IDs: files named PROP-*.md (ID: PROP-####) (canonical propositions live in <product-marketing>)
 #
 # This avoids false “duplicates” from assembled views (RA-###.md) and raw dumps.
 #
 # Commands:
 #   build                Build/refresh index TSV (default)
 #   validate             Fail if duplicate authoritative definitions exist
-#   next --type <t>      Print next legal ID for type (ra|pitch|evidence|refsol|segment|persona)
+#   next --type <t>      Print next legal ID for type (ra|pitch|evidence|refsol|segment|cpe|persona|proposition)
 #   where <ID>           Print authoritative path(s) for an ID (any type)
 #
 # Output:
@@ -39,7 +40,7 @@ Usage:
   ./virric/domains/research/scripts/research_id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
-  ra | pitch | evidence | refsol | segment | cpe | persona
+  ra | pitch | evidence | refsol | segment | cpe | persona | proposition
 EOF
 }
 
@@ -111,6 +112,17 @@ build_index() {
         fi
         if [[ -n "${per_id:-}" ]]; then
           printf "persona\t%s\t%s\n" "$per_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      PROP-*.md)
+        # Canonical propositions (product-marketing): prefer ID line; fall back to filename.
+        prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        if [[ -z "${prop_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^PROP-[0-9]{4}$ ]]; then prop_id="$base"; fi
+        fi
+        if [[ -n "${prop_id:-}" ]]; then
+          printf "proposition\t%s\t%s\n" "$prop_id" "$rel" >> "$tmp"
         fi
         ;;
       PITCH-*.md)
@@ -205,6 +217,11 @@ next_id() {
       max="$(awk -F'\t' '$1=="persona"{ sub(/^PER-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
       next=$((max + 1))
       printf "PER-%04d\n" "$next"
+      ;;
+    proposition)
+      max="$(awk -F'\t' '$1=="proposition"{ sub(/^PROP-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "PROP-%04d\n" "$next"
       ;;
     *)
       echo "Error: unknown type: $t" >&2
