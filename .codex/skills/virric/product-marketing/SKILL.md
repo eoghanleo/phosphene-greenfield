@@ -130,10 +130,12 @@ You must not write `DONE.json` until:
 
 - All validators are green (and strict variants if required by the run).
 - The **coverage targets** above are met (or explicitly justified).
+- The value-space mining score meets the threshold (see below).
 - Your `DONE.json` includes:
   - counts per persona: Jobs/Pains/Gains
   - counts per proposition: boosters/relievers/capabilities
   - a checklist note stating how each qualitative axis was addressed (reference PROP IDs)
+  - the score report (overall + subscores) and a short “next actions” note if any subscores are low.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -155,6 +157,8 @@ JTBD IDs convention (natural keys):
   - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
 - Validate all propositions:
   - `./virric/domains/product-marketing/scripts/validate_proposition.sh --all`
+- Domain done score (programmatic; no generation):
+  - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <MIN>`
 
 ## Scripts (entrypoints and purpose)
 
@@ -191,6 +195,7 @@ All scripts are **control scripts** (script-first; avoid hand-editing). Most scr
 - `update_proposition_capability.sh`: Update a capability row by CapabilityID.
 - `add_proposition_note.sh`: Append a timestamped note entry under `## Notes`.
 - `overwrite_proposition_notes.sh`: Replace the entire `## Notes` section.
+- `product-marketing-domain-done-score.sh`: Compute a programmatic domain done score for breadth/depth/interconnection across all PER/PROP outputs; prints subscores and next actions.
 
 ## Script helpers (optional)
 

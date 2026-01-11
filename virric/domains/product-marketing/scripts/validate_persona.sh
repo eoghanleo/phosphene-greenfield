@@ -249,7 +249,9 @@ validate_file() {
 
       # Evidence row CPE scope check:
       # If evidence row lists one or more CPEs, require intersection with persona CandidatePersonaIDs.
-      row_cpe="$(evidence_row_candidate_personas "$eid" | grep -oE 'CPE-[0-9]{4}' | tr '\n' ' ')"
+      # Note: grep returns exit code 1 on no matches; under set -euo pipefail that would abort strict validation.
+      # Empty evidence CPE scope is valid (general evidence), so treat it as empty list.
+      row_cpe="$( (evidence_row_candidate_personas "$eid" | grep -oE 'CPE-[0-9]{4}' || true) | tr '\n' ' ')"
       if [[ -n "${row_cpe:-}" && -n "${cpes:-}" ]]; then
         ok=0
         for x in $row_cpe; do
