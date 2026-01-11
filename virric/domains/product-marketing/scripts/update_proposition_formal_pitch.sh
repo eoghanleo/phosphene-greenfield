@@ -53,11 +53,14 @@ else
   CONTENT="$PITCH"
 fi
 
-PROP_PATH="$PROP" NEW_BLOCK="$CONTENT" python3 - <<'PY'
+TMP_OUT="$(mktemp)"
+set +e
+PROP_PATH="$PROP" OUT_PATH="$TMP_OUT" NEW_BLOCK="$CONTENT" python3 - <<'PY'
 import os, sys
 from pathlib import Path
 
 p = Path(os.environ["PROP_PATH"])
+out_path = Path(os.environ["OUT_PATH"])
 new_block = os.environ["NEW_BLOCK"].rstrip("\n") + "\n"
 
 text = p.read_text(encoding="utf-8")
@@ -67,6 +70,30 @@ def find_line_exact(s):
   for i, ln in enumerate(lines):
     if ln.rstrip("\n") == s:
       return i
+  return None
+
+def assert_balanced_fences(s: str, label: str):
+  n = sum(1 for ln in s.splitlines() if ln.startswith("```"))
+  if n % 2 != 0:
+    print(f"FAIL: {p.name}: {label} contains an unbalanced ``` fence count", file=sys.stderr)
+    sys.exit(1)
+
+def extract_vscript_block(start: int, end: int):
+  i = start + 1
+  while i < end and lines[i].strip() == "":
+    i += 1
+  if i < end and lines[i].startswith("```"):
+    j = i
+    block = [lines[j]]
+    j += 1
+    while j < end:
+      block.append(lines[j])
+      if lines[j].startswith("```"):
+        j += 1
+        break
+      j += 1
+    if any("[V-SCRIPT]:" in ln for ln in block):
+      return block
   return None
 
 start = find_line_exact("## Formal Pitch")
@@ -80,34 +107,46 @@ for i in range(start + 1, len(lines)):
     end = i
     break
 
-# Keep any [V-SCRIPT] fenced block at the top of the section, then replace the rest.
+vscript = extract_vscript_block(start, end)
+if vscript is None:
+  vscript = [
+    "```text\n",
+    "[V-SCRIPT]:\n",
+    "update_proposition_formal_pitch.sh\n",
+    "```\n",
+  ]
+
+assert_balanced_fences(new_block, "formal pitch content")
+
+# Keep (or reinsert) the [V-SCRIPT] block at the top of the section, then replace the rest.
 out = []
 out.extend(lines[: start + 1])
 out.append("\n")
-
-i = start + 1
-while i < end and lines[i].strip() == "":
-  i += 1
-
-if i < end and lines[i].startswith("```"):
-  # copy fenced block verbatim
-  while i < end:
-    out.append(lines[i])
-    if lines[i].startswith("```") and i != start + 1:
-      # end fence
-      i += 1
-      break
-    i += 1
-  out.append("\n")
-
+out.extend(vscript)
+out.append("\n")
 out.append(new_block if new_block.strip() else "\n")
 out.append("\n")
 out.extend(lines[end:])
 
-p.write_text("".join(out), encoding="utf-8")
-print(f"Updated formal pitch: {p}")
+out_path.write_text("".join(out), encoding="utf-8")
+print(f"Updated formal pitch -> {out_path}")
 PY
 
-"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
-echo "OK: validated $PROP"
+py_rc=$?
+if [[ $py_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $py_rc
+fi
+
+"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null
+val_rc=$?
+if [[ $val_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $val_rc
+fi
+
+mv "$TMP_OUT" "$PROP"
+set -e
+
+echo "OK: strict-validated $PROP"
 

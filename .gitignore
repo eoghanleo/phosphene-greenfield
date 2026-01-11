@@ -6,3 +6,7 @@
 # Cursor IDE metadata
 .cursor/
 
+
+# Local-only harness prompts / design notes (avoid contaminating agent test runs)
+/PARAMETER_PROMPT.md
+/VIRRIC_STATE_MACHINE_WORKING.md

@@ -91,6 +91,17 @@ validate_file() {
   local f="$1"
   [[ -f "$f" ]] || fail "Not a file: $f"
 
+  # Helper to extract lines between a heading and next '## ' heading
+  extract_block() {
+    local heading="$1"
+    awk -v heading="$heading" '
+      BEGIN { inside=0; }
+      $0 == heading { inside=1; next; }
+      inside && $0 ~ /^## / { exit; }
+      inside { print; }
+    ' "$f"
+  }
+
   local head
   head="$(head -n 30 "$f")"
   echo "$head" | grep -qE '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' || fail "$(basename "$f"): missing/invalid 'ID: PROP-####'"
@@ -123,17 +134,6 @@ validate_file() {
   do
     grep -qF "$h" "$f" || fail "$(basename "$f"): missing section '$h'"
   done
-
-  # Helper to extract lines between a heading and next '## ' heading
-  extract_block() {
-    local heading="$1"
-    awk -v heading="$heading" '
-      BEGIN { inside=0; }
-      $0 == heading { inside=1; next; }
-      inside && $0 ~ /^## / { exit; }
-      inside { print; }
-    ' "$f"
-  }
 
   # Target personas: must be bullet lines with PER-#### (ignore V-SCRIPT blocks and blank lines)
   tp="$(extract_block "## Target Persona(s)")"
@@ -227,7 +227,9 @@ validate_file() {
   if [[ "$STRICT" -eq 1 ]]; then
     # Internal consistency: Target personas must be listed in Dependencies.
     dep_ids="$(dependencies_ids "$f" | tr '\n' ' ')"
-    target_pers="$(extract_bullets_under_h2 "$f" "## Target Persona(s)" | grep -E '^PER-[0-9]{4}$' | tr '\n' ' ')"
+    # Note: grep returns 1 when no matches; allow empty target persona list in draft.
+    target_pers="$(extract_bullets_under_h2 "$f" "## Target Persona(s)" | grep -E '^PER-[0-9]{4}$' || true)"
+    target_pers="$(printf "%s\n" "$target_pers" | tr '\n' ' ')"
     for per in $target_pers; do
       if ! echo " $dep_ids " | grep -qF " $per "; then
         fail "$(basename "$f"): target persona $per missing from Dependencies header"
@@ -246,7 +248,9 @@ validate_file() {
     done < <(printf "%s\n" $target_pers)
 
     # Collect mapped JTBD IDs from boosters/relievers blocks (column 3).
-    mapped_ids="$( (echo "$gb"; echo "$pr") | grep -oE 'JTBD-(GAIN|PAIN)-[0-9]{4}-PER-[0-9]{4}' | sort -u )"
+    # Note: grep returns 1 when no matches; allow empty mapped JTBD list in draft.
+    mapped_ids="$( (echo "$gb"; echo "$pr") | grep -oE 'JTBD-(GAIN|PAIN)-[0-9]{4}-PER-[0-9]{4}' || true)"
+    mapped_ids="$(printf "%s\n" "$mapped_ids" | sort -u)"
     while IFS= read -r jtbd; do
       [[ -n "$jtbd" ]] || continue
       per="${jtbd##*-PER-}"

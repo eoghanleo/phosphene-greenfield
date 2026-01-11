@@ -45,11 +45,14 @@ if [[ "$NOTES_FILE" != /* ]]; then NOTES_FILE="$ROOT/$NOTES_FILE"; fi
 
 CONTENT="$(cat "$NOTES_FILE")"
 
-PERSONA_PATH="$PERSONA" NEW_NOTES="$CONTENT" python3 - <<'PY'
+TMP_OUT="$(mktemp)"
+set +e
+PERSONA_PATH="$PERSONA" OUT_PATH="$TMP_OUT" NEW_NOTES="$CONTENT" python3 - <<'PY'
 import os, sys
 from pathlib import Path
 
 p = Path(os.environ["PERSONA_PATH"])
+out_path = Path(os.environ["OUT_PATH"])
 new_notes = os.environ["NEW_NOTES"].rstrip("\n") + "\n"
 
 text = p.read_text(encoding="utf-8")
@@ -60,6 +63,30 @@ def find_line_exact(s):
     if ln.rstrip("\n") == s:
       return i
   return None
+
+def extract_vscript_block(start: int, end: int):
+  i = start + 1
+  while i < end and lines[i].strip() == "":
+    i += 1
+  if i < end and lines[i].startswith("```"):
+    j = i
+    block = [lines[j]]
+    j += 1
+    while j < end:
+      block.append(lines[j])
+      if lines[j].startswith("```"):
+        j += 1
+        break
+      j += 1
+    if any("[V-SCRIPT]:" in ln for ln in block):
+      return block
+  return None
+
+def assert_balanced_fences(s: str, label: str):
+  n = sum(1 for ln in s.splitlines() if ln.startswith("```"))
+  if n % 2 != 0:
+    print(f"FAIL: {p.name}: {label} contains an unbalanced ``` fence count", file=sys.stderr)
+    sys.exit(1)
 
 start = find_line_exact("## Notes")
 if start is None:
@@ -72,17 +99,46 @@ for i in range(start + 1, len(lines)):
     end = i
     break
 
+vscript = extract_vscript_block(start, end)
+if vscript is None:
+  vscript = [
+    "```text\n",
+    "[V-SCRIPT]:\n",
+    "add_persona_note.sh\n",
+    "overwrite_persona_notes.sh\n",
+    "```\n",
+  ]
+
+assert_balanced_fences(new_notes, "notes content")
+
 out = []
 out.extend(lines[: start + 1])
+out.append("\n")
+out.extend(vscript)
 out.append("\n")
 out.append(new_notes if new_notes.strip() else "\n")
 out.append("\n")
 out.extend(lines[end:])
 
-p.write_text("".join(out), encoding="utf-8")
-print(f"Overwrote notes -> {p}")
+out_path.write_text("".join(out), encoding="utf-8")
+print(f"Overwrote notes -> {out_path}")
 PY
 
-"$ROOT/virric/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
-echo "OK: validated $PERSONA"
+py_rc=$?
+if [[ $py_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $py_rc
+fi
+
+"$ROOT/virric/domains/product-marketing/scripts/validate_persona.sh" --strict "$TMP_OUT" >/dev/null
+val_rc=$?
+if [[ $val_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $val_rc
+fi
+
+mv "$TMP_OUT" "$PERSONA"
+set -e
+
+echo "OK: strict-validated $PERSONA"
 

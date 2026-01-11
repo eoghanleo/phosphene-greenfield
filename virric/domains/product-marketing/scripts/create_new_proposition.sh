@@ -134,6 +134,58 @@ txt = re.sub(r"-PROP-\d{4}\b", f"-{pid}", txt)
 p.write_text(txt, encoding="utf-8")
 PY
 
-"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" "$OUT" >/dev/null
+# Remove template placeholder bullet items in Target Persona(s) / Related Segment(s) (keep structure + [V-SCRIPT] blocks).
+PROP_PATH="$OUT" python3 - <<'PY'
+import re
+from pathlib import Path
+import os
+
+p = Path(os.environ["PROP_PATH"])
+lines = p.read_text(encoding="utf-8").splitlines(True)
+
+targets = {
+  "## Target Persona(s)": re.compile(r"^\-\s+PER-\d{4}\s*$"),
+  "## Related Segment(s)": re.compile(r"^\-\s+SEG-\d{4}\s*$"),
+}
+
+def section_bounds(h: str):
+  start = None
+  for i, ln in enumerate(lines):
+    if ln.rstrip("\n") == h:
+      start = i
+      break
+  if start is None:
+    return None, None
+  end = len(lines)
+  for j in range(start + 1, len(lines)):
+    if lines[j].startswith("## "):
+      end = j
+      break
+  return start, end
+
+for h, pat in targets.items():
+  start, end = section_bounds(h)
+  if start is None:
+    continue
+  block = lines[start:end]
+  new_block = []
+  for ln in block:
+    if pat.match(ln.rstrip("\n")):
+      continue
+    new_block.append(ln)
+  lines[start:end] = new_block
+
+p.write_text("".join(lines), encoding="utf-8")
+PY
+
+# Validate (strict: scripts must not create strict-invalid artifacts)
+set +e
+"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" --strict "$OUT" >/dev/null
+rc=$?
+set -e
+if [[ $rc -ne 0 ]]; then
+  rm -f "$OUT" || true
+  exit $rc
+fi
 echo "Created proposition: $OUT"
 

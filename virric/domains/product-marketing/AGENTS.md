@@ -17,6 +17,51 @@ To maximize repeatable performance and reduce formatting faults:
 - Use the domain scripts under `virric/domains/product-marketing/scripts/` to create and modify artifacts.
 - Always run validators after mutations (most scripts do this automatically).
 
+## Objective: value proposition design (creative analytical; opinionated)
+
+Your job in `<product-marketing>` is **value proposition design**, not product specification.
+
+- **Creative + analytical**: maximize structured value opportunity in the problem space; let downstream domains refine into strategy/roadmap/spec/backlog.
+- **Above feature, below product**: propositions are capability-level and outcome-level (not implementation plans).
+- **Many is good**: produce **as many propositions as possible** that can be mapped to the persona pool. Overlap and synergy are expected.
+
+### Non-negotiable behavior: recursive value-space mining
+
+Do not do a single pass.
+
+- Promote CPE→PER and PITCH→PROP **only as the first pass**.
+- Then **loop**:
+  - expand JTBD coverage per persona,
+  - expand the persona pool where justified (splits/merges/missing implied personas),
+  - generate many overlapping propositions,
+  - strengthen mapping density between propositions and JTBD IDs.
+- Only write `DONE.json` after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist).
+
+### Persona scope (you may extend beyond research candidates)
+
+Research provides `CPE-*` as candidate personas. You may create additional `PER-*` personas when they are a justified extension of the research bundle (split/merge/missing role/context).
+
+Traceability expectations for any `PER-*` you create:
+- Link upstream sources via the persona’s `## Evidence and links` section:
+  - `CandidatePersonaIDs`: the CPE(s) you promoted/extended (when applicable)
+  - `DocumentIDs`: RA + pitch IDs you used
+  - `EvidenceIDs`: specific evidence rows supporting key claims (when applicable)
+- If a persona is mostly inferred, state that explicitly in `## Notes` and explain the inference from bundle facts.
+
+### Proposition scope (be exhaustive; map to personas)
+
+For each `PROP-*`:
+- Add explicit **Target Persona(s)** (PER IDs).
+- Map boosters/relievers to persona JTBD IDs (so propositions are machine-linkable and downstream-usable).
+- Keep capabilities at the capability level (`feature|function|standard|experience`) and avoid drifting into detailed specs.
+
+### Proposition abstraction guardrail (avoid “whole product” propositions)
+
+Propositions must be **aggregateable** by downstream agents into product visions and PRDs.
+
+- Avoid propositions that are really “a full product alternative”.
+- Prefer multiple smaller propositions that share capabilities/relievers/boosters and can be recombined.
+
 ## In-doc script hints (`[V-SCRIPT]`)
 
 Persona/proposition templates may include fenced code blocks that begin with `[V-SCRIPT]:`.

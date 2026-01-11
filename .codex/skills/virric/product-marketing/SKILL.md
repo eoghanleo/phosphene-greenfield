@@ -23,6 +23,118 @@ Primary domain: `<product-marketing>`
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 
+## Value proposition design stance (opinionated; central)
+
+You are doing **value proposition design** (VPD): a **creative analytical** role that maximizes structured opportunity in the problem space.
+
+### Personas: you may extend beyond research candidates (required creativity)
+
+- You are **allowed to create new personas** beyond the `CPE-*` candidates **if** you can justify them as:
+  - a split (one CPE decomposed into multiple distinct needs/contexts),
+  - a merge (multiple CPEs synthesized into a single canonical persona),
+  - a missing-but-implied role/context that is a sensible extension of the research bundle.
+- “Common sense” and latent product-marketing knowledge are **allowed and expected**. Do not pretend research is exhaustive.
+- **Traceability requirement** (non-negotiable): every new/extended `PER-*` must record its rationale and provenance:
+  - link upstream `CPE-*` where applicable (CandidatePersonaIDs),
+  - link upstream RA + pitch IDs (DocumentIDs),
+  - link supporting `E-*` where applicable (EvidenceIDs),
+  - if a persona is primarily inferred, say so explicitly in `## Notes` and explain what bundle facts it extends.
+
+### Propositions: not a product spec; be exhaustive and overlapping
+
+- A value proposition is **above features** but **below the product**.
+- Propositions should be **overlapping and synergistic**. Overlap is a feature, not a bug.
+- The goal is to produce **as many distinct propositions as possible**, mapped to the persona pool:
+  - cover different combinations of the same persona’s top Jobs/Pains/Gains,
+  - cover different mechanisms/angles for the same pain/gain set,
+  - cover different persona subsets (single persona vs multi-persona propositions).
+- Do **not** collapse into implementation detail. Downstream domains (strategy/roadmap/feature-management) will refine into product specifics.
+
+### Proposition abstraction level (anti-pattern guardrail)
+
+Your propositions must be **aggregateable** by downstream agents into product visions and PRDs:
+
+- A `PROP-*` is **not** “an entire product idea” or “a competitor replacement”.
+- A `PROP-*` should read like an **outcome + mechanism stack** that could be combined with other propositions:
+  - If a proposition implicitly requires a full standalone product, split it into multiple smaller propositions that can be recombined.
+  - Prefer multiple propositions that share capabilities/boosters/relievers over one monolith.
+
+### How to “map” propositions (make them mechanically useful downstream)
+
+- Ensure each `PROP-*` has explicit **Target Persona(s)** (PER IDs).
+- Ensure boosters/relievers map to the target persona’s JTBD IDs:
+  - `MappedGainIDs[]`: `JTBD-GAIN-####-PER-####`
+  - `MappedPainIDs[]`: `JTBD-PAIN-####-PER-####`
+- Capabilities should remain **capability-level** (`feature|function|standard|experience`), not “spec backlog items”.
+
+## Recursive iteration mandate (non-negotiable)
+
+This domain is only valuable when you **recursively map the value space**.
+
+- **Do not stop** at a single-pass “promote CPE → PER” and “promote PITCH → PROP”.
+- You must loop until you can reasonably claim you’ve mined the problem space:
+  - expand personas (splits/merges/missing implied personas),
+  - expand JTBD coverage per persona,
+  - expand propositions (many overlapping),
+  - expand mappings (each prop maps to multiple JTBDs for its target personas).
+
+## Coverage targets (minimum gates; report in DONE.json)
+
+These are **minimum** gates intended to force multi-pass enrichment. If you cannot meet them due to limited upstream evidence, you must:
+- still perform the iterations, and
+- explicitly justify the shortfall in `DONE.json` (what prevented it; what would be needed).
+
+### Personas (PER-*) — minimum per persona
+
+- **JTBD coverage**:
+  - at least **5 Jobs**
+  - at least **5 Pains**
+  - at least **5 Gains**
+- **Traceability**:
+  - at least **2** items across EvidenceIDs/CandidatePersonaIDs/DocumentIDs combined (more is better)
+  - if an item is inferred, record the inference in `## Notes` (and keep speculative claims out of “authoritative voice”).
+
+### Propositions (PROP-*) — minimum per proposition
+
+- **Targeting**:
+  - at least **1** Target Persona
+  - at least **1** Related Segment (if segments exist upstream; otherwise justify)
+- **Mechanism tables**:
+  - at least **4** Gain Boosters rows
+  - at least **4** Pain Relievers rows
+  - at least **4** Capabilities rows
+- **Mapping density**:
+  - each booster should map to **2+** gains when possible
+  - each reliever should map to **2+** pains when possible
+
+### Proposition breadth — minimum per persona
+
+- For each canonical persona you output, produce at least:
+  - **3** propositions that target that persona (can be overlapping, can be shared with other personas).
+
+## Value-space mining checklist (qualitative; must be covered)
+
+You must be able to point to propositions/persona JTBDs that cover each axis below (where applicable):
+
+- **Benefit stacks**: different “bundles” of gains + pains (not just the pitch’s primary framing)
+- **Packaging**: lightweight vs heavyweight experience, guided vs autonomous, casual vs deep
+- **Risk / objections**: trust, accuracy, time cost, learning curve, sunk cost, privacy
+- **Acquisition contexts**: where/when the persona discovers the proposition (storefront, community, creator content, referrals)
+- **Monetization contexts**: free vs subscription vs IAP; “what are they paying for?” (without writing a full pricing spec)
+- **Segment edges**: adjacent segments and “why it does/doesn’t fit” boundaries
+- **Synergies**: propositions that reinforce each other vs propositions that compete for attention
+
+## Definition of done (domain-specific, producing mode)
+
+You must not write `DONE.json` until:
+
+- All validators are green (and strict variants if required by the run).
+- The **coverage targets** above are met (or explicitly justified).
+- Your `DONE.json` includes:
+  - counts per persona: Jobs/Pains/Gains
+  - counts per proposition: boosters/relievers/capabilities
+  - a checklist note stating how each qualitative axis was addressed (reference PROP IDs)
+
 ## In-doc script hints (`[V-SCRIPT]`)
 
 Persona templates include fenced code blocks that begin with `[V-SCRIPT]:` listing the relevant script entrypoints for that section.

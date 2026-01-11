@@ -42,16 +42,30 @@ done
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" ITEM="$PER" HEADING="## Target Persona(s)" python3 - <<'PY'
+TMP_OUT="$(mktemp)"
+set +e
+PROP_PATH="$PROP" OUT_PATH="$TMP_OUT" ITEM="$PER" HEADING="## Target Persona(s)" python3 - <<'PY'
 import os, re
 from pathlib import Path
 
 p = Path(os.environ["PROP_PATH"])
+out_path = Path(os.environ["OUT_PATH"])
 item = os.environ["ITEM"].strip()
 heading = os.environ["HEADING"]
 
 txt = p.read_text(encoding="utf-8")
 lines = txt.splitlines(True)
+
+def remove_from_dependencies(item_id: str):
+  for i, ln in enumerate(lines[:60]):
+    if ln.startswith("Dependencies:"):
+      raw = ln.split(":", 1)[1]
+      parts = [x.strip() for x in raw.split(",") if x.strip()]
+      parts = [x for x in parts if x != item_id]
+      new = ", ".join(parts)
+      lines[i] = f"Dependencies: {new}\n"
+      return
+  # If missing Dependencies:, leave (validator will catch).
 
 def find_line_exact(s):
   for i, ln in enumerate(lines):
@@ -76,10 +90,26 @@ for ln in block:
   new_block.append(ln)
 
 lines[start:end] = new_block
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Removed target persona {item} ({removed} occurrence(s)) -> {p}")
+remove_from_dependencies(item)
+out_path.write_text("".join(lines), encoding="utf-8")
+print(f"Removed target persona {item} ({removed} occurrence(s)) -> {out_path}")
 PY
 
-"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
-echo "OK: validated $PROP"
+py_rc=$?
+if [[ $py_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $py_rc
+fi
+
+"$ROOT/virric/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null
+val_rc=$?
+if [[ $val_rc -ne 0 ]]; then
+  rm -f "$TMP_OUT"
+  exit $val_rc
+fi
+
+mv "$TMP_OUT" "$PROP"
+set -e
+
+echo "OK: strict-validated $PROP"
 

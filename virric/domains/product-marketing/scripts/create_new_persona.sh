@@ -135,7 +135,53 @@ txt = re.sub(r"-PER-\d{4}\b", f"-{pid}", txt)
 p.write_text(txt, encoding="utf-8")
 PY
 
-# Validate
-"$ROOT/virric/domains/product-marketing/scripts/validate_persona.sh" "$OUT" >/dev/null
+# Remove template placeholder bullet items in Evidence and links subsections (keep structure + [V-SCRIPT] blocks).
+PERSONA_PATH="$OUT" python3 - <<'PY'
+import re
+from pathlib import Path
+import os
+
+p = Path(os.environ["PERSONA_PATH"])
+lines = p.read_text(encoding="utf-8").splitlines(True)
+
+targets = {
+  "### EvidenceIDs",
+  "### CandidatePersonaIDs",
+  "### DocumentIDs",
+  "### Links",
+}
+
+out = []
+i = 0
+while i < len(lines):
+  ln = lines[i]
+  out.append(ln)
+  if ln.rstrip("\n") in targets:
+    i += 1
+    # Copy through any [V-SCRIPT] fenced block(s) and blank lines; remove bullet lines until next heading.
+    while i < len(lines):
+      cur = lines[i]
+      if cur.startswith("### ") or cur.startswith("## "):
+        break
+      if re.match(r"^\-\s+", cur):
+        i += 1
+        continue
+      out.append(cur)
+      i += 1
+    continue
+  i += 1
+
+p.write_text("".join(out), encoding="utf-8")
+PY
+
+# Validate (strict: scripts must not create strict-invalid artifacts)
+set +e
+"$ROOT/virric/domains/product-marketing/scripts/validate_persona.sh" --strict "$OUT" >/dev/null
+rc=$?
+set -e
+if [[ $rc -ne 0 ]]; then
+  rm -f "$OUT" || true
+  exit $rc
+fi
 echo "Created persona: $OUT"
 
