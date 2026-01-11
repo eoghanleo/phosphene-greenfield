@@ -98,8 +98,6 @@ CORPUS_CLEAN_TXT="$tmp/corpus_clean.txt" # cleaned corpus (no IDs/tags/paths/scr
 
 sum_words=0
 sum_chars=0
-placeholder_notes=0
-placeholder_any=0
 
 sum_boosters=0
 sum_relievers=0
@@ -198,9 +196,6 @@ for f in "${PERSONA_FILES[@]:-}"; do
   sum_words=$((sum_words + words))
   sum_chars=$((sum_chars + chars))
 
-  if grep -qF '<free-form notes>' "$f"; then placeholder_notes=$((placeholder_notes + 1)); fi
-  if grep -qF '<...>' "$f" || grep -qF '<free-form notes>' "$f"; then placeholder_any=$((placeholder_any + 1)); fi
-
   jobs="$(grep -cE "^[|][[:space:]]*JTBD-JOB-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
   pains="$(grep -cE "^[|][[:space:]]*JTBD-PAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
   gains="$(grep -cE "^[|][[:space:]]*JTBD-GAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
@@ -253,9 +248,6 @@ for f in "${PROP_FILES[@]:-}"; do
   chars="$(wc -c < "$f" | awk '{print $1}')"
   sum_words=$((sum_words + words))
   sum_chars=$((sum_chars + chars))
-
-  if grep -qF '<free-form notes>' "$f"; then placeholder_notes=$((placeholder_notes + 1)); fi
-  if grep -qF '<...>' "$f" || grep -qF '<free-form notes>' "$f"; then placeholder_any=$((placeholder_any + 1)); fi
 
   boosters="$(grep -cE "^[|][[:space:]]*BOOST-[0-9]{4}-${prop_id}[[:space:]]*[|]" "$f" || true)"
   relievers="$(grep -cE "^[|][[:space:]]*REL-[0-9]{4}-${prop_id}[[:space:]]*[|]" "$f" || true)"
@@ -431,8 +423,6 @@ avg_caps="$(awk -v s="$sum_caps" -v n="$N_PROP" 'BEGIN{ if (n<=0) print 0; else 
 avg_mapped_gains="$(awk -v s="$sum_mapped_gains_items" -v n="$sum_mapped_gains_rows" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (s/n) }')"
 avg_mapped_pains="$(awk -v s="$sum_mapped_pains_items" -v n="$sum_mapped_pains_rows" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (s/n) }')"
 
-floor_fill_props="$(awk -F'\t' '$2==4 && $3==4 && $4==4 { ok++ } END{ print ok+0 }' "$PROPS_TSV")"
-
 corpus_words="$(wc -w < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
 
 # Persona upstream traceability density (non-domain artifact linkage)
@@ -539,56 +529,33 @@ score_conn="$(echo "$scores" | awk -F'\t' '{print $5}')"
 result="$(awk -v s="$overall" -v m="$MIN_SCORE" 'BEGIN{ if (s+0 >= m+0) print "PASS"; else print "FAIL" }')"
 
 if [[ "$QUIET" -ne 1 ]]; then
-  echo "VIRRIC domain done score -- <product-marketing>"
-  echo "Script: product-marketing-domain-done-score.sh"
-  echo "DocsRoot: $DOCS_ROOT"
-  echo "InputResearchRoot: $INPUT_RESEARCH_ROOT"
-  echo "InputResearch: ${INPUT_RESEARCH_ARTIFACTS} md artifacts; ${INPUT_RESEARCH_WORDS} cleaned words"
-  echo "Overall: ${overall}/100  (threshold: ${MIN_SCORE})  RESULT: ${result}"
+  echo "VIRRIC — Done Score  <product-marketing>"
+  echo "============================================================"
+  echo "Result:    ${result}   Overall: ${overall}/100   Threshold: ${MIN_SCORE}"
   echo ""
-  echo "Subscores:"
-  echo "  - volume:        ${score_vol}"
-  echo "  - diversity:     ${score_div}   (entropy=${entropy} bits/token, unique_words=${unique_words}, unique_ratio=$(awk -v u="$unique_words" -v w="$corpus_words" 'BEGIN{ if (w<=0) print 0; else printf "%.4f\n", (u/w) }'))"
-  echo "  - depth:         ${score_depth} (frag_avg_words=${frag_avg_words}, two_sentence_ratio=${frag_ge2_ratio}, mapped_gain_cov=${mapped_gain_ratio}, mapped_pain_cov=${mapped_pain_ratio})"
-  echo "  - connectivity:  ${score_conn}  (props=${N_PROP}, personas=${N_PER}, edges=${EDGES}, conn_density_persona_prop=${conn_density}, conn_density_persona_input=${conn_density_persona_input}, multi_target_ratio=${multi_ratio})"
+  echo "Inputs:"
+  echo "  - research: ${INPUT_RESEARCH_ARTIFACTS} markdown artifacts, ${INPUT_RESEARCH_WORDS} cleaned words"
+  echo "  - output:   ${corpus_words} cleaned words (agent-written; IDs/scripts/tags excluded)"
   echo ""
-  echo "Metric box (max points; earn-only; each category max=25):"
-  echo "  - Volume (25):"
-  echo "    - output_words / input_words  (full points at 0.50)"
-  echo "  - Diversity (25):"
-  echo "    - entropy_norm (entropy / log2(unique_words)): 12.5"
-  echo "    - unique_words / corpus_words: 12.5"
-  echo "  - Depth (25):"
-  echo "    - fragment_avg_words: 10"
-  echo "    - two_sentence_ratio: 10"
-  echo "    - mapped_gain_coverage (unique mapped gains / total gains): 2.5"
-  echo "    - mapped_pain_coverage (unique mapped pains / total pains): 2.5"
-  echo "  - Connectivity (25):"
-  echo "    - conn_density_persona_prop: 10"
-  echo "    - conn_density_persona_input (unique research IDs referenced / research artifacts): 7.5"
-  echo "    - multi_target_ratio: 7.5"
+  echo "Subscores (0–100):"
+  printf "  - %-12s %6.2f\n" "volume" "$score_vol"
+  printf "  - %-12s %6.2f  (entropy=%.4f bits/token, unique_words=%d, unique_ratio=%.4f)\n" "diversity" "$score_div" "$entropy" "$unique_words" "$(awk -v u="$unique_words" -v w="$corpus_words" 'BEGIN{ if (w<=0) print 0; else printf "%.4f\n", (u/w) }')"
+  printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sentence_ratio=%.4f, gain_cov=%.4f, pain_cov=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$frag_ge2_ratio" "$mapped_gain_ratio" "$mapped_pain_ratio"
+  printf "  - %-12s %6.2f  (dens_pp=%.4f, dens_input=%.4f, multi_target_ratio=%.4f)\n" "connectivity" "$score_conn" "$conn_density" "$conn_density_persona_input" "$multi_ratio"
   echo ""
-  echo "Thinness signals:"
-  echo "  - placeholder_notes: ${placeholder_notes}"
-  echo "  - placeholder_any:   ${placeholder_any}"
-  echo "  - floor_fill_props:  ${floor_fill_props}/${N_PROP} (props with exactly 4 boosters / 4 relievers / 4 capabilities)"
+  echo "Metric box (earn-only; max 25 points each):"
+  echo "  - volume:       output_words/input_words (full points at 0.50)"
+  echo "  - diversity:    entropy_norm + unique_words_ratio"
+  echo "  - depth:        fragment_avg_words + two_sentence_ratio + mapping coverage"
+  echo "  - connectivity: dens_pp + dens_input + multi_target_ratio"
   echo ""
-  echo "What to do next to increase score (programmatic guidance):"
-  awk -v r="$frag_ge2_ratio" -v aw="$frag_avg_words" '
+  echo "Advice (one sentence per category if <90):"
+  awk -v v="$score_vol" -v d="$score_div" -v dep="$score_depth" -v c="$score_conn" '
     BEGIN{
-      if (r+0 < 0.70) print "  - Increase two-sentence ratio: rewrite every fragment as 2–3 sentences (context + why + edge case).";
-      if (aw+0 < 22) print "  - Increase fragment_avg_words: add concrete constraints, examples, tradeoffs (aim avg >= ~22 words per fragment).";
-    }
-  '
-  awk -v mult="$multi_ratio" -v dens="$conn_density" '
-    BEGIN{
-      if (mult+0 < 0.20) print "  - Increase multi_target_ratio: make more propositions target 2+ personas (overlap/synergy).";
-      if (dens+0 < 0.15) print "  - Increase conn_density_persona_prop: ensure more persona↔prop links exist (each persona should be targeted by multiple props).";
-    }
-  '
-  awk -v up="$avg_persona_upstream_refs" '
-    BEGIN{
-      if (up+0 < 4.0) print "  - Improve persona upstream linkage: add EvidenceIDs / CandidatePersonaIDs / DocumentIDs so personas are traceable (not just inferred).";
+      if (v+0 < 90)  print "  - volume: increase output_words toward ~0.50×input_words by adding more substantive fragments across JTBDs, boosters/relievers/capabilities, and notes.";
+      if (d+0 < 90)  print "  - diversity: increase lexical variety by using more distinct wording and angles (avoid templated phrasing) while staying grounded in the research corpus.";
+      if (dep+0 < 90) print "  - depth: rewrite fragments into 2–3 sentence mini-arguments with context + why + tradeoff/edge-case, and ensure mappings cover the persona JTBD set.";
+      if (c+0 < 90)  print "  - connectivity: increase cross-linking by targeting propositions at multiple personas and referencing a broader slice of research artifacts in DocumentIDs/Links.";
     }
   '
 fi
