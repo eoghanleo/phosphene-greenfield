@@ -1,0 +1,1401 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>VIRRIC — product-marketing done-score playground</title>
+  <style>
+    :root {
+      --bg: #050607;
+      --panel: #0b0f0c;
+      --grid: rgba(120, 255, 0, 0.12);
+      --grid2: rgba(120, 255, 0, 0.08);
+      --virric: #78ff00; /* xterm-ish green */
+      --virric-dim: rgba(120, 255, 0, 0.75);
+      --text: rgba(240, 255, 240, 0.92);
+      --muted: rgba(240, 255, 240, 0.65);
+      --warn: #ffd000;
+      --bad: #ff5a6a;
+      --ok: #78ff00;
+    }
+
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background:
+        linear-gradient(0deg, var(--bg), var(--bg)),
+        radial-gradient(1200px 800px at 20% 0%, rgba(120,255,0,0.06), transparent 60%),
+        radial-gradient(1000px 600px at 80% 15%, rgba(120,255,0,0.04), transparent 60%);
+      color: var(--text);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      letter-spacing: 0.2px;
+    }
+
+    .wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 18px 16px 28px;
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 980px) {
+      .wrap { grid-template-columns: 1fr; }
+    }
+
+    .header {
+      grid-column: 1 / -1;
+      padding: 10px 12px;
+      border: 1px solid var(--grid);
+      background: linear-gradient(180deg, rgba(120,255,0,0.06), rgba(120,255,0,0.01));
+    }
+    .header .title { color: var(--virric); font-weight: 700; }
+    .header .sub { color: var(--muted); margin-top: 6px; font-size: 12px; line-height: 1.35; }
+    .tag { color: var(--virric); }
+
+    .panel {
+      border: 1px solid var(--grid);
+      background: var(--panel);
+    }
+    .panel h2 {
+      margin: 0;
+      padding: 10px 12px;
+      font-size: 13px;
+      color: var(--virric);
+      border-bottom: 1px solid var(--grid);
+    }
+    .panel .body { padding: 10px 12px 12px; }
+
+    .groupTitle {
+      margin: 12px 0 6px;
+      padding: 6px 8px;
+      border: 1px solid var(--grid2);
+      background: rgba(120,255,0,0.03);
+      color: var(--virric-dim);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .groupHint {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 120px 64px;
+      gap: 10px;
+      align-items: center;
+      margin: 8px 0;
+    }
+    .row label { font-size: 12px; color: var(--muted); }
+    .row .val { text-align: right; font-size: 12px; color: var(--text); }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--virric);
+    }
+
+    .lock {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      user-select: none;
+    }
+    .lock input { accent-color: var(--virric); }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .grid3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+    }
+    @media (max-width: 980px) {
+      .grid2, .grid3 { grid-template-columns: 1fr; }
+    }
+
+    .kpi {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--grid);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+    }
+    .kpi .label { color: var(--muted); font-size: 12px; }
+    .kpi .big { color: var(--virric); font-weight: 800; font-size: 22px; }
+    .kpi .small { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid var(--grid2);
+      color: var(--virric-dim);
+      font-size: 11px;
+      border-radius: 999px;
+      margin-left: 6px;
+    }
+
+    .scores {
+      padding: 10px 12px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .card {
+      border: 1px solid var(--grid2);
+      padding: 10px 10px;
+      background: linear-gradient(180deg, rgba(120,255,0,0.03), rgba(120,255,0,0.00));
+    }
+    .card .name { color: var(--muted); font-size: 12px; }
+    .card .num { color: var(--text); font-weight: 700; font-size: 16px; margin-top: 6px; }
+    .bar {
+      height: 8px;
+      border: 1px solid var(--grid2);
+      margin-top: 8px;
+      background: rgba(0,0,0,0.35);
+      position: relative;
+      overflow: hidden;
+    }
+    .bar > div {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, rgba(120,255,0,0.35), rgba(120,255,0,0.95));
+    }
+
+    .mono {
+      white-space: pre;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    canvas {
+      width: 100%;
+      height: 380px;
+      display: block;
+      background: rgba(0,0,0,0.22);
+      border-top: 1px solid var(--grid);
+    }
+
+    .checkGrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 10px;
+      max-height: 240px;
+      overflow: auto;
+      padding: 8px;
+      border: 1px solid var(--grid2);
+      background: rgba(0,0,0,0.20);
+      margin-top: 10px;
+    }
+    @media (max-width: 980px) {
+      .checkGrid { grid-template-columns: 1fr; }
+    }
+    .checkItem {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 11px;
+      color: var(--muted);
+      user-select: none;
+      white-space: nowrap;
+    }
+    .checkItem input { accent-color: var(--virric); }
+    .checkItem .k { color: var(--text); }
+
+    .noteBox {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border: 1px solid var(--grid2);
+      background: rgba(120,255,0,0.03);
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+    }
+
+    select, button {
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      border: 1px solid var(--grid2);
+      padding: 6px 8px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    button { cursor: pointer; }
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .controls .hint { color: var(--muted); font-size: 11px; }
+
+    .hr {
+      height: 1px;
+      background: var(--grid);
+      margin: 12px 0;
+    }
+
+    .mini {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .ok { color: var(--ok); }
+    .bad { color: var(--bad); }
+
+    .tileStack {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .tile {
+      border: 1px solid var(--grid2);
+      background: rgba(0,0,0,0.18);
+      padding: 8px;
+    }
+    .tileHead {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      margin: 2px 2px 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .tileHead .k { color: var(--virric); font-weight: 700; }
+    .tile canvas { width: 100%; height: auto; display: block; }
+
+    .sliderTools {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="title">VIRRIC <span class="pill">product-marketing-domain-done-score playground</span></div>
+      <div class="sub">
+        Standalone, no deps. Mirrors the math in <span class="tag">`virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh`</span>
+        (retuned version with fragment corpus + min-category drag). Use sliders, then sweep one variable to see curves.
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Inputs (sliders)</h2>
+      <div class="body">
+        <div class="sliderTools">
+          <button id="lockAll">Lock all</button>
+          <button id="unlockAll">Unlock all</button>
+          <span class="hint">Locks prevent the solver/heatmap optimizer from changing those inputs.</span>
+        </div>
+        <div id="sliders"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="kpi">
+        <div>
+          <div class="label">Overall score</div>
+          <div class="small">overall = sum(metric_points) / 100 · 100 (earn-only; no penalties; each metric maps to 0–100 via the same curve shape)</div>
+        </div>
+        <div class="big" id="overall">0.00</div>
+      </div>
+
+      <div class="scores" id="cards"></div>
+
+      <div class="body">
+        <div class="controls">
+          <label>
+            Sweep:
+            <select id="sweepVar"></select>
+          </label>
+          <label>
+            Steps:
+            <select id="steps">
+              <option value="40">40</option>
+              <option value="80" selected>80</option>
+              <option value="160">160</option>
+            </select>
+          </label>
+          <label>
+            Threshold:
+            <select id="threshold">
+              <option value="60">60</option>
+              <option value="70">70</option>
+              <option value="80" selected>80</option>
+              <option value="90">90</option>
+            </select>
+          </label>
+          <button id="redraw">Redraw graph</button>
+          <button id="optimize">Optimize (search)</button>
+          <button id="slidersToSeed">Sliders → solver seed</button>
+          <button id="bestToSliders">Solver best → sliders</button>
+          <label>
+            Budget:
+            <select id="optBudget">
+              <option value="800">800</option>
+              <option value="2000" selected>2000</option>
+              <option value="6000">6000</option>
+              <option value="20000">20000</option>
+            </select>
+          </label>
+          <span class="hint">Graph sweeps one variable across its slider range; other variables fixed at current values.</span>
+        </div>
+      </div>
+
+      <canvas id="plot" width="1200" height="380"></canvas>
+
+      <div class="body">
+        <div class="hr"></div>
+        <div class="controls">
+          <label>
+            Contribution metric:
+            <select id="ovMetric">
+              <option value="overall" selected>overall</option>
+              <option value="vol">volume</option>
+              <option value="div">diversity</option>
+              <option value="depth">depth</option>
+              <option value="conn">connectivity</option>
+            </select>
+          </label>
+          <label>
+            View:
+            <select id="ovMode">
+              <option value="both" selected>cumulative + marginal</option>
+              <option value="cum">cumulative only</option>
+              <option value="marg">marginal only</option>
+            </select>
+          </label>
+          <label>
+            Steps:
+            <select id="ovSteps">
+              <option value="40">40</option>
+              <option value="80" selected>80</option>
+              <option value="160">160</option>
+              <option value="320">320</option>
+            </select>
+          </label>
+          <button id="ovDraw">Draw contribution charts</button>
+          <button id="ovAll">Select all</button>
+          <button id="ovNone">Select none</button>
+          <span class="mini" id="ovMeta"></span>
+        </div>
+        <div class="noteBox">
+          For each selected slider, we sweep from its <b>min→max</b> (x normalized 0→1) while holding all other sliders fixed.<br/>
+          <b>Cumulative contribution</b> = metric(x) − metric(min).<br/>
+          <b>Marginal contribution</b> = metric(xᵢ) − metric(xᵢ₋₁) per step.<br/>
+          Faint line uses the <b>right y-axis</b> to show the absolute <b>total score</b> (0–100), so contribution curves keep usable vertical resolution.<br/>
+          This is ceteris paribus (not Shapley), but it’s excellent for seeing cliffs and easy gamification outs.
+        </div>
+        <div id="ovList" class="checkGrid"></div>
+        <div id="ovTiles" class="tileStack"></div>
+      </div>
+
+      <div class="body">
+        <div class="hr"></div>
+        <div class="controls">
+          <label>
+            Heatmap X:
+            <select id="hmX"></select>
+          </label>
+          <label>
+            Heatmap Y:
+            <select id="hmY"></select>
+          </label>
+          <label>
+            Resolution:
+            <select id="hmRes">
+              <option value="30x22">30×22</option>
+              <option value="50x36" selected>50×36</option>
+              <option value="80x58">80×58</option>
+            </select>
+          </label>
+          <label>
+            5D mode:
+            <select id="hmMode">
+              <option value="fix" selected>Fix other dims</option>
+              <option value="opt">Optimize other dims</option>
+            </select>
+          </label>
+          <label>
+            Per-cell budget:
+            <select id="hmCellBudget">
+              <option value="20">20</option>
+              <option value="60" selected>60</option>
+              <option value="120">120</option>
+            </select>
+          </label>
+          <button id="hmDraw">Draw heatmap</button>
+          <button id="hmBestToSliders">Heatmap best → sliders</button>
+          <span class="mini" id="hmMeta"></span>
+        </div>
+      </div>
+
+      <canvas id="heatmap" width="1200" height="380"></canvas>
+
+      <div class="body mono" id="debug"></div>
+    </div>
+  </div>
+
+  <script>
+    // -----------------------------
+    // Scorer math (JS mirror)
+    // -----------------------------
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const scoreLinear = (x, x0, x1) => {
+      const r = clamp((x - x0) / (x1 - x0), 0, 1);
+      return r * 100;
+    };
+    const log2 = (x) => Math.log(x) / Math.log(2);
+
+    function compute(s) {
+      // Inputs reflect the ratio-based metric box:
+      // out_words in_words ent uniq_words favg two_sent gain_cov pain_cov dens_pp dens_in mult
+
+      const MAX_VOL = 25, MAX_DIV = 25, MAX_DEP = 25, MAX_CON = 25;
+      const MAX_ALL = MAX_VOL + MAX_DIV + MAX_DEP + MAX_CON;
+
+      const MAX_VOL_WORDS = 25;
+      const MAX_DIV_ENT = 12.5, MAX_DIV_UNIQ = 12.5;
+      const MAX_DEP_FAVG = 10, MAX_DEP_2S = 10, MAX_DEP_GAIN = 2.5, MAX_DEP_PAIN = 2.5;
+      const MAX_CON_DENS_PP = 10, MAX_CON_DENS_IN = 7.5, MAX_CON_MULT = 7.5;
+
+      const out_in_ratio = (s.in_words > 0) ? (s.out_words / s.in_words) : 0;
+      const uniq_ratio = (s.out_words > 0) ? (s.uniq_words / s.out_words) : 0;
+      const ent_norm = (s.uniq_words > 1 && s.ent > 0) ? (s.ent / log2(s.uniq_words)) : 0;
+
+      const sc_vol = scoreLinear(out_in_ratio, 0.0, 0.50);
+      const sc_ent = scoreLinear(ent_norm, 0.55, 0.90);
+      const sc_uniq = scoreLinear(uniq_ratio, 0.03, 0.11);
+
+      const sc_favg = scoreLinear(s.favg, 12, 30);
+      const sc_2s   = scoreLinear(s.two_sent, 0.20, 0.75);
+      const sc_gain = scoreLinear(s.gain_cov, 0.20, 0.80);
+      const sc_pain = scoreLinear(s.pain_cov, 0.20, 0.80);
+
+      const sc_dpp = scoreLinear(s.dens_pp, 0.10, 0.50);
+      const sc_din = scoreLinear(s.dens_in, 0.05, 0.35);
+      const sc_mult = scoreLinear(s.mult, 0.15, 0.45);
+
+      const p_vol = (sc_vol/100) * MAX_VOL_WORDS;
+      const p_div = (sc_ent/100) * MAX_DIV_ENT + (sc_uniq/100) * MAX_DIV_UNIQ;
+      const p_dep = (sc_favg/100) * MAX_DEP_FAVG + (sc_2s/100) * MAX_DEP_2S + (sc_gain/100) * MAX_DEP_GAIN + (sc_pain/100) * MAX_DEP_PAIN;
+      const p_con = (sc_dpp/100) * MAX_CON_DENS_PP + (sc_din/100) * MAX_CON_DENS_IN + (sc_mult/100) * MAX_CON_MULT;
+
+      const overall = clamp(((p_vol + p_div + p_dep + p_con) / MAX_ALL) * 100, 0, 100);
+      const vol = clamp((p_vol / MAX_VOL) * 100, 0, 100);
+      const div = clamp((p_div / MAX_DIV) * 100, 0, 100);
+      const depth = clamp((p_dep / MAX_DEP) * 100, 0, 100);
+      const conn = clamp((p_con / MAX_CON) * 100, 0, 100);
+
+      return {
+        overall, vol, div, depth, conn,
+        out_in_ratio, uniq_ratio, ent_norm,
+        sc_vol, sc_ent, sc_uniq, sc_favg, sc_2s, sc_gain, sc_pain, sc_dpp, sc_din, sc_mult,
+        p_vol, p_div, p_dep, p_con
+      };
+    }
+
+    // -----------------------------
+    // UI schema (sliders)
+    // -----------------------------
+    const schema = [
+      { group:"input", key:"in_words", label:"input_words (research cleaned)", min:0, max:200000, step:100, value:39077 },
+      { group:"volume", key:"out_words", label:"output_words (product-marketing cleaned)", min:0, max:120000, step:100, value:2557 },
+
+      { group:"diversity", key:"ent", label:"entropy_bits_per_token", min:0, max:12, step:0.0001, value:8.9321 },
+      { group:"diversity", key:"uniq_words", label:"unique_words", min:0, max:50000, step:1, value:763 },
+
+      { group:"depth", key:"favg", label:"fragment_avg_words", min:0, max:80, step:0.01, value:7.3873 },
+      { group:"depth", key:"two_sent", label:"two_sentence_ratio", min:0, max:1, step:0.0001, value:0.0289 },
+      { group:"depth", key:"gain_cov", label:"mapped_gain_coverage", min:0, max:1, step:0.0001, value:1.0 },
+      { group:"depth", key:"pain_cov", label:"mapped_pain_coverage", min:0, max:1, step:0.0001, value:1.0 },
+
+      { group:"connectivity", key:"dens_pp", label:"conn_density_persona_prop", min:0, max:1, step:0.0001, value:0.4667 },
+      { group:"connectivity", key:"dens_in", label:"conn_density_persona_input", min:0, max:1, step:0.0001, value:1.0 },
+      { group:"connectivity", key:"mult", label:"multi_target_ratio", min:0, max:1, step:0.0001, value:0.4000 }
+    ];
+
+    const state = Object.fromEntries(schema.map(s => [s.key, s.value]));
+
+    // -----------------------------
+    // Render
+    // -----------------------------
+    const slidersEl = document.getElementById("sliders");
+    const cardsEl = document.getElementById("cards");
+    const overallEl = document.getElementById("overall");
+    const debugEl = document.getElementById("debug");
+    const sweepVarEl = document.getElementById("sweepVar");
+    const stepsEl = document.getElementById("steps");
+    const thresholdEl = document.getElementById("threshold");
+    const redrawBtn = document.getElementById("redraw");
+    const optimizeBtn = document.getElementById("optimize");
+    const slidersToSeedBtn = document.getElementById("slidersToSeed");
+    const bestToSlidersBtn = document.getElementById("bestToSliders");
+    const optBudgetEl = document.getElementById("optBudget");
+    const canvas = document.getElementById("plot");
+    const ctx = canvas.getContext("2d");
+
+    const hmXEl = document.getElementById("hmX");
+    const hmYEl = document.getElementById("hmY");
+    const hmResEl = document.getElementById("hmRes");
+    const hmModeEl = document.getElementById("hmMode");
+    const hmCellBudgetEl = document.getElementById("hmCellBudget");
+    const hmDrawBtn = document.getElementById("hmDraw");
+    const hmBestToSlidersBtn = document.getElementById("hmBestToSliders");
+    const hmMetaEl = document.getElementById("hmMeta");
+    const hmCanvas = document.getElementById("heatmap");
+    const hmCtx = hmCanvas.getContext("2d");
+
+    const ovMetricEl = document.getElementById("ovMetric");
+    const ovModeEl = document.getElementById("ovMode");
+    const ovStepsEl = document.getElementById("ovSteps");
+    const ovDrawBtn = document.getElementById("ovDraw");
+    const ovAllBtn = document.getElementById("ovAll");
+    const ovNoneBtn = document.getElementById("ovNone");
+    const ovMetaEl = document.getElementById("ovMeta");
+    const ovListEl = document.getElementById("ovList");
+    const ovTilesEl = document.getElementById("ovTiles");
+    const ovChecks = new Map(); // key -> checkbox
+
+    // Note: the old single-variable "contrib" chart was removed; the overlay chart now uses contribution semantics.
+
+    const sliderRefs = new Map(); // key -> {input, valEl}
+    const solver = {
+      seed: null,      // starting point for optimize()
+      best: null,      // best found parameters
+      bestOut: null    // best found output
+    };
+    const heat = {
+      best: null,
+      bestOut: null,
+      meta: ""
+    };
+
+    function fmt(x, n=2) {
+      if (Number.isNaN(x) || !Number.isFinite(x)) return "NaN";
+      return x.toFixed(n);
+    }
+
+    function sweptDomain(varKey) {
+      // Map a swept input variable to the *subscore* it primarily influences,
+      // so we can highlight that subscore line in yellow on the sweep chart.
+      if (["in_words","out_words"].includes(varKey)) return "volume";
+      if (["ent","uniq_words"].includes(varKey)) return "diversity";
+      if (["favg","two_sent","gain_cov","pain_cov"].includes(varKey)) return "depth";
+      if (["dens_pp","dens_in","mult"].includes(varKey)) return "connectivity";
+      return "overall";
+    }
+
+    function addSlider(def) {
+      const wrap = document.createElement("div");
+      wrap.className = "row";
+
+      const left = document.createElement("div");
+      const label = document.createElement("label");
+      label.textContent = def.label;
+      left.appendChild(label);
+
+      const input = document.createElement("input");
+      input.type = "range";
+      input.min = def.min;
+      input.max = def.max;
+      input.step = def.step;
+      input.value = def.value;
+
+      const val = document.createElement("div");
+      val.className = "val";
+      val.textContent = String(def.value);
+
+      const lockWrap = document.createElement("label");
+      lockWrap.className = "lock";
+      const lock = document.createElement("input");
+      lock.type = "checkbox";
+      lock.checked = false;
+      lockWrap.appendChild(lock);
+      const lockText = document.createElement("span");
+      lockText.textContent = "lock";
+      lockWrap.appendChild(lockText);
+
+      input.addEventListener("input", () => {
+        const v = (def.step < 1) ? parseFloat(input.value) : parseInt(input.value, 10);
+        state[def.key] = v;
+        val.textContent = input.value;
+        renderAll();
+      });
+
+      wrap.appendChild(left);
+      wrap.appendChild(val);
+      wrap.appendChild(lockWrap);
+
+      const full = document.createElement("div");
+      full.style.gridColumn = "1 / -1";
+      full.appendChild(input);
+      slidersEl.appendChild(wrap);
+      slidersEl.appendChild(full);
+
+      sliderRefs.set(def.key, { input, valEl: val, def, lockEl: lock });
+    }
+
+    function setBar(id, v) {
+      const bar = document.getElementById(id);
+      if (!bar) return;
+      const pct = clamp(v, 0, 100);
+      bar.style.width = pct + "%";
+    }
+
+    function scoreCard(name, value, id) {
+      const d = document.createElement("div");
+      d.className = "card";
+      d.innerHTML = `
+        <div class="name">${name}</div>
+        <div class="num">${fmt(value, 2)}</div>
+        <div class="bar"><div id="${id}"></div></div>
+      `;
+      return d;
+    }
+
+    function renderCards(out) {
+      cardsEl.innerHTML = "";
+      const cards = [
+        ["volume", out.vol, "b_vol"],
+        ["diversity", out.div, "b_div"],
+        ["depth", out.depth, "b_depth"],
+        ["connectivity", out.conn, "b_conn"]
+      ];
+      for (const [n, v, id] of cards) cardsEl.appendChild(scoreCard(n, v, id));
+      // bars
+      setBar("b_vol", out.vol);
+      setBar("b_div", out.div);
+      setBar("b_depth", out.depth);
+      setBar("b_conn", out.conn);
+    }
+
+    function renderDebug(out) {
+      debugEl.textContent =
+`Inputs:
+  in_words=${state.in_words}  out_words=${state.out_words}
+  ent=${state.ent}  uniq_words=${state.uniq_words}
+  favg=${state.favg}  two_sent=${state.two_sent}  gain_cov=${state.gain_cov}  pain_cov=${state.pain_cov}
+  dens_pp=${state.dens_pp}  dens_in=${state.dens_in}  mult=${state.mult}
+
+Internals:
+  ratios:
+    out/in=${fmt(out.out_in_ratio,4)}  uniq/out=${fmt(out.uniq_ratio,4)}  ent_norm=${fmt(out.ent_norm,4)}
+  norm(0..100):
+    vol=${fmt(out.sc_vol)} ent=${fmt(out.sc_ent)} uniq=${fmt(out.sc_uniq)}
+    favg=${fmt(out.sc_favg)} 2s=${fmt(out.sc_2s)} gain=${fmt(out.sc_gain)} pain=${fmt(out.sc_pain)}
+    dens_pp=${fmt(out.sc_dpp)} dens_in=${fmt(out.sc_din)} mult=${fmt(out.sc_mult)}
+  points:
+    vol=${fmt(out.p_vol)} div=${fmt(out.p_div)} depth=${fmt(out.p_dep)} conn=${fmt(out.p_con)}
+`;
+    }
+
+    function renderPlot() {
+      const varKey = sweepVarEl.value;
+      const def = schema.find(s => s.key === varKey);
+      if (!def) return;
+      const steps = parseInt(stepsEl.value, 10);
+      const thr = parseFloat(thresholdEl.value);
+      const dom = sweptDomain(varKey);
+      const w = canvas.width, h = canvas.height;
+      ctx.clearRect(0, 0, w, h);
+
+      // background grid
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fillRect(0, 0, w, h);
+
+      // grid lines
+      ctx.strokeStyle = "rgba(120,255,0,0.10)";
+      ctx.lineWidth = 1;
+      for (let i=0;i<=10;i++){
+        const y = (h-30) * (i/10) + 10;
+        ctx.beginPath(); ctx.moveTo(50, y); ctx.lineTo(w-10, y); ctx.stroke();
+      }
+      for (let i=0;i<=10;i++){
+        const x = (w-70) * (i/10) + 50;
+        ctx.beginPath(); ctx.moveTo(x, 10); ctx.lineTo(x, h-20); ctx.stroke();
+      }
+
+      // axis labels
+      ctx.fillStyle = "rgba(240,255,240,0.65)";
+      ctx.font = "12px ui-monospace, Menlo, monospace";
+      ctx.fillText(`${def.label} (sweep)`, 50, h-6);
+      ctx.fillText("score", 12, 22);
+
+      const points = [];
+      for (let i=0;i<=steps;i++){
+        const t = i/steps;
+        const xVal = def.min + t*(def.max-def.min);
+        const s2 = { ...state, [varKey]: xVal };
+        const out = compute(s2);
+        points.push({ xVal, overall: out.overall, vol: out.vol, div: out.div, depth: out.depth, conn: out.conn });
+      }
+
+      // helper to map coordinates
+      const x0 = def.min, x1 = def.max;
+      const plotX = (xVal) => 50 + (w-70) * ((xVal - x0) / (x1 - x0 || 1));
+      const plotY = (score) => 10 + (h-30) * (1 - clamp(score, 0, 100)/100);
+
+      function drawLine(getY, color, width=2) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        points.forEach((p, idx) => {
+          const x = plotX(p.xVal);
+          const y = plotY(getY(p));
+          if (idx === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      // Overall (bright), then faint subscores
+      drawLine(p => p.overall, "rgba(120,255,0,0.95)", 2.5);
+      drawLine(p => p.vol,  dom==="volume"       ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.14)", dom==="volume" ? 2.0 : 1.2);
+      drawLine(p => p.div,  dom==="diversity"    ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.28)", dom==="diversity" ? 2.0 : 1.2);
+      drawLine(p => p.depth,dom==="depth"        ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.22)", dom==="depth" ? 2.0 : 1.2);
+      drawLine(p => p.conn, dom==="connectivity" ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.18)", dom==="connectivity" ? 2.0 : 1.2);
+
+      // threshold line
+      ctx.strokeStyle = "rgba(255,208,0,0.55)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(50, plotY(thr));
+      ctx.lineTo(w-10, plotY(thr));
+      ctx.stroke();
+      ctx.fillStyle = "rgba(255,208,0,0.70)";
+      ctx.fillText(`threshold ${thr}`, w-170, plotY(thr)-6);
+
+      // legend
+      const legend = [
+        ["overall", "rgba(120,255,0,0.95)"],
+        ["vol",  dom==="volume"       ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.14)"],
+        ["div",  dom==="diversity"    ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.28)"],
+        ["depth",dom==="depth"        ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.22)"],
+        ["conn", dom==="connectivity" ? "rgba(255,208,0,0.85)" : "rgba(120,255,0,0.18)"]
+      ];
+      let lx = 60, ly = 26;
+      legend.forEach(([name, col]) => {
+        ctx.fillStyle = col;
+        ctx.fillRect(lx, ly-10, 10, 10);
+        ctx.fillStyle = "rgba(240,255,240,0.70)";
+        ctx.fillText(name, lx+14, ly-1);
+        lx += 86;
+      });
+
+      // current point marker
+      const curX = plotX(state[varKey]);
+      const curY = plotY(compute(state).overall);
+      ctx.fillStyle = "rgba(255,255,255,0.85)";
+      ctx.beginPath(); ctx.arc(curX, curY, 3.2, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = "rgba(240,255,240,0.70)";
+      ctx.fillText("current", curX+8, curY-8);
+    }
+
+    // -----------------------------
+    // Optimizer (fast random search)
+    // -----------------------------
+    function randBetween(min, max) {
+      return min + Math.random() * (max - min);
+    }
+    function snapToStep(x, def) {
+      const step = def.step;
+      if (step >= 1) return Math.round(x / step) * step;
+      // float step
+      const n = Math.round(x / step);
+      const v = n * step;
+      // avoid float drift
+      return parseFloat(v.toFixed(6));
+    }
+    function sampleWithin(def) {
+      const x = randBetween(def.min, def.max);
+      return snapToStep(x, def);
+    }
+    function optimize(overKeys, budget, baseState) {
+      const start = { ...baseState };
+      let best = { ...start };
+      let bestOut = compute(best);
+
+      // bias: half samples are global random, half are local jitters around current best
+      for (let i=0;i<budget;i++){
+        const cand = { ...best };
+        const global = (i % 2 === 0);
+        for (const k of overKeys) {
+          const def = schema.find(s => s.key === k);
+          if (!def) continue;
+          if (global) {
+            cand[k] = sampleWithin(def);
+          } else {
+            const span = (def.max - def.min);
+            const jitter = (Math.random() * 2 - 1) * span * 0.06; // 6% span
+            cand[k] = snapToStep(clamp(cand[k] + jitter, def.min, def.max), def);
+          }
+        }
+        const out = compute(cand);
+        if (out.overall > bestOut.overall) {
+          best = cand;
+          bestOut = out;
+        }
+      }
+      return { best, bestOut };
+    }
+
+    function setStateAndSliders(next) {
+      for (const def of schema) {
+        const k = def.key;
+        if (next[k] === undefined) continue;
+        state[k] = next[k];
+        const ref = sliderRefs.get(k);
+        if (ref) {
+          ref.input.value = String(next[k]);
+          ref.valEl.textContent = String(next[k]);
+        }
+      }
+      renderAll();
+    }
+
+    function getMetric(out, which) {
+      switch (which) {
+        case "overall": return out.overall;
+        case "vol": return out.vol;
+        case "div": return out.div;
+        case "depth": return out.depth;
+        case "conn": return out.conn;
+        default: return out.overall;
+      }
+    }
+
+    function colorForIndex(i, n) {
+      // virric green -> hazard yellow progression
+      if (n <= 1) return "rgba(120,255,0,0.95)";
+      const t = i / (n - 1);
+      const hue = 110 - (40 * t); // 110 (green) -> 70 (yellow-green)
+      return `hsla(${hue}, 100%, 55%, 0.95)`;
+    }
+
+    function withAlpha(color, alpha) {
+      // Supports rgba(), rgb(), hsla(), hsl(). Falls back to original string if unknown.
+      const a = clamp(alpha, 0, 1);
+      const c = String(color).trim();
+      let m;
+      m = c.match(/^rgba\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\)$/i);
+      if (m) return `rgba(${m[1]},${m[2]},${m[3]},${a})`;
+      m = c.match(/^rgb\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)\s*\)$/i);
+      if (m) return `rgba(${m[1]},${m[2]},${m[3]},${a})`;
+      m = c.match(/^hsla\(\s*([0-9.]+)\s*,\s*([0-9.]+)%\s*,\s*([0-9.]+)%\s*,\s*([0-9.]+)\s*\)$/i);
+      if (m) return `hsla(${m[1]},${m[2]}%,${m[3]}%,${a})`;
+      m = c.match(/^hsl\(\s*([0-9.]+)\s*,\s*([0-9.]+)%\s*,\s*([0-9.]+)%\s*\)$/i);
+      if (m) return `hsla(${m[1]},${m[2]}%,${m[3]}%,${a})`;
+      return c;
+    }
+
+    function drawContributionTile(canvasEl, key, metric, view, steps) {
+      const def = schema.find(s => s.key === key);
+      if (!def) return { cumMax: 0, mm: 0, absMin: 0, absMax: 0 };
+
+      const ctx = canvasEl.getContext("2d");
+      const w = canvasEl.width, h = canvasEl.height;
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fillRect(0, 0, w, h);
+
+      const outMin = compute({ ...state, [key]: def.min });
+      const yMin = getMetric(outMin, metric);
+
+      const pts = [];
+      let prevY = null;
+      let maxAbsMarg = 0;
+      let maxCum = 0;
+      let absMin = 1e9, absMax = -1e9;
+      for (let i=0;i<=steps;i++){
+        const t = i/steps;
+        const xVal = def.min + t*(def.max-def.min);
+        const out = compute({ ...state, [key]: snapToStep(xVal, def) });
+        const y = getMetric(out, metric);
+        const cum = y - yMin;
+        const marg = (prevY === null) ? 0 : (y - prevY);
+        const abs = out.overall; // always total score
+        prevY = y;
+        maxAbsMarg = Math.max(maxAbsMarg, Math.abs(marg));
+        maxCum = Math.max(maxCum, cum);
+        absMin = Math.min(absMin, abs);
+        absMax = Math.max(absMax, abs);
+        pts.push({ t, cum, marg, abs });
+      }
+
+      const lpad = 60;
+      const rpad = 70;
+      const top = { x: lpad, y: 14, w: w-(lpad+rpad), h: view==="both" ? (h-54)/2 : (h-34) };
+      const bot = { x: lpad, y: view==="both" ? (14 + top.h + 26) : 14, w: w-(lpad+rpad), h: view==="both" ? (h-54)/2 : (h-34) };
+
+      function drawGrid(rect) {
+        ctx.strokeStyle = "rgba(120,255,0,0.10)";
+        ctx.lineWidth = 1;
+        for (let i=0;i<=10;i++){
+          const yy = rect.y + rect.h * (i/10);
+          ctx.beginPath(); ctx.moveTo(rect.x, yy); ctx.lineTo(rect.x+rect.w, yy); ctx.stroke();
+        }
+        for (let i=0;i<=10;i++){
+          const xx = rect.x + rect.w * (i/10);
+          ctx.beginPath(); ctx.moveTo(xx, rect.y); ctx.lineTo(xx, rect.y+rect.h); ctx.stroke();
+        }
+        ctx.strokeRect(rect.x, rect.y, rect.w, rect.h);
+      }
+      function pxX(rect, t) { return rect.x + rect.w * t; }
+
+      const cumMax = Math.max(1e-6, Math.min(100, maxCum));
+      function pxYCum(rect, cum) {
+        const r = clamp(cum / cumMax, 0, 1);
+        return rect.y + rect.h * (1 - r);
+      }
+      const mm = Math.max(1e-6, maxAbsMarg);
+      function pxYMarg(rect, m) {
+        const r = clamp((m + mm) / (2*mm), 0, 1);
+        return rect.y + rect.h * (1 - r);
+      }
+      function pxYAbs(rect, abs) {
+        const r = clamp(abs / 100, 0, 1);
+        return rect.y + rect.h * (1 - r);
+      }
+
+      const col = colorForIndex(0, 1);
+
+      if (view === "cum" || view === "both") {
+        drawGrid(top);
+        ctx.fillStyle = "rgba(240,255,240,0.55)";
+        ctx.font = "11px ui-monospace, Menlo, monospace";
+        ctx.fillText("Δ(cum)", top.x - 52, top.y - 4);
+
+        const cticks = 4;
+        for (let i=0;i<=cticks;i++){
+          const v = (cumMax * i) / cticks;
+          const yy = pxYCum(top, v);
+          ctx.fillText(fmt(v, cumMax < 10 ? 2 : 1), top.x - 52, yy + 4);
+        }
+
+        // right axis for total score
+        ctx.strokeStyle = "rgba(120,255,0,0.18)";
+        ctx.beginPath();
+        ctx.moveTo(top.x + top.w, top.y);
+        ctx.lineTo(top.x + top.w, top.y + top.h);
+        ctx.stroke();
+        ctx.fillStyle = "rgba(240,255,240,0.45)";
+        for (let v=0; v<=100; v+=25) {
+          const yy = pxYAbs(top, v);
+          ctx.fillText(String(v), top.x + top.w + 6, yy + 4);
+        }
+        ctx.fillText("total", top.x + top.w + 6, top.y - 4);
+
+        // total score (faint)
+        ctx.strokeStyle = withAlpha(col, 0.16);
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 5]);
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+          const x = pxX(top, p.t);
+          const y = pxYAbs(top, p.abs);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // cumulative contribution
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+          const x = pxX(top, p.t);
+          const y = pxYCum(top, p.cum);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      if (view === "marg" || view === "both") {
+        const r = view==="both" ? bot : top;
+        drawGrid(r);
+        ctx.fillStyle = "rgba(240,255,240,0.55)";
+        ctx.font = "11px ui-monospace, Menlo, monospace";
+        ctx.fillText("Δ(marg)", r.x - 52, r.y - 4);
+
+        const mticks = 4;
+        for (let i=0;i<=mticks;i++){
+          const v = (-mm) + (2*mm*i)/mticks;
+          const yy = pxYMarg(r, v);
+          ctx.fillText(fmt(v, mm < 1 ? 3 : 2), r.x - 52, yy + 4);
+        }
+
+        ctx.strokeStyle = "rgba(255,208,0,0.25)";
+        ctx.beginPath();
+        ctx.moveTo(r.x, pxYMarg(r, 0));
+        ctx.lineTo(r.x + r.w, pxYMarg(r, 0));
+        ctx.stroke();
+
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        pts.forEach((p, i) => {
+          const x = pxX(r, p.t);
+          const y = pxYMarg(r, p.marg);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      ctx.fillStyle = "rgba(240,255,240,0.55)";
+      ctx.font = "11px ui-monospace, Menlo, monospace";
+      ctx.fillText("x = normalized min→max", w-200, h-10);
+
+      return { cumMax, mm, absMin, absMax };
+    }
+
+    function drawOverlay() {
+      const metric = ovMetricEl.value;
+      const view = ovModeEl.value; // both | cum | marg
+      const steps = parseInt(ovStepsEl.value, 10);
+
+      const selected = [...ovChecks.entries()].filter(([, cb]) => cb.checked).map(([k]) => k);
+      ovTilesEl.innerHTML = "";
+
+      if (selected.length === 0) {
+        const msg = document.createElement("div");
+        msg.className = "mini";
+        msg.textContent = "Select one or more sliders above, then click Draw (renders one chart per slider).";
+        ovTilesEl.appendChild(msg);
+        ovMetaEl.textContent = "";
+        return;
+      }
+
+      selected.forEach((key) => {
+        const tile = document.createElement("div");
+        tile.className = "tile";
+
+        const head = document.createElement("div");
+        head.className = "tileHead";
+        head.innerHTML = `<span class="k">${key}</span><span class="mini">metric=${metric} · view=${view} · steps=${steps}</span>`;
+        tile.appendChild(head);
+
+        const cv = document.createElement("canvas");
+        cv.width = 1200;
+        cv.height = (view === "both") ? 260 : 180;
+        tile.appendChild(cv);
+
+        const meta = drawContributionTile(cv, key, metric, view, steps);
+        const tail = document.createElement("div");
+        tail.className = "mini";
+        tail.textContent = `cumMax≈${fmt(meta.cumMax,2)} · max|marg|≈${fmt(meta.mm,4)} · total≈${fmt(meta.absMin,1)}→${fmt(meta.absMax,1)}`;
+        tile.appendChild(tail);
+
+        ovTilesEl.appendChild(tile);
+      });
+
+      ovMetaEl.textContent = `tiles=${selected.length}`;
+    }
+
+    // -----------------------------
+    // Heatmap manifold (2D slice; optional optimize other 3 dims)
+    // -----------------------------
+    function scoreToRGBA(score, thr) {
+      // Black background; virric green intensity encodes score.
+      // Above threshold gets a brighter, slightly yellowed tint.
+      const s = clamp(score, 0, 100) / 100;
+      let g = 255 * Math.pow(s, 0.85);
+      let r = 120 * Math.pow(Math.max(0, s - 0.75) / 0.25, 1.0);
+      let b = 0;
+      if (score >= thr) {
+        // brighten and add a touch of hazard-yellow
+        r = Math.max(r, 120);
+        g = Math.min(255, g + 20);
+      }
+      const a = 0.92;
+      return { r: Math.round(r), g: Math.round(g), b: Math.round(b), a };
+    }
+
+    function drawHeatmap() {
+      const xKey = hmXEl.value;
+      const yKey = hmYEl.value;
+      if (!xKey || !yKey || xKey === yKey) return;
+      const xDef = schema.find(s => s.key === xKey);
+      const yDef = schema.find(s => s.key === yKey);
+      if (!xDef || !yDef) return;
+      const [nx, ny] = hmResEl.value.split("x").map(n => parseInt(n, 10));
+      const mode = hmModeEl.value; // fix | opt
+      const cellBudget = parseInt(hmCellBudgetEl.value, 10);
+      const thr = parseFloat(thresholdEl.value);
+
+      const w = hmCanvas.width, h = hmCanvas.height;
+      hmCtx.clearRect(0, 0, w, h);
+      hmCtx.fillStyle = "rgba(0,0,0,0.25)";
+      hmCtx.fillRect(0, 0, w, h);
+
+      // Pixel buffer (small grid -> scaled to canvas)
+      const img = hmCtx.createImageData(nx, ny);
+      let idx = 0;
+
+      const otherKeys = schema
+        .map(s => s.key)
+        .filter(k => k !== xKey && k !== yKey)
+        .filter(k => {
+          const ref = sliderRefs.get(k);
+          return !(ref && ref.lockEl && ref.lockEl.checked);
+        });
+      const start = { ...state };
+
+      let minS = 1e9, maxS = -1e9;
+      let best = { ...start };
+      let bestOut = compute(best);
+
+      // brute grid
+      for (let j=0;j<ny;j++){
+        const ty = (ny===1)?0:(j/(ny-1));
+        const yVal = yDef.min + ty*(yDef.max - yDef.min);
+        for (let i=0;i<nx;i++){
+          const tx = (nx===1)?0:(i/(nx-1));
+          const xVal = xDef.min + tx*(xDef.max - xDef.min);
+          let cand = { ...start, [xKey]: snapToStep(xVal, xDef), [yKey]: snapToStep(yVal, yDef) };
+
+          let out;
+          if (mode === "opt") {
+            // Optimize the remaining (unlocked) dims for this (x,y) point.
+            const res = optimize(otherKeys, cellBudget, cand);
+            cand = res.best;
+            out = res.bestOut;
+          } else {
+            out = compute(cand);
+          }
+
+          const s = out.overall;
+          minS = Math.min(minS, s);
+          maxS = Math.max(maxS, s);
+          if (s > bestOut.overall) { best = cand; bestOut = out; }
+
+          const c = scoreToRGBA(s, thr);
+          img.data[idx++] = c.r;
+          img.data[idx++] = c.g;
+          img.data[idx++] = c.b;
+          img.data[idx++] = Math.round(c.a * 255);
+        }
+      }
+
+      // draw scaled
+      const tmp = document.createElement("canvas");
+      tmp.width = nx; tmp.height = ny;
+      tmp.getContext("2d").putImageData(img, 0, 0);
+      hmCtx.imageSmoothingEnabled = false;
+      hmCtx.drawImage(tmp, 50, 10, w-60, h-30);
+
+      // overlay grid + axes
+      hmCtx.strokeStyle = "rgba(120,255,0,0.10)";
+      hmCtx.lineWidth = 1;
+      hmCtx.strokeRect(50, 10, w-60, h-30);
+      hmCtx.fillStyle = "rgba(240,255,240,0.65)";
+      hmCtx.font = "12px ui-monospace, Menlo, monospace";
+      hmCtx.fillText(`heatmap: ${xKey} × ${yKey}  mode=${mode} (best = max OVERALL score in grid)`, 50, h-6);
+      hmCtx.fillText(`min=${fmt(minS,2)} max=${fmt(maxS,2)} thr=${thr}`, w-360, h-6);
+
+      // threshold contour (simple: draw points where score >= thr)
+      // (fast + dirty: stipple overlay)
+      hmCtx.fillStyle = "rgba(255,208,0,0.22)";
+      const pxW = (w-60)/nx;
+      const pxH = (h-30)/ny;
+      // redraw via second pass: recompute quickly in fix mode if needed; store not kept -> so approximate using colors:
+      // We'll skip exact contour and draw a line at best point instead.
+
+      // best point marker
+      const bx = clamp((best[xKey] - xDef.min) / (xDef.max - xDef.min || 1), 0, 1);
+      const by = clamp((best[yKey] - yDef.min) / (yDef.max - yDef.min || 1), 0, 1);
+      const x = 50 + (w-60) * bx;
+      const y = 10 + (h-30) * (1 - by);
+      hmCtx.fillStyle = "rgba(255,255,255,0.85)";
+      hmCtx.beginPath(); hmCtx.arc(x, y, 3.4, 0, Math.PI*2); hmCtx.fill();
+      hmCtx.fillStyle = "rgba(240,255,240,0.75)";
+      hmCtx.fillText(`best=${fmt(bestOut.overall,2)}`, x+8, y-8);
+
+      heat.best = best;
+      heat.bestOut = bestOut;
+      heat.meta = `grid ${nx}×${ny} · ${mode==="opt" ? `opt over ${otherKeys.length} dims (per-cell budget=${cellBudget})` : "fixed others"} · best_overall=${fmt(bestOut.overall,2)}`;
+      hmMetaEl.innerHTML = heat.meta;
+    }
+
+    function renderAll() {
+      const out = compute(state);
+      overallEl.textContent = fmt(out.overall, 2);
+      renderCards(out);
+      renderDebug(out);
+      renderPlot();
+    }
+
+    // init sliders
+    slidersEl.innerHTML = "";
+    const groupOrder = ["input","volume","diversity","depth","connectivity"];
+    const groupMeta = {
+      input: { title: "Input (research)", hint: "Upstream corpus parameters used to scale ratios. Set these to match your current run." },
+      volume: { title: "Volume", hint: "Scaled as output_words / input_words (full points at 0.50). Earn-only; linear." },
+      diversity: { title: "Diversity", hint: "Entropy + unique_words on the fragment corpus. Earn-only; discourages homogeneous phrasing." },
+      depth: { title: "Depth", hint: "Fragment depth + mapping coverage ratios. Earn-only; rewards non-label content." },
+      connectivity: { title: "Connectivity", hint: "Persona↔prop density + linkage to research inputs + multi-targeting. Earn-only." }
+    };
+    for (const g of groupOrder) {
+      const title = document.createElement("div");
+      title.className = "groupTitle";
+      title.textContent = groupMeta[g].title;
+      slidersEl.appendChild(title);
+      const hint = document.createElement("div");
+      hint.className = "groupHint";
+      hint.textContent = groupMeta[g].hint;
+      slidersEl.appendChild(hint);
+      schema.filter(s => s.group === g).forEach(addSlider);
+    }
+
+    // init sweep selector
+    schema.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.key;
+      opt.textContent = s.key;
+      sweepVarEl.appendChild(opt);
+    });
+    sweepVarEl.value = "cwords";
+
+    // heatmap selectors
+    schema.forEach(s => {
+      const ox = document.createElement("option");
+      ox.value = s.key; ox.textContent = s.key;
+      hmXEl.appendChild(ox);
+      const oy = document.createElement("option");
+      oy.value = s.key; oy.textContent = s.key;
+      hmYEl.appendChild(oy);
+    });
+    hmXEl.value = "favg";
+    hmYEl.value = "cwords";
+    hmMetaEl.textContent = "";
+
+    // overlay list
+    ovListEl.innerHTML = "";
+    for (const g of groupOrder) {
+      const head = document.createElement("div");
+      head.className = "checkItem";
+      head.style.gridColumn = "1 / -1";
+      head.innerHTML = `<span class="k">${groupMeta[g].title}</span>`;
+      ovListEl.appendChild(head);
+      schema.filter(s => s.group === g).forEach(s => {
+        const lab = document.createElement("label");
+        lab.className = "checkItem";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = false;
+        ovChecks.set(s.key, cb);
+        const txt = document.createElement("span");
+        txt.className = "k";
+        txt.textContent = s.key;
+        lab.appendChild(cb);
+        lab.appendChild(txt);
+        ovListEl.appendChild(lab);
+      });
+    }
+
+    redrawBtn.addEventListener("click", renderPlot);
+    sweepVarEl.addEventListener("change", renderPlot);
+    stepsEl.addEventListener("change", renderPlot);
+    thresholdEl.addEventListener("change", () => { renderPlot(); drawHeatmap(); });
+
+    optimizeBtn.addEventListener("click", () => {
+      const budget = parseInt(optBudgetEl.value, 10);
+      const keys = schema
+        .map(s => s.key)
+        .filter(k => {
+          const ref = sliderRefs.get(k);
+          return !(ref && ref.lockEl && ref.lockEl.checked);
+        });
+      if (!solver.seed) solver.seed = { ...state };
+      const res = optimize(keys, budget, solver.seed);
+      solver.best = res.best;
+      solver.bestOut = res.bestOut;
+      hmMetaEl.innerHTML = `<span class="${solver.bestOut.overall >= parseFloat(thresholdEl.value) ? "ok" : "bad"}">solver_best=${fmt(solver.bestOut.overall,2)}</span> (budget=${budget}; stored, not applied)`;
+    });
+
+    slidersToSeedBtn.addEventListener("click", () => {
+      solver.seed = { ...state };
+      solver.best = null;
+      solver.bestOut = null;
+      hmMetaEl.innerHTML = `<span class="ok">solver_seed=sliders</span> (best cleared)`;
+    });
+
+    bestToSlidersBtn.addEventListener("click", () => {
+      if (!solver.best) {
+        hmMetaEl.innerHTML = `<span class="bad">no solver best yet</span> (click Optimize first)`;
+        return;
+      }
+      setStateAndSliders(solver.best);
+      hmMetaEl.innerHTML = `<span class="${solver.bestOut && solver.bestOut.overall >= parseFloat(thresholdEl.value) ? "ok" : "bad"}">applied solver best</span> (${solver.bestOut ? fmt(solver.bestOut.overall,2) : "?"})`;
+    });
+
+    const lockAllBtn = document.getElementById("lockAll");
+    const unlockAllBtn = document.getElementById("unlockAll");
+    lockAllBtn.addEventListener("click", () => {
+      for (const [, ref] of sliderRefs.entries()) {
+        if (ref.lockEl) ref.lockEl.checked = true;
+      }
+      hmMetaEl.innerHTML = `<span class="ok">locked all</span>`;
+    });
+    unlockAllBtn.addEventListener("click", () => {
+      for (const [, ref] of sliderRefs.entries()) {
+        if (ref.lockEl) ref.lockEl.checked = false;
+      }
+      hmMetaEl.innerHTML = `<span class="ok">unlocked all</span>`;
+    });
+
+    ovDrawBtn.addEventListener("click", drawOverlay);
+    ovAllBtn.addEventListener("click", () => {
+      for (const [, cb] of ovChecks.entries()) cb.checked = true;
+      drawOverlay();
+    });
+    ovNoneBtn.addEventListener("click", () => {
+      for (const [, cb] of ovChecks.entries()) cb.checked = false;
+      drawOverlay();
+    });
+
+    hmDrawBtn.addEventListener("click", drawHeatmap);
+    hmXEl.addEventListener("change", drawHeatmap);
+    hmYEl.addEventListener("change", drawHeatmap);
+    hmResEl.addEventListener("change", drawHeatmap);
+    hmModeEl.addEventListener("change", drawHeatmap);
+    hmCellBudgetEl.addEventListener("change", drawHeatmap);
+
+    hmBestToSlidersBtn.addEventListener("click", () => {
+      if (!heat.best) {
+        hmMetaEl.innerHTML = `<span class="bad">no heatmap best yet</span> (click Draw heatmap)`;
+        return;
+      }
+      setStateAndSliders(heat.best);
+      hmMetaEl.innerHTML = `${heat.meta} · <span class="${heat.bestOut && heat.bestOut.overall >= parseFloat(thresholdEl.value) ? "ok" : "bad"}">applied_to_sliders</span>`;
+    });
+
+    renderAll();
+    drawHeatmap();
+    drawOverlay();
+  </script>
+</body>
+</html>
+

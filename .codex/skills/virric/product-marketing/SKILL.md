@@ -19,6 +19,7 @@ Primary domain: `<product-marketing>`
 - Start from `<research>` outputs:
   - Candidate Personas: `CPE-*` docs inside the RA bundle (`60-candidate-personas/`)
   - Segments/persona hypotheses, EvidenceIDs, and the pitch set
+- You may (and should) also link and cite **any other `<research>` artifacts** you consulted (e.g. methods, evidence bank, hypothesis notes, assembled bundles) via `DocumentIDs` / `Links` to drive deeper reading and higher connectivity-to-input.
 - Use templates under `virric/domains/product-marketing/templates/`.
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
@@ -93,6 +94,12 @@ These are **minimum** gates intended to force multi-pass enrichment. If you cann
   - at least **5 Jobs**
   - at least **5 Pains**
   - at least **5 Gains**
+- **Fragment depth (required; drives exploration)**:
+  - Every individual JTBD fragment (each Job/Pain/Gain table row) must be **2–3 sentences**.
+  - Each fragment should include:
+    - the concrete behavior/context (what’s happening),
+    - the underlying need (why it matters),
+    - and (optionally) an edge case / objection / tradeoff.
 - **Traceability**:
   - at least **2** items across EvidenceIDs/CandidatePersonaIDs/DocumentIDs combined (more is better)
   - if an item is inferred, record the inference in `## Notes` (and keep speculative claims out of “authoritative voice”).
@@ -106,6 +113,12 @@ These are **minimum** gates intended to force multi-pass enrichment. If you cann
   - at least **4** Gain Boosters rows
   - at least **4** Pain Relievers rows
   - at least **4** Capabilities rows
+- **Fragment depth (required; drives exploration)**:
+  - Every individual fragment row must be **2–3 sentences**:
+    - Booster
+    - Reliever
+    - Capability
+  - Keep them mechanism-level and testable (avoid vague “make it better” language).
 - **Mapping density**:
   - each booster should map to **2+** gains when possible
   - each reliever should map to **2+** pains when possible

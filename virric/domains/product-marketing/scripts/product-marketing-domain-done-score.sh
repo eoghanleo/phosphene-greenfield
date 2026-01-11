@@ -27,7 +27,7 @@ source "$LIB_DIR/virric_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh [--docs-root <dir>] [--min-score <0..100>] [--quiet]
+  ./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh [--docs-root <dir>] [--input-research-root <dir>] [--min-score <0..100>] [--quiet]
 
 Notes:
   - This script is programmatic only (it does not generate content).
@@ -39,12 +39,14 @@ fail() { echo "FAIL: $*" >&2; exit 2; }
 
 ROOT="$(virric_find_project_root)"
 DOCS_ROOT="$ROOT/virric/domains/product-marketing/docs"
+INPUT_RESEARCH_ROOT="$ROOT/virric/domains/research/docs"
 MIN_SCORE="80"
 QUIET=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --docs-root) DOCS_ROOT="${2:-}"; shift 2 ;;
+    --input-research-root) INPUT_RESEARCH_ROOT="${2:-}"; shift 2 ;;
     --min-score) MIN_SCORE="${2:-}"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -54,6 +56,9 @@ done
 
 if [[ "$DOCS_ROOT" != /* ]]; then DOCS_ROOT="$ROOT/$DOCS_ROOT"; fi
 [[ -d "$DOCS_ROOT" ]] || fail "Missing docs root dir: $DOCS_ROOT"
+
+if [[ "$INPUT_RESEARCH_ROOT" != /* ]]; then INPUT_RESEARCH_ROOT="$ROOT/$INPUT_RESEARCH_ROOT"; fi
+[[ -d "$INPUT_RESEARCH_ROOT" ]] || fail "Missing input research root dir: $INPUT_RESEARCH_ROOT"
 
 if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
   fail "--min-score must be numeric (0..100)"
@@ -82,10 +87,14 @@ trap 'rm -rf "$tmp"' EXIT
 PERSONAS_TSV="$tmp/personas.tsv"
 PROPS_TSV="$tmp/props.tsv"
 EDGES_TSV="$tmp/edges.tsv"   # prop_id<TAB>per_id
+CORPUS_TXT="$tmp/corpus_fragments.txt"  # one fragment per line (JTBD/booster/reliever/capability text only)
+CORPUS_CLEAN_TXT="$tmp/corpus_clean.txt" # cleaned corpus (no IDs/tags/paths/scripts), used for ALL corpus-derived metrics
 
 : > "$PERSONAS_TSV"
 : > "$PROPS_TSV"
 : > "$EDGES_TSV"
+: > "$CORPUS_TXT"
+: > "$CORPUS_CLEAN_TXT"
 
 sum_words=0
 sum_chars=0
@@ -101,6 +110,83 @@ sum_mapped_pains_items=0
 sum_mapped_pains_rows=0
 
 props_multi_target=0
+
+append_section_text() {
+  # Extract plaintext-like content from a markdown section:
+  # - Ignores fenced code blocks (e.g. [V-SCRIPT] hints)
+  # - Stops at next "## " heading
+  # - Skips tables and known template boilerplate lines
+  # - Strips list bullet prefixes
+  local file="$1"
+  local start="$2"
+  awk -v start="$start" '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    function clean(line){
+      line = trim(line);
+      sub(/^-+[[:space:]]+/, "", line);
+      if (line=="") return "";
+      if (line ~ /^\[V-SCRIPT\]/) return "";
+      if (line ~ /^[[:space:]]*[A-Za-z0-9_.-]+[.]sh[[:space:]]*$/) return "";
+      if (line ~ /^Each item has:/) return "";
+      if (line ~ /^Store supporting IDs/) return "";
+      if (line ~ /^Mapped(Gain|Pain)IDs/) return "";
+      if (line ~ /^CapabilityType must be/) return "";
+      if (line ~ /^[|]/) return ""; # tables
+      return line;
+    }
+    BEGIN{ inside=0; fence=0; }
+    $0==start { inside=1; next }
+    inside && $0 ~ /^## / { exit }
+    inside {
+      if ($0 ~ /^```/) { fence = !fence; next }
+      if (fence) next
+      line = clean($0);
+      if (line!="") print line;
+    }
+  ' "$file"
+}
+
+clean_corpus() {
+  # Remove IDs/tags/paths/scripts so they don't count toward ANY corpus-derived metric.
+  # Keep sentence punctuation so the sentence-ratio metric still works.
+  sed -E \
+    -e 's/`[^`]*`/ /g' \
+    -e 's#https?://[^[:space:]]+# #g' \
+    -e 's#file://[^[:space:]]+# #g' \
+    -e 's/[[:alnum:]_.-]+[.]sh\\b/ /g' \
+    -e 's/JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-PER-[0-9]{4}/ /g' \
+    -e 's/(BOOST|REL|CAP)-[0-9]{4}-PROP-[0-9]{4}/ /g' \
+    -e 's/(PER|PROP|CPE|SEG|PITCH|RA|E)-[0-9]{3,4}/ /g' \
+    -e 's/[[:space:]]+/ /g' \
+    -e 's/^[[:space:]]+//; s/[[:space:]]+$//' \
+    "$CORPUS_TXT" > "$CORPUS_CLEAN_TXT"
+}
+
+clean_markdown_tree_words() {
+  # Compute cleaned word count across an upstream markdown corpus directory.
+  # Strips fenced code blocks and tables, then removes ID-like tokens and collapses whitespace.
+  local dir="$1"
+  find "$dir" -type f -name "*.md" -print0 2>/dev/null \
+    | xargs -0 cat 2>/dev/null \
+    | awk '
+        BEGIN{ fence=0; }
+        /^```/ { fence = !fence; next }
+        fence { next }
+        /^[|]/ { next }         # tables
+        { print }
+      ' \
+    | sed -E \
+        -e 's/`[^`]*`/ /g' \
+        -e 's#https?://[^[:space:]]+# #g' \
+        -e 's#file://[^[:space:]]+# #g' \
+        -e 's/[[:alnum:]_.-]+[.]sh\\b/ /g' \
+        -e 's/JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-PER-[0-9]{4}/ /g' \
+        -e 's/(BOOST|REL|CAP)-[0-9]{4}-PROP-[0-9]{4}/ /g' \
+        -e 's/(PER|PROP|CPE|SEG|PITCH|RA|E)-[0-9]{3,4}/ /g' \
+        -e 's/[[:space:]]+/ /g' \
+        -e 's/^[[:space:]]+//; s/[[:space:]]+$//' \
+    | wc -w | awk '{print $1}'
+}
 
 # PERSONAS: counts + traceability density
 for f in "${PERSONA_FILES[@]:-}"; do
@@ -118,6 +204,20 @@ for f in "${PERSONA_FILES[@]:-}"; do
   jobs="$(grep -cE "^[|][[:space:]]*JTBD-JOB-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
   pains="$(grep -cE "^[|][[:space:]]*JTBD-PAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
   gains="$(grep -cE "^[|][[:space:]]*JTBD-GAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
+
+  # Corpus: JTBD fragment text (column 3) only
+  # Table shape: | JTBD-ID | Job/Pain/Gain | Importance |
+  awk -F'|' -v per="$per_id" '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    $0 ~ /^[|][[:space:]]*JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-/ && $0 ~ ("-" per "[[:space:]]*[|]") {
+      txt=trim($3);
+      if (txt!="" && txt!="<...>") print txt;
+    }
+  ' "$f" >> "$CORPUS_TXT"
+
+  # Corpus: include all agent-composed prose (snapshot summary + notes)
+  append_section_text "$f" "## Snapshot summary" >> "$CORPUS_TXT" || true
+  append_section_text "$f" "## Notes" >> "$CORPUS_TXT" || true
 
   evidence_ids="$(awk '
     $0=="### EvidenceIDs" {inside=1; next}
@@ -213,48 +313,92 @@ for f in "${PROP_FILES[@]:-}"; do
   ' "$f")
 
   printf "%s\t%d\t%d\t%d\t%d\t%s\n" "$prop_id" "$boosters" "$relievers" "$caps" "$tcount" "$(basename "$f")" >> "$PROPS_TSV"
+
+  # Corpus: proposition fragment text only (exclude mapped ID columns)
+  awk -F'|' -v pid="$prop_id" '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    $0 ~ /^[|][[:space:]]*BOOST-[0-9]{4}-/ && $0 ~ ("-" pid "[[:space:]]*[|]") {
+      txt=trim($3);
+      if (txt!="" && txt!="<...>") print txt;
+    }
+    $0 ~ /^[|][[:space:]]*REL-[0-9]{4}-/ && $0 ~ ("-" pid "[[:space:]]*[|]") {
+      txt=trim($3);
+      if (txt!="" && txt!="<...>") print txt;
+    }
+    $0 ~ /^[|][[:space:]]*CAP-[0-9]{4}-/ && $0 ~ ("-" pid "[[:space:]]*[|]") {
+      txt=trim($4);
+      if (txt!="" && txt!="<...>") print txt;
+    }
+  ' "$f" >> "$CORPUS_TXT"
+
+  # Corpus: include all agent-composed prose (formal pitch + notes)
+  append_section_text "$f" "## Formal Pitch" >> "$CORPUS_TXT" || true
+  append_section_text "$f" "## Notes" >> "$CORPUS_TXT" || true
 done
 
 EDGES="$(wc -l < "$EDGES_TSV" | awk '{print $1}')"
 
-entropy_bits="$(cat "${PERSONA_FILES[@]}" "${PROP_FILES[@]}" 2>/dev/null | awk '
-  BEGIN { n=0; }
-  {
-    line=$0 "\n";
-    for (i=1;i<=length(line);i++) { c=substr(line,i,1); cnt[c]++; n++; }
-  }
-  END {
-    if (n==0) { print 0; exit }
-    H=0;
-    for (c in cnt) {
-      p = cnt[c]/n;
-      H += (-p * (log(p)/log(2)));
-    }
-    printf "%.4f\n", H;
-  }
-')"
+# Upstream input inventory (research)
+INPUT_RESEARCH_ARTIFACTS="$(find "$INPUT_RESEARCH_ROOT" -type f -name "*.md" 2>/dev/null | wc -l | awk '{print $1}')"
+INPUT_RESEARCH_WORDS="$(clean_markdown_tree_words "$INPUT_RESEARCH_ROOT")"
 
-if command -v gzip >/dev/null 2>&1; then
-  gz_bytes="$(cat "${PERSONA_FILES[@]}" "${PROP_FILES[@]}" 2>/dev/null | gzip -c | wc -c | awk '{print $1}')"
-  gzip_ratio="$(awk -v gz="$gz_bytes" -v raw="$sum_chars" 'BEGIN{ if (raw<=0) print 1.0; else printf "%.4f\n", (gz/raw) }')"
-else
-  gzip_ratio="1.0000"
-fi
+# Build cleaned corpus for ALL corpus-derived metrics (volume/diversity/depth).
+clean_corpus
 
-lex_stats="$(cat "${PERSONA_FILES[@]}" "${PROP_FILES[@]}" 2>/dev/null \
+# Diversity from cleaned corpus (stopword filtered; length filtered).
+# Outputs: total_tokens \t uniq_tokens \t entropy_bits_per_token
+div_stats="$(cat "$CORPUS_CLEAN_TXT" 2>/dev/null \
   | tr '[:upper:]' '[:lower:]' \
   | tr -cs '[:alnum:]' '\n' \
   | awk '
+      BEGIN{
+        split("a an the and or but if then else so to of in on for with without from into over under by as at is are was were be been being i you we they he she it my your our their this that these those not no yes", sw, " ");
+        for (i in sw) stop[sw[i]]=1;
+      }
       NF{
         w=$0;
+        if (length(w) < 3) next;
+        if (w ~ /^[0-9]+$/) next;
+        if (stop[w]) next;
         total++;
+        cnt[w]++;
         if (!seen[w]++){ uniq++; }
       }
-      END{ printf "%d\t%d\n", total+0, uniq+0 }
+      END{
+        if (total<=0) { printf "0\t0\t0.0000\n"; exit }
+        H=0;
+        for (w in cnt) {
+          p = cnt[w]/total;
+          H += (-p * (log(p)/log(2)));
+        }
+        printf "%d\t%d\t%.4f\n", total+0, uniq+0, H;
+      }
     ')"
-lex_total="$(echo "$lex_stats" | awk -F'\t' '{print $1}')"
-lex_uniq="$(echo "$lex_stats" | awk -F'\t' '{print $2}')"
-lex_ratio="$(awk -v u="$lex_uniq" -v t="$lex_total" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (u/t) }')"
+div_total="$(echo "$div_stats" | awk -F'\t' '{print $1}')"
+unique_words="$(echo "$div_stats" | awk -F'\t' '{print $2}')"
+entropy="$(echo "$div_stats" | awk -F'\t' '{print $3}')"
+
+frag_stats="$(awk '
+  function sent_count(s){ c=0; for (i=1;i<=length(s);i++){ ch=substr(s,i,1); if (ch=="." || ch=="!" || ch=="?") c++; } return c; }
+  BEGIN{ n=0; ge2=0; gt3=0; wsum=0; }
+  {
+    n++;
+    w=split($0, a, /[[:space:]]+/);
+    wsum += (w>0?w:0);
+    sc=sent_count($0);
+    if (sc>=2) ge2++;
+    if (sc>3) gt3++;
+  }
+  END{
+    avgw=(n>0)?(wsum/n):0;
+    r=(n>0)?(ge2/n):0;
+    printf "%d\t%.4f\t%.4f\t%d\n", n+0, avgw, r, gt3+0;
+  }
+' "$CORPUS_CLEAN_TXT")"
+frag_count="$(echo "$frag_stats" | awk -F'\t' '{print $1}')"
+frag_avg_words="$(echo "$frag_stats" | awk -F'\t' '{print $2}')"
+frag_ge2_ratio="$(echo "$frag_stats" | awk -F'\t' '{print $3}')"
+frag_gt3_count="$(echo "$frag_stats" | awk -F'\t' '{print $4}')"
 
 connect_metrics="$(awk -F'\t' -v nper="$N_PER" -v nprop="$N_PROP" '
   BEGIN{ edges=0; }
@@ -278,52 +422,8 @@ conn_density="$(echo "$connect_metrics" | awk -F'\t' '{print $2}')"
 min_props_per_persona="$(echo "$connect_metrics" | awk -F'\t' '{print $4}')"
 multi_ratio="$(awk -v m="$props_multi_target" -v n="$N_PROP" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (m/n) }')"
 
-# Saturation: per persona, pains+gains referenced by propositions that target the persona.
-sat_sum=0
-sat_count=0
-sat_min=1.0
-sat_missing=""
-for per in $(awk -F'\t' '{print $1}' "$PERSONAS_TSV"); do
-  per_file="$(awk -F'\t' -v p="$per" '$1==p{print $8; exit}' "$PERSONAS_TSV")"
-  per_path="$PERSONAS_DIR/$per_file"
-  per_pains="$(grep -oE "JTBD-PAIN-[0-9]{4}-${per}" "$per_path" | sort -u || true)"
-  per_gains="$(grep -oE "JTBD-GAIN-[0-9]{4}-${per}" "$per_path" | sort -u || true)"
-  total_pg="$(printf "%s\n%s\n" "$per_pains" "$per_gains" | grep -cE '^JTBD-(PAIN|GAIN)-' || true)"
-  if [[ "$total_pg" -eq 0 ]]; then
-    sat=0
-  else
-    mapped="$(
-      awk -F'\t' -v p="$per" '$2==p{print $1}' "$EDGES_TSV" \
-        | while IFS= read -r pid; do
-            [[ -n "$pid" ]] || continue
-            shopt -s nullglob
-            for pf in "$PROPS_DIR/${pid}-"*.md; do
-              grep -hoE "JTBD-(GAIN|PAIN)-[0-9]{4}-${per}" "$pf" 2>/dev/null || true
-            done
-            shopt -u nullglob
-          done \
-        | sort -u
-    )"
-    covered=0
-    missing_list=""
-    while IFS= read -r id; do
-      [[ -n "$id" ]] || continue
-      if printf "%s\n" "$mapped" | grep -qF "$id"; then
-        covered=$((covered + 1))
-      else
-        missing_list="${missing_list}${id} "
-      fi
-    done < <(printf "%s\n%s\n" "$per_pains" "$per_gains" | grep -E '^JTBD-(PAIN|GAIN)-' || true)
-    sat="$(awk -v c="$covered" -v t="$total_pg" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (c/t) }')"
-    if [[ -n "${missing_list// }" ]]; then
-      sat_missing="${sat_missing}${per}: missing ${missing_list}"$'\n'
-    fi
-  fi
-  sat_sum="$(awk -v s="$sat_sum" -v x="$sat" 'BEGIN{ printf "%.4f\n", (s+x) }')"
-  sat_count=$((sat_count + 1))
-  sat_min="$(awk -v m="$sat_min" -v x="$sat" 'BEGIN{ if (x<m) print x; else print m }')"
-done
-sat_avg="$(awk -v s="$sat_sum" -v n="$sat_count" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (s/n) }')"
+## NOTE: saturation-style “coverage” metrics intentionally removed from scoring for now.
+## The shortlist focuses on monotonic earnable metrics (no penalties). Coverage can be reintroduced later as a positive metric.
 
 avg_boosters="$(awk -v s="$sum_boosters" -v n="$N_PROP" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (s/n) }')"
 avg_relievers="$(awk -v s="$sum_relievers" -v n="$N_PROP" 'BEGIN{ if (n<=0) print 0; else printf "%.4f\n", (s/n) }')"
@@ -333,62 +433,100 @@ avg_mapped_pains="$(awk -v s="$sum_mapped_pains_items" -v n="$sum_mapped_pains_r
 
 floor_fill_props="$(awk -F'\t' '$2==4 && $3==4 && $4==4 { ok++ } END{ print ok+0 }' "$PROPS_TSV")"
 
-scores="$(awk -v words="$sum_words" \
-  -v ent="$entropy_bits" -v gz="$gzip_ratio" -v lex="$lex_ratio" \
-  -v nper="$N_PER" -v nprop="$N_PROP" -v dens="$conn_density" -v minpp="$min_props_per_persona" \
-  -v mult="$multi_ratio" \
-  -v ab="$avg_boosters" -v ar="$avg_relievers" -v ac="$avg_caps" \
-  -v amg="$avg_mapped_gains" -v amp="$avg_mapped_pains" \
-  -v sat="$sat_avg" -v satmin="$sat_min" \
-  -v phn="$placeholder_notes" -v pha="$placeholder_any" \
-  -v floorfill="$floor_fill_props" -v nprop2="$N_PROP" '
+corpus_words="$(wc -w < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
+
+# Persona upstream traceability density (non-domain artifact linkage)
+avg_persona_evidence="$(awk -F'\t' '{s+=$5} END{ if (NR<=0) print 0; else printf "%.4f\n", (s/NR) }' "$PERSONAS_TSV")"
+avg_persona_cpe="$(awk -F'\t' '{s+=$6} END{ if (NR<=0) print 0; else printf "%.4f\n", (s/NR) }' "$PERSONAS_TSV")"
+avg_persona_docs="$(awk -F'\t' '{s+=$7} END{ if (NR<=0) print 0; else printf "%.4f\n", (s/NR) }' "$PERSONAS_TSV")"
+avg_persona_upstream_refs="$(awk -v a="$avg_persona_evidence" -v b="$avg_persona_cpe" -v c="$avg_persona_docs" 'BEGIN{ printf "%.4f\n", (a+b+c) }')"
+
+# Mapping coverage ratios (scale with persona pool size)
+total_gain_ids="$(cat "${PERSONA_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
+total_pain_ids="$(cat "${PERSONA_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
+mapped_gain_ids="$(cat "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
+mapped_pain_ids="$(cat "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
+mapped_gain_ratio="$(awk -v m="$mapped_gain_ids" -v t="$total_gain_ids" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (m/t) }')"
+mapped_pain_ratio="$(awk -v m="$mapped_pain_ids" -v t="$total_pain_ids" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (m/t) }')"
+
+# Input-linkage ratio: how many distinct research IDs are referenced by product-marketing artifacts,
+# scaled against the number of available research artifacts.
+research_refs_unique="$(cat "${PERSONA_FILES[@]:-}" "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE '(RA|PITCH|E|SEG|CPE)-[0-9]{3,4}' | sort -u | wc -l | awk '{print $1}')"
+conn_density_persona_input="$(awk -v r="$research_refs_unique" -v n="$INPUT_RESEARCH_ARTIFACTS" 'BEGIN{ if (n<=0) print 0; x=(r/n); if (x>1) x=1; printf "%.4f\n", x }')"
+
+scores="$(awk -v out_words="$corpus_words" \
+  -v in_words="$INPUT_RESEARCH_WORDS" \
+  -v ent="$entropy" -v uniq_words="$unique_words" \
+  -v favg="$frag_avg_words" -v two_sent="$frag_ge2_ratio" \
+  -v gain_cov="$mapped_gain_ratio" -v pain_cov="$mapped_pain_ratio" \
+  -v dens_pp="$conn_density" -v mult="$multi_ratio" -v dens_in="$conn_density_persona_input" '
 
 function clamp(x, lo, hi){ return (x<lo)?lo:((x>hi)?hi:x); }
 function score_linear(x, x0, x1){ return clamp((x - x0) / (x1 - x0), 0, 1) * 100; }
 
 BEGIN {
-  vol = clamp((log(words+1)/log(10)) * 25, 0, 100);
+  # -----------------------------
+  # Ratio-based metric box (no penalties; earn-only; scales against input corpus)
+  # -----------------------------
+  # Max points by category (sum = 100; each category max = 25)
+  MAX_VOL = 25;
+  MAX_DIV = 25;
+  MAX_DEP = 25;
+  MAX_CON = 25;
+  MAX_ALL = (MAX_VOL+MAX_DIV+MAX_DEP+MAX_CON);
 
-  ent_s = score_linear(ent, 3.2, 5.0);
-  gz_s  = score_linear(gz, 0.18, 0.45);
-  lex_s = score_linear(lex, 0.10, 0.28);
-  div = (ent_s*0.4 + gz_s*0.3 + lex_s*0.3);
+  # Split points within categories (sum to 25 each)
+  MAX_VOL_WORDS = 25;
 
-  cap_base = clamp((ac/4.0) * 25, 0, 50);
-  cap_bonus = score_linear(ac, 4, 10) * 0.50;
-  cap_s = clamp(cap_base + cap_bonus, 0, 100);
+  MAX_DIV_ENT   = 12.5;
+  MAX_DIV_UNIQ  = 12.5;
 
-  boo_base = clamp((ab/4.0) * 20, 0, 40);
-  boo_bonus = score_linear(ab, 4, 8) * 0.60;
-  boo_s = clamp(boo_base + boo_bonus, 0, 100);
+  MAX_DEP_FAVG  = 10;
+  MAX_DEP_2S    = 10;
+  MAX_DEP_GAIN  = 2.5;
+  MAX_DEP_PAIN  = 2.5;
 
-  rel_base = clamp((ar/4.0) * 20, 0, 40);
-  rel_bonus = score_linear(ar, 4, 8) * 0.60;
-  rel_s = clamp(rel_base + rel_bonus, 0, 100);
+  MAX_CON_DENS_PP = 10;
+  MAX_CON_DENS_IN = 7.5;
+  MAX_CON_MULT    = 7.5;
 
-  map_s = score_linear((amg+amp)/2.0, 1.6, 3.0);
+  # -----------------------------
+  # Ratios
+  # -----------------------------
+  out_in_ratio = (in_words>0)?(out_words/in_words):0;                 # output vs input words
+  uniq_ratio = (out_words>0)?(uniq_words/out_words):0;               # unique_words / corpus_words (scalable)
+  ent_norm = (uniq_words>1 && ent>0)?(ent/(log(uniq_words)/log(2))):0; # entropy normalized to max possible
 
-  ph_pen = clamp(phn * 1, 0, 20);
-  depth = clamp((cap_s*0.45 + boo_s*0.2 + rel_s*0.2 + map_s*0.15) - ph_pen, 0, 100);
+  # -----------------------------
+  # Normalize to 0..100 (mostly linear; volume explicitly linear per spec)
+  # -----------------------------
+  s_vol = score_linear(out_in_ratio, 0.0, 0.50);
 
-  base = (nper>0)?(1.0/nper):0;
-  dens_ratio = (base>0)?(dens/base):0;
-  dens_s = clamp(dens_ratio, 0, 2) * 50;
-  multi_s = score_linear(mult, 0.10, 0.40);
-  minpp_s = clamp(minpp/3.0, 0, 2) * 50;
-  conn = clamp(multi_s*0.55 + dens_s*0.25 + minpp_s*0.20, 0, 100);
+  s_ent = score_linear(ent_norm, 0.55, 0.90);
+  s_uniq = score_linear(uniq_ratio, 0.03, 0.11);
 
-  sat_s = clamp(sat * 100, 0, 100);
-  sat_min_s = clamp(satmin * 100, 0, 100);
-  sat_final = (sat_s*0.7 + sat_min_s*0.3);
+  s_favg = score_linear(favg, 12, 30);
+  s_2s   = score_linear(two_sent, 0.20, 0.75);
+  s_gain = score_linear(gain_cov, 0.20, 0.80);
+  s_pain = score_linear(pain_cov, 0.20, 0.80);
 
-  overall = vol*0.12 + div*0.13 + depth*0.30 + conn*0.30 + sat_final*0.15;
+  s_dens_pp = score_linear(dens_pp, 0.10, 0.50);
+  s_dens_in = score_linear(dens_in, 0.05, 0.35);
+  s_mult    = score_linear(mult, 0.15, 0.45);
 
-  if (nprop2>0 && floorfill==nprop2) overall -= 12;
-  overall -= clamp(pha * 1.0, 0, 15);
+  # Points (earn-only)
+  p_vol = (s_vol/100.0) * MAX_VOL_WORDS;
+  p_div = (s_ent/100.0) * MAX_DIV_ENT + (s_uniq/100.0) * MAX_DIV_UNIQ;
+  p_dep = (s_favg/100.0) * MAX_DEP_FAVG + (s_2s/100.0) * MAX_DEP_2S + (s_gain/100.0) * MAX_DEP_GAIN + (s_pain/100.0) * MAX_DEP_PAIN;
+  p_con = (s_dens_pp/100.0) * MAX_CON_DENS_PP + (s_dens_in/100.0) * MAX_CON_DENS_IN + (s_mult/100.0) * MAX_CON_MULT;
 
-  overall = clamp(overall, 0, 100);
-  printf "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", overall, vol, div, depth, conn, sat_final;
+  overall = clamp(((p_vol + p_div + p_dep + p_con) / MAX_ALL) * 100.0, 0, 100);
+  vol = clamp((p_vol / MAX_VOL) * 100.0, 0, 100);
+  div = clamp((p_div / MAX_DIV) * 100.0, 0, 100);
+  dep = clamp((p_dep / MAX_DEP) * 100.0, 0, 100);
+  con = clamp((p_con / MAX_CON) * 100.0, 0, 100);
+
+  printf "%.2f\t%.2f\t%.2f\t%.2f\t%.2f\n", overall, vol, div, dep, con;
 }
 ')"
 
@@ -397,7 +535,6 @@ score_vol="$(echo "$scores" | awk -F'\t' '{print $2}')"
 score_div="$(echo "$scores" | awk -F'\t' '{print $3}')"
 score_depth="$(echo "$scores" | awk -F'\t' '{print $4}')"
 score_conn="$(echo "$scores" | awk -F'\t' '{print $5}')"
-score_sat="$(echo "$scores" | awk -F'\t' '{print $6}')"
 
 result="$(awk -v s="$overall" -v m="$MIN_SCORE" 'BEGIN{ if (s+0 >= m+0) print "PASS"; else print "FAIL" }')"
 
@@ -405,43 +542,53 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "VIRRIC domain done score -- <product-marketing>"
   echo "Script: product-marketing-domain-done-score.sh"
   echo "DocsRoot: $DOCS_ROOT"
+  echo "InputResearchRoot: $INPUT_RESEARCH_ROOT"
+  echo "InputResearch: ${INPUT_RESEARCH_ARTIFACTS} md artifacts; ${INPUT_RESEARCH_WORDS} cleaned words"
   echo "Overall: ${overall}/100  (threshold: ${MIN_SCORE})  RESULT: ${result}"
   echo ""
   echo "Subscores:"
   echo "  - volume:        ${score_vol}"
-  echo "  - diversity:     ${score_div}   (entropy=${entropy_bits} bits/char, gzip_ratio=${gzip_ratio}, lex_ratio=${lex_ratio})"
-  echo "  - depth:         ${score_depth} (avg boosters=${avg_boosters}, relievers=${avg_relievers}, capabilities=${avg_caps}; avgMapped gains=${avg_mapped_gains}, pains=${avg_mapped_pains})"
-  echo "  - connectivity:  ${score_conn}  (props=${N_PROP}, personas=${N_PER}, edges=${EDGES}, density=${conn_density}, multi_target_ratio=${multi_ratio}, min_props_per_persona=${min_props_per_persona})"
-  echo "  - saturation:    ${score_sat}   (avg pains+gains coverage=${sat_avg}, min=${sat_min})"
+  echo "  - diversity:     ${score_div}   (entropy=${entropy} bits/token, unique_words=${unique_words}, unique_ratio=$(awk -v u="$unique_words" -v w="$corpus_words" 'BEGIN{ if (w<=0) print 0; else printf "%.4f\n", (u/w) }'))"
+  echo "  - depth:         ${score_depth} (frag_avg_words=${frag_avg_words}, two_sentence_ratio=${frag_ge2_ratio}, mapped_gain_cov=${mapped_gain_ratio}, mapped_pain_cov=${mapped_pain_ratio})"
+  echo "  - connectivity:  ${score_conn}  (props=${N_PROP}, personas=${N_PER}, edges=${EDGES}, conn_density_persona_prop=${conn_density}, conn_density_persona_input=${conn_density_persona_input}, multi_target_ratio=${multi_ratio})"
+  echo ""
+  echo "Metric box (max points; earn-only; each category max=25):"
+  echo "  - Volume (25):"
+  echo "    - output_words / input_words  (full points at 0.50)"
+  echo "  - Diversity (25):"
+  echo "    - entropy_norm (entropy / log2(unique_words)): 12.5"
+  echo "    - unique_words / corpus_words: 12.5"
+  echo "  - Depth (25):"
+  echo "    - fragment_avg_words: 10"
+  echo "    - two_sentence_ratio: 10"
+  echo "    - mapped_gain_coverage (unique mapped gains / total gains): 2.5"
+  echo "    - mapped_pain_coverage (unique mapped pains / total pains): 2.5"
+  echo "  - Connectivity (25):"
+  echo "    - conn_density_persona_prop: 10"
+  echo "    - conn_density_persona_input (unique research IDs referenced / research artifacts): 7.5"
+  echo "    - multi_target_ratio: 7.5"
   echo ""
   echo "Thinness signals:"
   echo "  - placeholder_notes: ${placeholder_notes}"
   echo "  - placeholder_any:   ${placeholder_any}"
   echo "  - floor_fill_props:  ${floor_fill_props}/${N_PROP} (props with exactly 4 boosters / 4 relievers / 4 capabilities)"
   echo ""
-  if [[ -n "${sat_missing:-}" ]]; then
-    echo "Saturation gaps (pains+gains not mapped by any targeting proposition):"
-    echo "$sat_missing" | sed '/^[[:space:]]*$/d; s/^/  - /'
-    echo ""
-  fi
-
   echo "What to do next to increase score (programmatic guidance):"
-  awk -v mult="$multi_ratio" -v minpp="$min_props_per_persona" '
+  awk -v r="$frag_ge2_ratio" -v aw="$frag_avg_words" '
     BEGIN{
-      if (mult+0 < 0.20) print "  - Increase overlap: create multi-persona propositions (aim >= 20% of props target 2+ personas).";
-      if (minpp+0 < 4) print "  - Increase per-persona breadth: ensure each persona is targeted by >3 propositions (aim >= 4).";
+      if (r+0 < 0.70) print "  - Increase two-sentence ratio: rewrite every fragment as 2–3 sentences (context + why + edge case).";
+      if (aw+0 < 22) print "  - Increase fragment_avg_words: add concrete constraints, examples, tradeoffs (aim avg >= ~22 words per fragment).";
     }
   '
-  awk -v ac="$avg_caps" -v ab="$avg_boosters" -v ar="$avg_relievers" -v phn="$placeholder_notes" '
+  awk -v mult="$multi_ratio" -v dens="$conn_density" '
     BEGIN{
-      if (ac+0 <= 4.01) print "  - Mine capabilities beyond the minimum: add more than 4 capability rows per proposition; do not stop at one-per-type.";
-      if (ab+0 <= 4.01 || ar+0 <= 4.01) print "  - Deepen boosters/relievers: add additional rows (beyond 4) to explore alternate mechanisms and benefit stacks.";
-      if (phn+0 > 0) print "  - Replace placeholder notes (<free-form notes>) with concrete bullets about risks/objections, packaging, and edge cases.";
+      if (mult+0 < 0.20) print "  - Increase multi_target_ratio: make more propositions target 2+ personas (overlap/synergy).";
+      if (dens+0 < 0.15) print "  - Increase conn_density_persona_prop: ensure more persona↔prop links exist (each persona should be targeted by multiple props).";
     }
   '
-  awk -v satmin="$sat_min" '
+  awk -v up="$avg_persona_upstream_refs" '
     BEGIN{
-      if (satmin+0 < 1.0) print "  - Fix saturation gaps: ensure every persona pain+gain is referenced by at least one proposition mapping (or explicitly justify).";
+      if (up+0 < 4.0) print "  - Improve persona upstream linkage: add EvidenceIDs / CandidatePersonaIDs / DocumentIDs so personas are traceable (not just inferred).";
     }
   '
 fi

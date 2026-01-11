@@ -105,8 +105,7 @@ Put the receipt next to the artifact it’s attesting to:
   "outputs": ["..."],
   "checks": ["..."],
   "inputs_hash": "sha256:...",
-  "timestamp_utc": "2026-01-09T00:00:00Z",
-  "commit_sha": "..."
+  "timestamp_utc": "2026-01-09T00:00:00Z"
 }
 ```
 

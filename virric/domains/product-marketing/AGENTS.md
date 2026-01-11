@@ -42,6 +42,18 @@ Do not do a single pass.
   - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <PROMPT:done_score_min>`
   - If it FAILs, follow its “What to do next” hints and iterate.
 
+### Non-negotiable behavior: fragment depth (2–3 sentences each)
+
+To force real exploration (not “label filling”), treat every line item as a mini-argument:
+
+- For **personas**: every Job/Pain/Gain table row must be **2–3 sentences**.
+- For **propositions**: every Booster/Reliever/Capability row must be **2–3 sentences**.
+
+Each fragment should include:
+- concrete context/behavior,
+- why it matters (need/outcome),
+- and optionally an edge case / objection / tradeoff.
+
 ### Persona scope (you may extend beyond research candidates)
 
 Research provides `CPE-*` as candidate personas. You may create additional `PER-*` personas when they are a justified extension of the research bundle (split/merge/missing role/context).
@@ -49,7 +61,7 @@ Research provides `CPE-*` as candidate personas. You may create additional `PER-
 Traceability expectations for any `PER-*` you create:
 - Link upstream sources via the persona’s `## Evidence and links` section:
   - `CandidatePersonaIDs`: the CPE(s) you promoted/extended (when applicable)
-  - `DocumentIDs`: RA + pitch IDs you used
+  - `DocumentIDs`: any `<research>` IDs you used (not just RA + pitches; cite methods/evidence-bank/etc if you read them)
   - `EvidenceIDs`: specific evidence rows supporting key claims (when applicable)
 - If a persona is mostly inferred, state that explicitly in `## Notes` and explain the inference from bundle facts.
 
