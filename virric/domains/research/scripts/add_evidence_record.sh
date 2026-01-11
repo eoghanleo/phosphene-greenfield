@@ -39,8 +39,8 @@ ROOT="$(virric_find_project_root)"
 if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
-EVID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type evidence)"
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
+EVID="$("$ROOT/virric/virric-core/bin/virric" id next --type evidence)"
 
 FILE="$BUNDLE/50-evidence-bank.md"
 [[ -f "$FILE" ]] || { echo "Error: missing $FILE" >&2; exit 1; }

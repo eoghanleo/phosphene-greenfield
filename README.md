@@ -124,7 +124,7 @@ These are conventions intended to make receipts predictable for automation and r
 - **checks** (typical):
   - `./virric/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>`
   - `./virric/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
-  - `./virric/domains/research/scripts/research_id_registry.sh validate`
+  - `./virric/virric-core/bin/virric id validate`
 
 #### `<feature-management>` — `feature-request` (FR dossier)
 

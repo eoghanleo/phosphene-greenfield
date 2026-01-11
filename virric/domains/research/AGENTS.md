@@ -30,8 +30,8 @@ When producing a research assessment, prefer using the domain scripts to enforce
 - Assemble a single-file view (for human reading):
   - `./virric/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
 - Rebuild + validate global ID uniqueness:
-  - `./virric/domains/research/scripts/research_id_registry.sh build`
-  - `./virric/domains/research/scripts/research_id_registry.sh validate`
+  - `./virric/virric-core/bin/virric id build`
+  - `./virric/virric-core/bin/virric id validate`
 
 If an agent produces a large raw narrative first, preserve it as `99-raw-agent-output.md` inside the bundle, then distill it into the canonical bundle files and re-run validation until green.
 

@@ -24,9 +24,9 @@ Authoritative ownership rule (important):
 
 This repo enforces that via an index + allocator script:
 
-- Build/refresh index: `./virric/domains/research/scripts/research_id_registry.sh build`
-- Validate uniqueness: `./virric/domains/research/scripts/research_id_registry.sh validate`
-- Allocate next ID: `./virric/domains/research/scripts/research_id_registry.sh next --type evidence|pitch|refsol|ra|segment|cpe|persona`
+- Build/refresh index: `./virric/virric-core/bin/virric id build`
+- Validate uniqueness: `./virric/virric-core/bin/virric id validate`
+- Allocate next ID: `./virric/virric-core/bin/virric id next --type evidence|pitch|refsol|ra|segment|cpe|persona`
 
 Creation scripts call the allocator so new artifacts start compliant.
 

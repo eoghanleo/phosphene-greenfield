@@ -38,8 +38,8 @@ if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 [[ -d "$BUNDLE/30-pitches" ]] || { echo "Error: bundle missing 30-pitches/: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
-PITCH_ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type pitch)"
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
+PITCH_ID="$("$ROOT/virric/virric-core/bin/virric" id next --type pitch)"
 RA_ID="$(grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$BUNDLE/00-coversheet.md" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
 [[ -n "$RA_ID" ]] || { echo "Error: could not read RA ID from 00-coversheet.md" >&2; exit 1; }
 

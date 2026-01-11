@@ -4,6 +4,15 @@
 #
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LIB_DIR="$(cd "$SCRIPT_DIR/../lib" 2>/dev/null && pwd || true)"
+if [[ -z "${LIB_DIR:-}" || ! -f "$LIB_DIR/virric_env.sh" ]]; then
+  # Repo layout fallback: virric/virric-core/bin/virric -> virric/virric-core/lib/virric_env.sh
+  LIB_DIR="$(cd "$SCRIPT_DIR/../lib" && pwd)"
+fi
+# shellcheck source=/dev/null
+source "$LIB_DIR/virric_env.sh"
+
 CMD="${1:-help}"
 shift || true
 
@@ -96,14 +105,58 @@ Usage:
 Commands:
   banner   Print the VIRRIC neon banner
   doctor   Print banner + dependency diagnostics
+  id       Global ID registry (build/validate/where/next)
   help     Show this help
 
+ID registry:
+  ./virric/virric-core/bin/virric id build
+  ./virric/virric-core/bin/virric id validate
+  ./virric/virric-core/bin/virric id where <ID>
+  ./virric/virric-core/bin/virric id next --type <type>
+
 EOF
+}
+
+id_help() {
+  cat <<'EOF'
+VIRRIC ID REGISTRY (global)
+
+Usage:
+  ./virric/virric-core/bin/virric id [build|validate|where <ID>|next --type <type>]
+
+Notes:
+  - This is a repo-wide registry (writes to: virric/id_index.tsv)
+  - Implementation lives in:
+      virric/virric-core/bin/id_registry.sh
+
+EOF
+}
+
+id_cmd() {
+  local root
+  root="$(virric_find_project_root)" || {
+    echo "VIRRIC: not in a VIRRIC project (cannot find repo root with ./virric)." 1>&2
+    return 1
+  }
+
+  local impl="$root/virric/virric-core/bin/id_registry.sh"
+  if [[ ! -f "$impl" ]]; then
+    echo "VIRRIC: missing ID registry implementation: $impl" 1>&2
+    return 1
+  fi
+
+  local sub="${1:-build}"
+  case "$sub" in
+    -h|--help|help) id_help; return 0 ;;
+  esac
+
+  bash "$impl" "$sub" "${@:2}"
 }
 
 case "$CMD" in
   banner) banner ;;
   doctor) doctor ;;
+  id) id_cmd "$@" ;;
   help|-h|--help) help ;;
   *)
     echo "Unknown command: $CMD" 1>&2

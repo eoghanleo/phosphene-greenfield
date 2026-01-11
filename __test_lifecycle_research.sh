@@ -19,7 +19,7 @@ cleanup() {
 trap cleanup EXIT
 
 echo "--- registry validate (pre) ---"
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
 
 echo "--- create RA bundle ---"
 bundle_line="$("$ROOT/virric/domains/research/scripts/create_research_assessment_bundle.sh" \
@@ -84,7 +84,7 @@ ASM_FILE="${asm_line#Assembled: }"
 [[ -f "$ASM_FILE" ]] || fail "assembled file not created: $ASM_FILE"
 
 echo "--- registry validate (post; repo-wide) ---"
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
 
 echo "OK: research lifecycle test passed."
 

@@ -56,8 +56,8 @@ RA_ID="$(grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$BUNDLE/00-covershe
 [[ -n "${RA_ID:-}" ]] || { echo "Error: could not read RA ID from $BUNDLE/00-coversheet.md" >&2; exit 1; }
 
 # Ensure global uniqueness is clean before allocating.
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
-CPE_ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type cpe)"
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
+CPE_ID="$("$ROOT/virric/virric-core/bin/virric" id next --type cpe)"
 
 OUT_DIR="$BUNDLE/60-candidate-personas"
 mkdir -p "$OUT_DIR"

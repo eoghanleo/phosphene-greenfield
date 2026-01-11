@@ -93,13 +93,13 @@ extract_bullets_under() {
 
 id_exists_in_registry() {
   local id="$1"
-  "$ROOT/virric/domains/research/scripts/research_id_registry.sh" where "$id" >/dev/null 2>&1
+  "$ROOT/virric/virric-core/bin/virric" id where "$id" >/dev/null 2>&1
 }
 
 evidence_row_candidate_personas() {
   local eid="$1"
   local evidence_file
-  evidence_file="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" where "$eid" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
+  evidence_file="$("$ROOT/virric/virric-core/bin/virric" id where "$eid" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
   [[ -n "${evidence_file:-}" ]] || return 0
   [[ "$evidence_file" = /* ]] || evidence_file="$ROOT/$evidence_file"
   [[ -f "$evidence_file" ]] || return 0

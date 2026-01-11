@@ -240,7 +240,7 @@ validate_file() {
     # Build a map of PER-#### -> file path.
     while IFS= read -r per; do
       [[ -n "$per" ]] || continue
-      per_path="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" where "$per" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
+      per_path="$("$ROOT/virric/virric-core/bin/virric" id where "$per" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
       [[ -n "${per_path:-}" ]] || fail "$(basename "$f"): persona not found in registry: $per"
       [[ "$per_path" = /* ]] || per_path="$ROOT/$per_path"
       [[ -f "$per_path" ]] || fail "$(basename "$f"): persona path not found: $per_path"

@@ -39,8 +39,8 @@ Canonical location:
 Before finalizing a SPEC for PR, run:
 
 ```bash
-./virric/domains/research/scripts/research_id_registry.sh validate
-./virric/domains/research/scripts/research_id_registry.sh where RA-001
+./virric/virric-core/bin/virric id validate
+./virric/virric-core/bin/virric id where RA-001
 ```
 
 And run `where <ID>` for any ID you cite in the SPEC.

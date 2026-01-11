@@ -41,8 +41,8 @@ ROOT="$(virric_find_project_root)"
 if [[ "$BUNDLE" != /* ]]; then BUNDLE="$ROOT/$BUNDLE"; fi
 [[ -d "$BUNDLE" ]] || { echo "Error: not a directory: $BUNDLE" >&2; exit 1; }
 
-"$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
-RSID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type refsol)"
+"$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
+RSID="$("$ROOT/virric/virric-core/bin/virric" id next --type refsol)"
 
 FILE="$BUNDLE/10-reference-solutions.md"
 [[ -f "$FILE" ]] || { echo "Error: missing $FILE" >&2; exit 1; }

@@ -53,8 +53,8 @@ if [[ "$OUT_DIR" != /* ]]; then OUT_DIR="$ROOT/$OUT_DIR"; fi
 mkdir -p "$OUT_DIR"
 
 if [[ -z "${ID}" ]]; then
-  "$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
-  ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type persona)"
+  "$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
+  ID="$("$ROOT/virric/virric-core/bin/virric" id next --type persona)"
 fi
 
 if ! [[ "$ID" =~ ^PER-[0-9]{4}$ ]]; then

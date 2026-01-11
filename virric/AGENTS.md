@@ -64,9 +64,9 @@ VIRRIC maintains a repo-wide ID index at:
 Build / validate / query:
 
 ```bash
-./virric/domains/research/scripts/research_id_registry.sh build
-./virric/domains/research/scripts/research_id_registry.sh validate
-./virric/domains/research/scripts/research_id_registry.sh where PER-0003
+./virric/virric-core/bin/virric id build
+./virric/virric-core/bin/virric id validate
+./virric/virric-core/bin/virric id where PER-0003
 ```
 
 ### In-doc script hints (`[V-SCRIPT]`)

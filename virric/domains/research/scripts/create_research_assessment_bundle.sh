@@ -64,9 +64,9 @@ fi
 ROOT="$(virric_find_project_root)"
 
 if [[ -z "${ID}" ]]; then
-  "$ROOT/virric/domains/research/scripts/research_id_registry.sh" validate >/dev/null
+  "$ROOT/virric/virric-core/bin/virric" id validate >/dev/null
   # Allocate next legal RA id from global index
-  ID="$("$ROOT/virric/domains/research/scripts/research_id_registry.sh" next --type ra)"
+  ID="$("$ROOT/virric/virric-core/bin/virric" id next --type ra)"
 fi
 
 if ! [[ "$ID" =~ ^RA-[0-9]{3}$ ]]; then
