@@ -37,7 +37,9 @@ Do not do a single pass.
   - strengthen mapping density between propositions and JTBD IDs.
 - Only write `DONE.json` after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist).
 - Use the score tool to force iteration:
-  - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <MIN>`
+  - Treat it as a **validator gate** (not an FYI).
+  - The harness prompt provides your minimum threshold as `done_score_min` — use that value.
+  - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <PROMPT:done_score_min>`
   - If it FAILs, follow its “What to do next” hints and iterate.
 
 ### Persona scope (you may extend beyond research candidates)

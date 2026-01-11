@@ -22,6 +22,9 @@ Primary domain: `<product-marketing>`
 - Use templates under `virric/domains/product-marketing/templates/`.
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
+- Treat the **domain done-score** as a first-class validator:
+  - The harness prompt will supply `done_score_min` (your target threshold).
+  - You must run the done-score script repeatedly and iterate until it is **PASS**.
 
 ## Value proposition design stance (opinionated; central)
 
@@ -130,12 +133,12 @@ You must not write `DONE.json` until:
 
 - All validators are green (and strict variants if required by the run).
 - The **coverage targets** above are met (or explicitly justified).
-- The value-space mining score meets the threshold (see below).
+- The domain done-score is **PASS** (threshold comes from the harness prompt via `done_score_min`).
 - Your `DONE.json` includes:
   - counts per persona: Jobs/Pains/Gains
   - counts per proposition: boosters/relievers/capabilities
   - a checklist note stating how each qualitative axis was addressed (reference PROP IDs)
-  - the score report (overall + subscores) and a short “next actions” note if any subscores are low.
+  - the done-score report (overall + subscores), the `done_score_min` you were given, and a short “next actions” note if any subscores are low.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -157,8 +160,8 @@ JTBD IDs convention (natural keys):
   - `./virric/domains/product-marketing/scripts/validate_persona.sh --all`
 - Validate all propositions:
   - `./virric/domains/product-marketing/scripts/validate_proposition.sh --all`
-- Domain done score (programmatic; no generation):
-  - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <MIN>`
+- Domain done score (mandatory for producing; programmatic; no generation):
+  - `./virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score <PROMPT:done_score_min>`
 
 ## Scripts (entrypoints and purpose)
 
