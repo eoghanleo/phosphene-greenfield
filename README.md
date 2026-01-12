@@ -1,236 +1,32 @@
-# PHOSPHENE
 
-Phosphene is a lightweight agentic harness framework built on a brutally simple premise:
+![FLORA-Text Modification Request-52d07bab](https://github.com/user-attachments/assets/be6dbfd9-bd1c-4f10-ae55-b30029da9349)
 
-- **GitHub Actions is the scheduler.**
-- **Codex is the worker.**
-- **The repo is shared memory.**
 
-Phosphene is a **convention, not a platform**. It achieves determinism and auditability by making the repo itself the state machine.
 
-## Core idea (repo as signal bus)
 
-Agents do not message each other. They write artifacts.
 
-GitHub Actions observes repo changes, runs validation/routing logic, and invokes the next agent.
+The PHOSPHENE git-native agentic harness system for software and product development. Optimised for OpenAI Codex. To be open-sourced.
 
-In one line:
+![FLORA-VIRIDIAN Design-340e14c5](https://github.com/user-attachments/assets/1b281dde-45b6-4022-ac52-4439878c46c0)
 
-**Signals broadcast through the repo to Actions, which (via deterministic routing + a central planner) calls the next agent, and PR merge is the officialization point.**
+Viridian:
 
-## Non-negotiable workflow rule: PR-gated officialization
+![FLORA-Background Modification-75c6589b](https://github.com/user-attachments/assets/50ebc45c-1e3f-425a-a87a-83ad67013135)
 
-Artifacts effectively have three states:
+Beryl:
 
-- **Open** (work in progress)
-- **In PR** (candidate changes under review/automation)
-- **Closed** (merged to the default branch)
+![FLORA-Text Background Change-55feb0cc](https://github.com/user-attachments/assets/bc0f025c-59ee-4364-9c9a-fb544b94857d)
 
-Any change only becomes “official” when it merges via a PR event.
+Cerulean:
 
-## Repo layout (drop-in harness)
+![FLORA-Image 2-bf32b532](https://github.com/user-attachments/assets/462451e1-e33b-48b3-b4cd-14065b541e34)
 
-Hard requirement:
+Amaranth:
 
-- `phosphene/` must exist at the **repo root**
+![FLORA-Cadmium Background Design-8c09b9b1](https://github.com/user-attachments/assets/a9d82395-df8b-46d8-bdbc-a9f0cad11cae)
 
-Canonical scaffold:
+Cadmium:
 
-- `phosphene/domains/<domain>/{docs,templates,scripts,signals}/`
+![FLORA-Image Editing Request-dc7cd840](https://github.com/user-attachments/assets/05c385a1-cd7d-4d66-8580-0014c2f6b16a)
 
-Domain reference convention:
-
-- Refer to domains using angle brackets: `<ideation>`, `<research>`, `<product-marketing>`, etc.
-- Avoid “go to this directory” pointers inside handoff/spec docs; use the domain tag.
-
-Script naming convention:
-
-- Scripts should use **fully spelled-out, self-describing names** (avoid abbreviations in filenames).
-  - Example: `add_reference_solution.sh` (not `add_refsol.sh`).
-
-## In-doc script hints (`[V-SCRIPT]`)
-
-Some templates/artifacts include fenced code blocks that begin with:
-
-```text
-[V-SCRIPT]:
-<script_name.sh>
-```
-
-Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the relevant control scripts for that section.
-
-## The contract lives in `AGENTS.md`
-
-Phosphene expects a single source of truth for agent behavior:
-
-- Root shim: `AGENTS.md`
-- Canonical handoff: `phosphene/AGENTS.md`
-- Design note: `PHOSPHENE_STATE_MACHINE_WORKING.md`
-- Skills (mandatory): `.codex/skills/phosphene/**`
-
-To browse skills, open the relevant `SKILL.md` under `.codex/skills/phosphene/**`.
-
-Codex skill reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
-
-## Completion receipts: `DONE.json` (recommended, not a signal)
-
-`DONE.json` is a **completion receipt** written by the assigned agent at the end of work as:
-
-- a final checklist (hallucination check)
-- a machine-checkable “I believe I’m done” handshake
-- a compact audit manifest (inputs/outputs/checks)
-
-Important:
-
-- `DONE.json` is **not** part of the signals system.
-- Signals are **additional** to the core PR-gated flow: get work → do work → finish work → PR work.
-
-### Where to put it
-
-Put the receipt at the **domain root**:
-
-- `phosphene/domains/<domain>/DONE.json`
-
-Do **not** put receipts inside `docs/**` or deeper subdirectories.
-
-### Minimal shape (baseline)
-
-```json
-{
-  "receipt_version": 1,
-  "work_id": "RA-001",
-  "domain": "research",
-  "artifact_type": "research-assessment",
-  "ok": true,
-  "inputs": ["..."],
-  "outputs": ["..."],
-  "checks": ["..."],
-  "inputs_hash": "sha256:...",
-  "timestamp_utc": "2026-01-09T00:00:00Z"
-}
-```
-
-### Domain payload expectations (recommended)
-
-These are conventions intended to make receipts predictable for automation and review.
-
-#### `<research>` — `research-assessment` (RA bundle)
-
-- **work_id**: `RA-###`
-- **outputs** (typical):
-  - `00-coversheet.md`, `10-reference-solutions.md`, `20-competitive-landscape.md`
-  - `30-pitches/PITCH-*.md`, `40-hypotheses.md`, `50-evidence-bank.md`, `90-methods.md`
-  - `RA-###.md` (assembled view; generated)
-- **checks** (typical):
-  - `./phosphene/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>`
-  - `./phosphene/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
-  - `./phosphene/phosphene-core/bin/phosphene id validate`
-
-#### `<feature-management>` — `feature-request` (FR dossier)
-
-- **work_id**: `FR-###`
-- **outputs** (typical):
-  - `phosphene/domains/feature-management/docs/frs/FR-###-*.md`
-  - `phosphene/domains/feature-management/docs/backlog_tree.md` (generated)
-  - `phosphene/domains/feature-management/docs/fr_dependencies.md` (generated)
-- **checks** (typical):
-  - `./phosphene/domains/feature-management/scripts/validate_feature_request.sh`
-  - `./phosphene/domains/feature-management/scripts/update_backlog_tree.sh`
-  - `./phosphene/domains/feature-management/scripts/feature_request_dependency_tracker.sh`
-
-#### Other domains (templates-first)
-
-For domains that are currently templates-first (no validators yet), `DONE.json` still helps:
-
-- keep outputs scoped and enumerated
-- record what was and wasn’t verified
-- make follow-on automation easier when validators are added later
-
-## Signals (optional add-ons to the core flow)
-
-Signals are **explicit, small files** placed under:
-
-- `phosphene/domains/<domain>/signals/`
-
-They exist to support automation and routing, not to define canonical completion state.
-
-Good properties of a signal:
-
-- **intent-bearing**: says what someone wants to happen
-- **scoped**: references a `work_id` and `<domain>`
-- **ephemeral**: can be consumed and then removed/archived
-- **machine-checkable**: JSON/YAML with stable fields, not prose
-
-Example signal payload (shape is a convention, not enforced yet):
-
-```json
-{
-  "signal_version": 1,
-  "work_id": "RA-001",
-  "domain": "research",
-  "intent": "request-next-agent",
-  "notes": "Please generate propositions from the pitch set.",
-  "pointers": [
-    "phosphene/domains/research/docs/research-assessments/RA-001-.../00-coversheet.md"
-  ],
-  "timestamp_utc": "2026-01-09T00:00:00Z"
-}
-```
-
-## Identity and uniqueness: concatenated natural keys (central tenet)
-
-Phosphene strongly prefers **long, stable, human-readable natural keys** for identifiers.
-
-Core idea:
-- If an artifact has a globally unique ID (e.g., `PER-0003`), then any nested identifiers can be made globally unique by **concatenation**.
-- This supports **scriptable nesting** without requiring a centralized allocator for every sub-entity.
-
-Example (nested JTBD items inside a Persona):
-- `JTBD-PAIN-0001-PER-0003`
-  - `JTBD-PAIN-0001` is the local counter within that persona
-  - `PER-0003` is the globally unique parent key
-
-Implications:
-- IDs can be safely “namespaced” by their parent artifact ID (and even grandparent IDs if needed).
-- Scripts can validate structure locally (within one file/bundle) while still guaranteeing global uniqueness across the repo.
-
-### Optional hardening: hash overlays (future-friendly)
-
-Natural keys are enough for uniqueness, but Phosphene can layer hashes trivially:
-- **Hashed natural key**: `sha256(<natural_key>)` (useful for compact routing keys / indexing)
-- **Full file hash**: `sha256(file_contents)` (useful for version receipts / tamper detection)
-
-This also supports Merkle-style composition if desired:
-- file hashes roll up into bundle hashes
-- bundle hashes roll up into work-item hashes
-
-## Quick start (run from repo root)
-
-```bash
-./phosphene/phosphene-core/bin/phosphene banner
-```
-
-Create an FR:
-
-```bash
-./phosphene/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
-```
-
-Validate FRs:
-
-```bash
-./phosphene/domains/feature-management/scripts/validate_feature_request.sh
-```
-
-Create and validate an RA bundle:
-
-```bash
-./phosphene/domains/research/scripts/create_research_assessment_bundle.sh --title "..." --priority Medium
-./phosphene/domains/research/scripts/validate_research_assessment_bundle.sh phosphene/domains/research/docs/research-assessments/RA-001-...
-```
-
-## Notes
-
-- This build assumes **bash-only** + baseline Unix tools (`awk`, `sed`, `grep`, `find`, `date`).
-
-
+Chartreuse:
