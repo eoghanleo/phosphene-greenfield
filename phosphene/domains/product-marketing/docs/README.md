@@ -1,0 +1,37 @@
+# Product Marketing (Domain)
+
+Primary artifacts:
+- `persona` — who we serve and what they care about.
+- `proposition` — what we promise and why it’s compelling.
+
+Canonical locations:
+- Templates: `phosphene/domains/product-marketing/templates/`
+- Working artifacts:
+  - `phosphene/domains/product-marketing/docs/personas/`
+  - `phosphene/domains/product-marketing/docs/propositions/`
+
+Validation (recommended):
+- `./phosphene/domains/product-marketing/scripts/validate_persona.sh --all`
+- `./phosphene/domains/product-marketing/scripts/validate_proposition.sh --all`
+
+JTBD IDs convention (natural keys):
+- In persona Jobs/Pains/Gains tables, use: `JTBD-<TYPE>-####-<PersonaID>`
+  - `<TYPE>` is `JOB|PAIN|GAIN`
+  - `<PersonaID>` is the persona `PER-####` from the file header
+
+Helper (optional):
+- `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
+
+Workflow policy (preferred):
+- For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).
+- See `.codex/skills/phosphene/product-marketing/SKILL.md` for the full control script list.
+
+Handoff (default):
+- **To Product Strategy** with market framing and messaging constraints.
+- **To Product Management** with positioning that must be reflected in the spec.
+
+Upstream input (common):
+- `<research>` bundles may include **Candidate Personas** (`CPE-####`) under `60-candidate-personas/`.
+  - Treat creating `PER-####` as a promotion step from one or more CPE candidates.
+
+

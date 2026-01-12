@@ -1,12 +1,12 @@
-# VIRRIC
+# PHOSPHENE
 
-Virric is a lightweight agentic harness framework built on a brutally simple premise:
+Phosphene is a lightweight agentic harness framework built on a brutally simple premise:
 
 - **GitHub Actions is the scheduler.**
 - **Codex is the worker.**
 - **The repo is shared memory.**
 
-Virric is a **convention, not a platform**. It achieves determinism and auditability by making the repo itself the state machine.
+Phosphene is a **convention, not a platform**. It achieves determinism and auditability by making the repo itself the state machine.
 
 ## Core idea (repo as signal bus)
 
@@ -32,11 +32,11 @@ Any change only becomes “official” when it merges via a PR event.
 
 Hard requirement:
 
-- `virric/` must exist at the **repo root**
+- `phosphene/` must exist at the **repo root**
 
 Canonical scaffold:
 
-- `virric/domains/<domain>/{docs,templates,scripts,signals}/`
+- `phosphene/domains/<domain>/{docs,templates,scripts,signals}/`
 
 Domain reference convention:
 
@@ -61,14 +61,14 @@ Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the releva
 
 ## The contract lives in `AGENTS.md`
 
-Virric expects a single source of truth for agent behavior:
+Phosphene expects a single source of truth for agent behavior:
 
 - Root shim: `AGENTS.md`
-- Canonical handoff: `virric/AGENTS.md`
-- Design note: `VIRRIC_STATE_MACHINE_WORKING.md`
-- Skills (mandatory): `.codex/skills/virric/**`
+- Canonical handoff: `phosphene/AGENTS.md`
+- Design note: `PHOSPHENE_STATE_MACHINE_WORKING.md`
+- Skills (mandatory): `.codex/skills/phosphene/**`
 
-To browse skills, open the relevant `SKILL.md` under `.codex/skills/virric/**`.
+To browse skills, open the relevant `SKILL.md` under `.codex/skills/phosphene/**`.
 
 Codex skill reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
@@ -89,7 +89,7 @@ Important:
 
 Put the receipt at the **domain root**:
 
-- `virric/domains/<domain>/DONE.json`
+- `phosphene/domains/<domain>/DONE.json`
 
 Do **not** put receipts inside `docs/**` or deeper subdirectories.
 
@@ -122,21 +122,21 @@ These are conventions intended to make receipts predictable for automation and r
   - `30-pitches/PITCH-*.md`, `40-hypotheses.md`, `50-evidence-bank.md`, `90-methods.md`
   - `RA-###.md` (assembled view; generated)
 - **checks** (typical):
-  - `./virric/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>`
-  - `./virric/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
-  - `./virric/virric-core/bin/virric id validate`
+  - `./phosphene/domains/research/scripts/validate_research_assessment_bundle.sh <bundle_dir>`
+  - `./phosphene/domains/research/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
+  - `./phosphene/phosphene-core/bin/phosphene id validate`
 
 #### `<feature-management>` — `feature-request` (FR dossier)
 
 - **work_id**: `FR-###`
 - **outputs** (typical):
-  - `virric/domains/feature-management/docs/frs/FR-###-*.md`
-  - `virric/domains/feature-management/docs/backlog_tree.md` (generated)
-  - `virric/domains/feature-management/docs/fr_dependencies.md` (generated)
+  - `phosphene/domains/feature-management/docs/frs/FR-###-*.md`
+  - `phosphene/domains/feature-management/docs/backlog_tree.md` (generated)
+  - `phosphene/domains/feature-management/docs/fr_dependencies.md` (generated)
 - **checks** (typical):
-  - `./virric/domains/feature-management/scripts/validate_feature_request.sh`
-  - `./virric/domains/feature-management/scripts/update_backlog_tree.sh`
-  - `./virric/domains/feature-management/scripts/feature_request_dependency_tracker.sh`
+  - `./phosphene/domains/feature-management/scripts/validate_feature_request.sh`
+  - `./phosphene/domains/feature-management/scripts/update_backlog_tree.sh`
+  - `./phosphene/domains/feature-management/scripts/feature_request_dependency_tracker.sh`
 
 #### Other domains (templates-first)
 
@@ -150,7 +150,7 @@ For domains that are currently templates-first (no validators yet), `DONE.json` 
 
 Signals are **explicit, small files** placed under:
 
-- `virric/domains/<domain>/signals/`
+- `phosphene/domains/<domain>/signals/`
 
 They exist to support automation and routing, not to define canonical completion state.
 
@@ -171,7 +171,7 @@ Example signal payload (shape is a convention, not enforced yet):
   "intent": "request-next-agent",
   "notes": "Please generate propositions from the pitch set.",
   "pointers": [
-    "virric/domains/research/docs/research-assessments/RA-001-.../00-coversheet.md"
+    "phosphene/domains/research/docs/research-assessments/RA-001-.../00-coversheet.md"
   ],
   "timestamp_utc": "2026-01-09T00:00:00Z"
 }
@@ -179,7 +179,7 @@ Example signal payload (shape is a convention, not enforced yet):
 
 ## Identity and uniqueness: concatenated natural keys (central tenet)
 
-Virric strongly prefers **long, stable, human-readable natural keys** for identifiers.
+Phosphene strongly prefers **long, stable, human-readable natural keys** for identifiers.
 
 Core idea:
 - If an artifact has a globally unique ID (e.g., `PER-0003`), then any nested identifiers can be made globally unique by **concatenation**.
@@ -196,7 +196,7 @@ Implications:
 
 ### Optional hardening: hash overlays (future-friendly)
 
-Natural keys are enough for uniqueness, but Virric can layer hashes trivially:
+Natural keys are enough for uniqueness, but Phosphene can layer hashes trivially:
 - **Hashed natural key**: `sha256(<natural_key>)` (useful for compact routing keys / indexing)
 - **Full file hash**: `sha256(file_contents)` (useful for version receipts / tamper detection)
 
@@ -207,26 +207,26 @@ This also supports Merkle-style composition if desired:
 ## Quick start (run from repo root)
 
 ```bash
-./virric/virric-core/bin/virric banner
+./phosphene/phosphene-core/bin/phosphene banner
 ```
 
 Create an FR:
 
 ```bash
-./virric/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
+./phosphene/domains/feature-management/scripts/create_feature_request.sh --title "..." --description "..." --priority "High"
 ```
 
 Validate FRs:
 
 ```bash
-./virric/domains/feature-management/scripts/validate_feature_request.sh
+./phosphene/domains/feature-management/scripts/validate_feature_request.sh
 ```
 
 Create and validate an RA bundle:
 
 ```bash
-./virric/domains/research/scripts/create_research_assessment_bundle.sh --title "..." --priority Medium
-./virric/domains/research/scripts/validate_research_assessment_bundle.sh virric/domains/research/docs/research-assessments/RA-001-...
+./phosphene/domains/research/scripts/create_research_assessment_bundle.sh --title "..." --priority Medium
+./phosphene/domains/research/scripts/validate_research_assessment_bundle.sh phosphene/domains/research/docs/research-assessments/RA-001-...
 ```
 
 ## Notes

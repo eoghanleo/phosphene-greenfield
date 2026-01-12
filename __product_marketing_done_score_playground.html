@@ -3,15 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>VIRRIC — product-marketing done-score playground</title>
+  <title>PHOSPHENE — product-marketing done-score playground</title>
   <style>
     :root {
       --bg: #050607;
       --panel: #0b0f0c;
       --grid: rgba(120, 255, 0, 0.12);
       --grid2: rgba(120, 255, 0, 0.08);
-      --virric: #78ff00; /* xterm-ish green */
-      --virric-dim: rgba(120, 255, 0, 0.75);
+      --phosphene: #78ff00; /* xterm-ish green */
+      --phosphene-dim: rgba(120, 255, 0, 0.75);
       --text: rgba(240, 255, 240, 0.92);
       --muted: rgba(240, 255, 240, 0.65);
       --warn: #ffd000;
@@ -50,9 +50,9 @@
       border: 1px solid var(--grid);
       background: linear-gradient(180deg, rgba(120,255,0,0.06), rgba(120,255,0,0.01));
     }
-    .header .title { color: var(--virric); font-weight: 700; }
+    .header .title { color: var(--phosphene); font-weight: 700; }
     .header .sub { color: var(--muted); margin-top: 6px; font-size: 12px; line-height: 1.35; }
-    .tag { color: var(--virric); }
+    .tag { color: var(--phosphene); }
 
     .panel {
       border: 1px solid var(--grid);
@@ -62,7 +62,7 @@
       margin: 0;
       padding: 10px 12px;
       font-size: 13px;
-      color: var(--virric);
+      color: var(--phosphene);
       border-bottom: 1px solid var(--grid);
     }
     .panel .body { padding: 10px 12px 12px; }
@@ -72,7 +72,7 @@
       padding: 6px 8px;
       border: 1px solid var(--grid2);
       background: rgba(120,255,0,0.03);
-      color: var(--virric-dim);
+      color: var(--phosphene-dim);
       font-size: 12px;
       font-weight: 700;
     }
@@ -96,7 +96,7 @@
 
     input[type="range"] {
       width: 100%;
-      accent-color: var(--virric);
+      accent-color: var(--phosphene);
     }
 
     .lock {
@@ -108,7 +108,7 @@
       color: var(--muted);
       user-select: none;
     }
-    .lock input { accent-color: var(--virric); }
+    .lock input { accent-color: var(--phosphene); }
 
     .grid2 {
       display: grid;
@@ -132,14 +132,14 @@
       align-items: center;
     }
     .kpi .label { color: var(--muted); font-size: 12px; }
-    .kpi .big { color: var(--virric); font-weight: 800; font-size: 22px; }
+    .kpi .big { color: var(--phosphene); font-weight: 800; font-size: 22px; }
     .kpi .small { color: var(--muted); font-size: 12px; margin-top: 4px; }
 
     .pill {
       display: inline-block;
       padding: 2px 8px;
       border: 1px solid var(--grid2);
-      color: var(--virric-dim);
+      color: var(--phosphene-dim);
       font-size: 11px;
       border-radius: 999px;
       margin-left: 6px;
@@ -210,7 +210,7 @@
       user-select: none;
       white-space: nowrap;
     }
-    .checkItem input { accent-color: var(--virric); }
+    .checkItem input { accent-color: var(--phosphene); }
     .checkItem .k { color: var(--text); }
 
     .noteBox {
@@ -274,7 +274,7 @@
       color: var(--muted);
       font-size: 11px;
     }
-    .tileHead .k { color: var(--virric); font-weight: 700; }
+    .tileHead .k { color: var(--phosphene); font-weight: 700; }
     .tile canvas { width: 100%; height: auto; display: block; }
 
     .sliderTools {
@@ -289,9 +289,9 @@
 <body>
   <div class="wrap">
     <div class="header">
-      <div class="title">VIRRIC <span class="pill">product-marketing-domain-done-score playground</span></div>
+      <div class="title">PHOSPHENE <span class="pill">product-marketing-domain-done-score playground</span></div>
       <div class="sub">
-        Standalone, no deps. Mirrors the math in <span class="tag">`virric/domains/product-marketing/scripts/product-marketing-domain-done-score.sh`</span>
+        Standalone, no deps. Mirrors the math in <span class="tag">`phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh`</span>
         (retuned version with fragment corpus + min-category drag). Use sliders, then sweep one variable to see curves.
       </div>
     </div>
@@ -886,7 +886,7 @@ Internals:
     }
 
     function colorForIndex(i, n) {
-      // virric green -> hazard yellow progression
+      // phosphene green -> hazard yellow progression
       if (n <= 1) return "rgba(120,255,0,0.95)";
       const t = i / (n - 1);
       const hue = 110 - (40 * t); // 110 (green) -> 70 (yellow-green)
@@ -1121,7 +1121,7 @@ Internals:
     // Heatmap manifold (2D slice; optional optimize other 3 dims)
     // -----------------------------
     function scoreToRGBA(score, thr) {
-      // Black background; virric green intensity encodes score.
+      // Black background; phosphene green intensity encodes score.
       // Above threshold gets a brighter, slightly yellowed tint.
       const s = clamp(score, 0, 100) / 100;
       let g = 255 * Math.pow(s, 0.85);
