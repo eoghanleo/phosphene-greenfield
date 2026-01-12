@@ -31,7 +31,7 @@ No domain scripts yet (templates-first):
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to the TP artifact listing:
+Write a **single domain receipt** at `virric/domains/test-management/DONE.json` (domain root; not in subfolders) listing:
 
 - inputs (SPEC/FR pointers)
 - outputs (TP doc)

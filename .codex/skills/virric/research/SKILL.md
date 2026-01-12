@@ -78,7 +78,7 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Receipts (recommended)
 
-When done, write `DONE.json` in the bundle root (receipt, not signal) enumerating:
+When done, write a **single domain receipt** at `virric/domains/research/DONE.json` (domain root; not inside bundle folders) enumerating:
 
 - inputs (idea stub, constraints, etc.)
 - outputs (bundle files)

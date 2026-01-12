@@ -18,7 +18,7 @@ If you need the deeper model (state machine + contracts), read:
 - Read the domain skill (mandatory): `.codex/skills/virric/<domain>/SKILL.md`
 - Use **control scripts** (don’t hand-edit script-managed artifacts).
 - Run the domain validator(s).
-- Write a **receipt** (`DONE.json`) next to the artifact you produced.
+- Write a **receipt** at `virric/domains/<domain>/DONE.json` (domain root; **not** in subdirectories like `docs/**`).
 - Open a PR. Nothing is canonical until merged.
 
 ### Repo layout (canonical)
@@ -43,6 +43,7 @@ Refer to domains using angle brackets:
 ### Receipts vs signals (important)
 
 - `DONE.json` is a **receipt** (completion manifest + hallucination check). It is **not** a signal.
+- Receipt location (standard): `virric/domains/<domain>/DONE.json` (one per domain run; do not scatter receipts into subfolders).
 - Signals are optional add-ons for routing automation:
   - `virric/domains/<domain>/signals/**`
 

@@ -1,7 +1,7 @@
 ID: PROP-0001
-Title: <proposition name>
+Title:
 Status: Draft
-Updated: YYYY-MM-DD
+Updated:
 Dependencies: 
 Owner: 
 EditPolicy: DO_NOT_EDIT_DIRECTLY (use scripts; see .codex/skills/virric/product-marketing/SKILL.md)
@@ -13,7 +13,7 @@ EditPolicy: DO_NOT_EDIT_DIRECTLY (use scripts; see .codex/skills/virric/product-
 update_proposition_formal_pitch.sh
 ```
 
-Our <capabilities> help <personas> who want to <jobs> by reducing <pains> and boosting <gains>. We achieve this by <relievers> and delivering <boosters>.
+Our capabilities help target personas make progress on their jobs by reducing their pains and boosting their gains.
 
 ## Target Persona(s)
 
@@ -23,8 +23,6 @@ add_proposition_target_persona.sh
 remove_proposition_target_persona.sh
 ```
 
-- PER-0001
-
 ## Related Segment(s)
 
 ```text
@@ -32,8 +30,6 @@ remove_proposition_target_persona.sh
 add_proposition_related_segment.sh
 remove_proposition_related_segment.sh
 ```
-
-- SEG-0001
 
 ## Gain Boosters
 
@@ -47,7 +43,7 @@ MappedGainIDs is an array encoded as a comma-separated list of JTBD IDs.
 
 | BoosterID | Booster | MappedGainIDs[] |
 |---|---|---|
-| BOOST-0001-PROP-0001 | <booster> | JTBD-GAIN-0001-PER-0001 |
+|  |  |  |
 
 ## Pain Relievers
 
@@ -61,7 +57,7 @@ MappedPainIDs is an array encoded as a comma-separated list of JTBD IDs.
 
 | RelieverID | Reliever | MappedPainIDs[] |
 |---|---|---|
-| REL-0001-PROP-0001 | <reliever> | JTBD-PAIN-0001-PER-0001 |
+|  |  |  |
 
 ## Capabilities
 
@@ -75,7 +71,7 @@ CapabilityType must be one of: `feature|function|standard|experience`.
 
 | CapabilityID | CapabilityType | Capability |
 |---|---|---|
-| CAP-0001-PROP-0001 | feature | <capability> |
+|  | feature |  |
 
 ## Notes
 
@@ -85,5 +81,5 @@ add_proposition_note.sh
 overwrite_proposition_notes.sh
 ```
 
-<free-form notes>
+
 

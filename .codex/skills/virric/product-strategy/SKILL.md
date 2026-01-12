@@ -32,7 +32,7 @@ No domain scripts yet (templates-first):
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to the ROADMAP artifact listing:
+Write a **single domain receipt** at `virric/domains/product-strategy/DONE.json` (domain root; not in subfolders) listing:
 
 - inputs (pointers to RA coversheet/pitches; persona/proposition docs)
 - outputs (ROADMAP doc)

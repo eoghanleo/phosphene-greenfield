@@ -264,7 +264,7 @@ For repeatability, prefer using these scripts instead of manual edits:
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to each produced artifact listing:
+Write a **single domain receipt** at `virric/domains/product-marketing/DONE.json` (domain root; do not place receipts in `docs/**`) listing:
 
 - inputs (pointers to research bundle files / EvidenceIDs)
 - outputs (PER/PROP docs)

@@ -87,10 +87,11 @@ Important:
 
 ### Where to put it
 
-Put the receipt next to the artifact it’s attesting to:
+Put the receipt at the **domain root**:
 
-- For bundles (e.g. `<research>` RAs): in the bundle root (same folder as `00-coversheet.md`)
-- For single-doc artifacts: adjacent to the doc
+- `virric/domains/<domain>/DONE.json`
+
+Do **not** put receipts inside `docs/**` or deeper subdirectories.
 
 ### Minimal shape (baseline)
 

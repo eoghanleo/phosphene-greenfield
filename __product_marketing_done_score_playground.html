@@ -481,8 +481,11 @@
       const ent_norm = (s.uniq_words > 1 && s.ent > 0) ? (s.ent / log2(s.uniq_words)) : 0;
 
       const sc_vol = scoreLinear(out_in_ratio, 0.0, 0.50);
-      const sc_ent = scoreLinear(ent_norm, 0.55, 0.90);
-      const sc_uniq = scoreLinear(uniq_ratio, 0.03, 0.11);
+      // Diversity bounds (must match product-marketing-domain-done-score.sh):
+      // - entropy_norm: 0.10 .. 0.98
+      // - unique_ratio: 0.10 .. 0.25
+      const sc_ent = scoreLinear(ent_norm, 0.10, 0.98);
+      const sc_uniq = scoreLinear(uniq_ratio, 0.10, 0.25);
 
       const sc_favg = scoreLinear(s.favg, 12, 30);
       const sc_2s   = scoreLinear(s.two_sent, 0.20, 0.75);

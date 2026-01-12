@@ -65,7 +65,7 @@ Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 Important:
 
 - `DONE.json` is **not** a signal.
-- Place the receipt next to the artifact it attests to (bundle root or adjacent to single-doc artifact).
+- Place the receipt at the **domain root**: `virric/domains/<domain>/DONE.json` (not inside `docs/**` or other subfolders).
 
 ## Signals (optional add-ons)
 

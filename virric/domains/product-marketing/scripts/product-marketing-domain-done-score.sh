@@ -492,8 +492,9 @@ BEGIN {
   # -----------------------------
   s_vol = score_linear(out_in_ratio, 0.0, 0.50);
 
-  s_ent = score_linear(ent_norm, 0.55, 0.90);
-  s_uniq = score_linear(uniq_ratio, 0.03, 0.11);
+  # Diversity bounds (fixed; not user-configurable): linearly distribute reward over predictable ranges.
+  s_ent = score_linear(ent_norm, 0.10, 0.98);
+  s_uniq = score_linear(uniq_ratio, 0.10, 0.25);
 
   s_favg = score_linear(favg, 12, 30);
   s_2s   = score_linear(two_sent, 0.20, 0.75);

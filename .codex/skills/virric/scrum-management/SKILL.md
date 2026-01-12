@@ -31,7 +31,7 @@ No domain scripts yet (templates-first):
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to the ISSUE mirror artifact listing:
+Write a **single domain receipt** at `virric/domains/scrum-management/DONE.json` (domain root; not in subfolders) listing:
 
 - inputs (issue URLs, labels/status)
 - outputs (ISSUE mirror doc)

@@ -32,7 +32,7 @@ No domain scripts yet (templates-first):
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to the IDEA artifact listing:
+Write a **single domain receipt** at `virric/domains/ideation/DONE.json` (domain root; not in subfolders) listing:
 
 - inputs (prompt/context)
 - outputs (the IDEA file)

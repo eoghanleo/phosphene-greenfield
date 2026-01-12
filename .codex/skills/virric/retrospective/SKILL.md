@@ -32,7 +32,7 @@ No domain scripts yet (templates-first):
 
 ## Receipts (recommended)
 
-Write a `DONE.json` receipt adjacent to each produced artifact listing:
+Write a **single domain receipt** at `virric/domains/retrospective/DONE.json` (domain root; not in subfolders) listing:
 
 - inputs (PRs/issues/notes)
 - outputs (PM/PB docs)

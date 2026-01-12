@@ -48,7 +48,7 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Receipts (recommended)
 
-When completing an FR change, add a `DONE.json` receipt adjacent to the FR dossier enumerating:
+When completing an FR change, add a **single domain receipt** at `virric/domains/feature-management/DONE.json` (domain root; not in subfolders) enumerating:
 
 - inputs (links/constraints)
 - outputs (FR dossier + refreshed reports)

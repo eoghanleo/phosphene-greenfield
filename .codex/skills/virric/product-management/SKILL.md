@@ -64,7 +64,7 @@ If an ID doesn’t resolve, you must either:
 
 ## Receipts (required for PR-ready work)
 
-Write a `DONE.json` receipt adjacent to the SPEC artifact listing:
+Write a **single domain receipt** at `virric/domains/product-management/DONE.json` (domain root; do not place receipts in subfolders) listing:
 
 - inputs (ROADMAP + persona/proposition + RA pointers)
 - outputs (SPEC doc)
