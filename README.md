@@ -31,6 +31,7 @@ In practice, each colour is a **lens** with a simple contract:
 - **Takes as inputs**:
   - Raw sparks (notes, user pain, customer quotes, founder intuition)
   - Constraints (time, budget, technical realities, market context)
+  - Continuous improvement, refinement and opportunity expansion from lifecycle memory (Chartreuse)
 - **Produces outputs**:
   - Clear idea artifacts with names and intent (enough to hand off)
   - Signals that invite structure: “turn this into positioning”, “test this claim”, “spec this idea”
@@ -110,6 +111,7 @@ In practice, each colour is a **lens** with a simple contract:
 - **Produces outputs**:
   - Retrospectives and playbooks that prevent repeat mistakes
   - Evolving shared language (ontology) that makes the next cycle cleaner
+  - Can close the loop back to Viridian to continuously generate new ideas, new value and entire new products autonomously.
 
 
 ---
