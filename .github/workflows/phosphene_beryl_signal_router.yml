@@ -1,0 +1,70 @@
+name: "PHOSPHENE / Beryl / Signal router (research)"
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - "phosphene/domains/research/signals/**"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+concurrency:
+  group: phosphene-beryl-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  mention_codex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post @codex routing comment (research signals)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const pull_number = pr.number;
+
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            const signalFiles = files
+              .map(f => f.filename)
+              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
+
+            if (signalFiles.length === 0) {
+              core.notice("No research signal files detected (nothing to route).");
+              return;
+            }
+
+            const body = [
+              "@codex",
+              "",
+              "PHOSPHENE router: **Beryl (research)** detected signal changes in this PR.",
+              "",
+              "**Please do:**",
+              "- Treat `<research>` as the single primary domain.",
+              "- Read `phosphene/phosphene/AGENTS.md` (repo contract).",
+              "- Consume these signal file(s):",
+              ...signalFiles.map(p => `  - \`${p}\``),
+              "",
+              "**Output expectations:**",
+              "- Use PHOSPHENE control scripts under `phosphene/domains/research/scripts/` when applicable.",
+              "- Validate with any domain validator(s) + `./phosphene/phosphene-core/bin/phosphene id validate`.",
+              "- Write a receipt: `phosphene/domains/research/DONE.json` (domain root; not under `docs/**`).",
+              "",
+              "If the request is ambiguous, ask a single clarifying question and stop.",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: pull_number,
+              body,
+            });
+

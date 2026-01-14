@@ -1,0 +1,87 @@
+name: "PHOSPHENE / Summon (comment → @codex)"
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: phosphene-summon-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  summon:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Respond to /phosphene summon commands
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const bodyRaw = (context.payload.comment?.body || "").trim();
+
+            // Only respond to explicit summons to avoid loops/noise.
+            if (!bodyRaw.startsWith("/phosphene ")) return;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.issue.number;
+
+            // Format:
+            //   /phosphene beryl <intent...>
+            //   /phosphene cerulean <intent...>
+            const match = bodyRaw.match(/^\/phosphene\s+(beryl|cerulean)\s*(.*)$/i);
+            if (!match) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: "PHOSPHENE: Unknown summon. Use `/phosphene beryl <intent>` or `/phosphene cerulean <intent>`.",
+              });
+              return;
+            }
+
+            const color = match[1].toLowerCase();
+            const intent = (match[2] || "").trim() || "(no intent provided)";
+
+            const mapping = {
+              beryl: {
+                domainTag: "<research>",
+                domainPath: "phosphene/domains/research/",
+                doneReceipt: "phosphene/domains/research/DONE.json",
+              },
+              cerulean: {
+                domainTag: "<product-marketing>",
+                domainPath: "phosphene/domains/product-marketing/",
+                doneReceipt: "phosphene/domains/product-marketing/DONE.json",
+              },
+            };
+
+            const m = mapping[color];
+            const msg = [
+              "@codex",
+              "",
+              `PHOSPHENE summon: **${color}** → ${m.domainTag}`,
+              "",
+              `**Intent:** ${intent}`,
+              "",
+              "**Constraints (PHOSPHENE):**",
+              `- Single primary domain: ${m.domainTag}`,
+              "- Read `phosphene/phosphene/AGENTS.md`",
+              "- Prefer domain control scripts; avoid hand-editing script-managed artifacts",
+              "- Validate as appropriate + `./phosphene/phosphene-core/bin/phosphene id validate`",
+              `- Write receipt: \`${m.doneReceipt}\` (domain root; not under \`docs/**\`)`,
+              "",
+              `**Domain path:** \`${m.domainPath}\``,
+              "",
+              "If you need clarifications, ask exactly one question and stop.",
+            ].join("\n");
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: msg,
+            });
+
