@@ -13,6 +13,19 @@ At its core:
 - **The repo is shared memory**
 - **PR merge is the officialization point**
 
+## What Phosphene nails (and most “vibe context management” repos don’t)
+
+- **Total autonomous operations**: Humans don’t have to be in the loop unless they *want* to be. You can run end-to-end cycles that create artifacts, validate them, open PRs, and route the next step automatically. The system is cylical and non-linear by design. Ralph-Wiggum to your hearts content, or speed run the whole cycle. Or both.
+
+- **Fully cloud powered operations**: The harness is designed so the *work* can run in the cloud. You can steer it from anywhere—yes, including from your phone.
+
+- **Consumer license friendly**: If you’ve got a paid ChatGPT subscription, you’re good. No API keys required for the core `@codex`-driven workflow.
+
+- **Repo-first architecture**: If it lands in GitHub, it’s immediately schedulable and testable. This fits modern repo-first stacks (e.g. Vercel Next.js, database-as-a-service like PlanetScale): push → build → test → play in a little over a minute.
+
+- **More than just vibe coding**: The “coding” modules are optional. Compose what you need: build a deep research farm, clip an ontology-mining memory module onto your existing vibe rig, or scale serious testing management without changing your whole workflow.
+
+
 ## The six colours (modular lifecycle + memory system)
 
 Phosphene is modular: you can run one colour in isolation, or combine them into whatever lifecycle fits your team.
