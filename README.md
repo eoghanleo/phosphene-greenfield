@@ -3,7 +3,7 @@
 
 
 
-
+## PHOSPHENE
 
 PHOSPHENE is a **git-native harness for continuous product development**: a way to keep ideas, decisions, artifacts, and handoffs legible over time—without needing a heavyweight platform.
 
@@ -17,51 +17,102 @@ At its core:
 
 Phosphene is modular: you can run one colour in isolation, or combine them into whatever lifecycle fits your team.
 
+In practice, each colour is a **lens** with a simple contract:
+- **Inputs**: artifacts and signals produced by whichever colours came before (or by humans).
+- **Outputs**: new artifacts (and sometimes new signals) that make the *next* colour easier, faster, and more deterministic.
+
+---
+
 ![FLORA-VIRIDIAN Design-340e14c5](https://github.com/user-attachments/assets/1b281dde-45b6-4022-ac52-4439878c46c0)
 
-Viridian:
+## **Viridian** — the colour of new ideas and fertile beginnings
 
-- **the colour of new ideas and fertile beginnings**
-- **Ideation domain**
-- **Moonshot domain (to be developed)**
+- **Domains**: Ideation; Moonshot (to be developed)
+- **Takes as inputs**:
+  - Raw sparks (notes, user pain, customer quotes, founder intuition)
+  - Constraints (time, budget, technical realities, market context)
+- **Produces outputs**:
+  - Clear idea artifacts with names and intent (enough to hand off)
+  - Signals that invite structure: “turn this into positioning”, “test this claim”, “spec this idea”
+
+---
 
 ![FLORA-Background Modification-75c6589b](https://github.com/user-attachments/assets/50ebc45c-1e3f-425a-a87a-83ad67013135)
 
-Beryl:
+## **Beryl** — creative clarity, the emergence of structure
 
-- **creative clarity, the emergence of structure**
-- **Product-marketing domain**
-- **Product-strategy domain**
+- **Domains**: Product-marketing; Product-strategy
+- **Takes as inputs**:
+  - A Viridian idea that’s “real enough” to shape
+  - Early research (optional but powerful) and any known competitors/alternatives
+- **Produces outputs**:
+  - Who it’s for + why it matters (personas, propositions, positioning)
+  - Strategic shape (narrative, roadmap intent, tradeoffs)
+  - Signals that invite detail: “spec this”, “turn into features”, “make acceptance criteria”
+
+
+---
 
 ![FLORA-Text Background Change-55feb0cc](https://github.com/user-attachments/assets/bc0f025c-59ee-4364-9c9a-fb544b94857d)
 
-Cerulean:
+## **Cerulean** — going deep, diving into detail
 
-- **going deep, diving into detail**
-- **Product-management domain**
-- **Feature-management domain**
+- **Domains**: Product-management; Feature-management
+- **Takes as inputs**:
+  - Beryl outputs (positioning, roadmap intent, proposition constraints)
+  - Operational constraints (scope, sequencing, dependencies)
+- **Produces outputs**:
+  - Specs and feature requests that engineers can execute
+  - Backlog structure and dependency clarity
+  - Signals that invite execution: “plan sprint”, “break into issues”, “write tests”
+
+
+---
 
 ![FLORA-Image 2-bf32b532](https://github.com/user-attachments/assets/462451e1-e33b-48b3-b4cd-14065b541e34)
 
-Amaranth:
+## **Amaranth** — new stars formed, new elements made manifest
 
-- **new stars formed, new elements made manifest**
-- **scrum-management domain**
+- **Domains**: Scrum-management
+- **Takes as inputs**:
+  - Cerulean features/specs + priority decisions
+  - Team reality (capacity, risks, sequencing)
+- **Produces outputs**:
+  - Work breakdown, issue mirrors, and execution rhythm
+  - Signals that invite validation: “prove it works”, “verify edge cases”, “ship-ready?”
+
+
+---
 
 ![FLORA-Cadmium Background Design-8c09b9b1](https://github.com/user-attachments/assets/a9d82395-df8b-46d8-bdbc-a9f0cad11cae)
 
-Cadmium:
+## **Cadmium** — reactions and fiery testing, tempering to strength
 
-- **reactions and fiery testing, tempering to strength**
-- **test-management domain**
+- **Domains**: Test-management
+- **Takes as inputs**:
+  - Amaranth execution artifacts (issues, acceptance criteria) and the current build state
+  - Risk areas and “what must not break”
+- **Produces outputs**:
+  - Test plans and verification evidence
+  - Signals that invite learning: “what surprised us?”, “what should we change next time?”
+
+
+---
 
 ![FLORA-Image Editing Request-dc7cd840](https://github.com/user-attachments/assets/05c385a1-cd7d-4d66-8580-0014c2f6b16a)
 
-Chartreuse:
+## **Chartreuse** — continuous ingenuity, surprising distillations
 
-- **continuous ingenuity, surprising distillations**
-- **retrospective domain**
-- **ontology domain (to be developed)**
+- **Domains**: Retrospective; Ontology (to be developed)
+- **Takes as inputs**:
+  - Outcomes (what shipped), evidence (what happened), and friction (what hurt)
+  - Cadmium findings and constraints discovered under real pressure
+- **Produces outputs**:
+  - Retrospectives and playbooks that prevent repeat mistakes
+  - Evolving shared language (ontology) that makes the next cycle cleaner
+
+
+---
 
 > Note: the repo may include additional domains as the framework evolves; the colour system is intended to be **composable**, not restrictive.
 
