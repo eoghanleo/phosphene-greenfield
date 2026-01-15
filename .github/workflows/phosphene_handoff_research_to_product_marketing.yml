@@ -52,10 +52,7 @@ jobs:
 
             const candidateSignalPaths = files
               .map(f => f.filename)
-              .filter(p =>
-                p.startsWith("phosphene/domains/research/signals/") &&
-                !p.includes("/signals/_consumed/")
-              );
+              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
 
             if (candidateSignalPaths.length === 0) {
               core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
@@ -133,7 +130,45 @@ jobs:
                 ? pointers.map(p => `- \`${p}\``).join("\n")
                 : "- (no pointers provided)";
 
-              const dedupeMarker = `phosphene-handoff:research->product-marketing;pr=${pull_number};signal=${signalPath};merge=${pr.merge_commit_sha}`;
+              const signalId = sig.signal_id || "";
+              const dedupeMarker = signalId
+                ? `phosphene-signal-id:${signalId}`
+                : `phosphene-handoff:research->product-marketing;pr=${pull_number};signal=${signalPath};merge=${pr.merge_commit_sha}`;
+
+              // Monotonic consumption: if any other signal declares this one as a parent, skip.
+              if (signalId) {
+                const walk = (dir) => {
+                  const out = [];
+                  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+                    const p = `${dir}/${ent.name}`;
+                    if (ent.isDirectory()) out.push(...walk(p));
+                    else if (p.endsWith(".json")) out.push(p);
+                  }
+                  return out;
+                };
+
+                const allSignalJson = walk("phosphene/domains").filter(p => p.includes("/signals/"));
+                let hasChild = false;
+                for (const p of allSignalJson) {
+                  // skip self
+                  if (p === signalPath) continue;
+                  let other;
+                  try {
+                    other = JSON.parse(fs.readFileSync(p, "utf8"));
+                  } catch {
+                    continue;
+                  }
+                  const parents = Array.isArray(other.parents) ? other.parents : [];
+                  if (parents.includes(signalId)) {
+                    hasChild = true;
+                    break;
+                  }
+                }
+                if (hasChild) {
+                  core.notice(`PHOSPHENE: skipping ${signalPath} because it already has child signal(s) (signal_id=${signalId}).`);
+                  continue;
+                }
+              }
 
               // Dedupe: if an issue already exists with this marker, skip.
               const search = await github.rest.search.issuesAndPullRequests({

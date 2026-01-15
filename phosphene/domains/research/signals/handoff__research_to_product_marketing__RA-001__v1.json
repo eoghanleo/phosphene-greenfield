@@ -1,5 +1,6 @@
 {
   "signal_version": 1,
+  "signal_id": "SIG-RA-001-research_to_product_marketing-v1",
   "signal_type": "phosphene.handoff.research_to_product_marketing.v1",
   "from_domain": "research",
   "to_domain": "product-marketing",
@@ -7,6 +8,7 @@
   "intent": "proposition-development",
   "title": "RA-001 → proposition development",
   "notes": "Test handoff signal for validating the merge-time orchestration. Use RA-001 as the canonical upstream context and generate product-marketing propositions that remain continuous with its pitches, hypotheses, and evidence bank.",
+  "parents": [],
   "pointers": [
     "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/RA-001.md",
     "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/30-pitches/README.md",
