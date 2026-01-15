@@ -93,7 +93,7 @@ if [[ -e "$OUT" ]]; then
   exit 1
 fi
 
-TEMPLATE="$ROOT/phosphene/domains/product-marketing/templates/proposition.md"
+TEMPLATE="$ROOT/phosphene/domains/product-marketing/templates/value-proposition-design-bundle/proposition.md"
 [[ -f "$TEMPLATE" ]] || { echo "Error: missing template: $TEMPLATE" >&2; exit 1; }
 
 cp "$TEMPLATE" "$OUT"

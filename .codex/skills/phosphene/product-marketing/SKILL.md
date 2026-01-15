@@ -11,8 +11,9 @@ Primary domain: `<product-marketing>`
 
 ## What you produce
 
-- Personas: `phosphene/domains/product-marketing/docs/personas/PER-*.md`
-- Propositions: `phosphene/domains/product-marketing/docs/propositions/PROP-*.md`
+- VPD bundles: `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-*/00-coversheet.md`
+- Personas: `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-*/10-personas/PER-*.md`
+- Propositions: `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-*/20-propositions/PROP-*.md`
 
 ## How to work
 
@@ -20,7 +21,7 @@ Primary domain: `<product-marketing>`
   - Candidate Personas: `CPE-*` docs inside the RA bundle (`60-candidate-personas/`)
   - Segments/persona hypotheses, EvidenceIDs, and the pitch set
 - You may (and should) also link and cite **any other `<research>` artifacts** you consulted (e.g. methods, evidence bank, hypothesis notes, assembled bundles) via `DocumentIDs` / `Links` to drive deeper reading and higher connectivity-to-input.
-- Use templates under `phosphene/domains/product-marketing/templates/`.
+- Use templates under `phosphene/domains/product-marketing/templates/value-proposition-design-bundle/`.
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 - Treat the **domain done-score** as a first-class validator:
@@ -165,10 +166,12 @@ JTBD IDs convention (natural keys):
 
 ## Validation (recommended)
 
+- Create a VPD bundle:
+  - `./phosphene/domains/product-marketing/scripts/create_value_proposition_design_bundle.sh --title "..."`
 - Validate a persona:
-  - `./phosphene/domains/product-marketing/scripts/validate_persona.sh phosphene/domains/product-marketing/docs/personas/PER-0001.md`
+  - `./phosphene/domains/product-marketing/scripts/validate_persona.sh phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md`
 - Validate a proposition:
-  - `./phosphene/domains/product-marketing/scripts/validate_proposition.sh phosphene/domains/product-marketing/docs/propositions/PROP-0001.md`
+  - `./phosphene/domains/product-marketing/scripts/validate_proposition.sh phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-.../20-propositions/PROP-0001.md`
 - Validate all personas:
   - `./phosphene/domains/product-marketing/scripts/validate_persona.sh --all`
 - Validate all propositions:
@@ -216,16 +219,16 @@ All scripts are **control scripts** (script-first; avoid hand-editing). Most scr
 ## Script helpers (optional)
 
 - Add a JOB/PAIN/GAIN JTBD row (auto-allocates the next local #### and appends `-PER-####`):
-  - `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/docs/personas/PER-0001.md --type JOB --text "..." --importance 3`
+  - `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
 
 ## Control scripts (preferred; avoid hand-editing)
 
 For repeatability, prefer using these scripts instead of manual edits:
 
 - Create a new persona:
-  - `./phosphene/domains/product-marketing/scripts/create_new_persona.sh --title "..." --dependencies "CPE-0001,RA-001"`
+  - `./phosphene/domains/product-marketing/scripts/create_new_persona.sh --title "..." --vpd VPD-001 --dependencies "CPE-0001,RA-001"`
 - Update snapshot summary:
-  - `./phosphene/domains/product-marketing/scripts/update_persona_summary.sh --persona phosphene/domains/product-marketing/docs/personas/PER-0001-*.md --summary-file /path/to/summary.md`
+  - `./phosphene/domains/product-marketing/scripts/update_persona_summary.sh --persona phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-.../10-personas/PER-0001-*.md --summary-file /path/to/summary.md`
 - Add/update JTBD rows:
   - `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona ... --type JOB|PAIN|GAIN --text "..." --importance 3`
   - `./phosphene/domains/product-marketing/scripts/update_persona_jtbd_item.sh --persona ... --jtbd-id JTBD-PAIN-0001-PER-0001 --text "..." --importance 5`
@@ -242,7 +245,7 @@ For repeatability, prefer using these scripts instead of manual edits:
 ### Propositions (PROP-*)
 
 - Create a new proposition:
-  - `./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." --dependencies "PER-0001,RA-001"`
+  - `./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." --vpd VPD-001 --dependencies "PER-0001,RA-001"`
 - Formal pitch:
   - `./phosphene/domains/product-marketing/scripts/update_proposition_formal_pitch.sh --proposition ... --pitch "Our <capabilities> help ..."`
 - Target personas / related segments:
