@@ -12,6 +12,14 @@ It is intended to be **generated as an output of a `<research>` domain run**, co
 
 On **PR merge** (not PR open) that includes one or more matching signal files.
 
+## Consumption (deactivation)
+
+After the downstream work completes (typically by merging the PR that closes the handoff Issue), PHOSPHENE should **deactivate** the signal so it cannot be re-consumed.
+
+Canonical mechanism:
+- Move the signal file into: `phosphene/domains/research/signals/_consumed/**`
+- Consumers must ignore anything under `_consumed/`.
+
 ## File type
 
 - JSON (required)

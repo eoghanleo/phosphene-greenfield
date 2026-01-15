@@ -52,7 +52,10 @@ jobs:
 
             const candidateSignalPaths = files
               .map(f => f.filename)
-              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
+              .filter(p =>
+                p.startsWith("phosphene/domains/research/signals/") &&
+                !p.includes("/signals/_consumed/")
+              );
 
             if (candidateSignalPaths.length === 0) {
               core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
