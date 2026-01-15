@@ -218,3 +218,41 @@ Phosphene prefers **long, stable, human-readable natural keys** for identifiers 
 ./phosphene/phosphene-core/bin/phosphene id validate
 ```
 
+## Setup & Configuration
+
+This repo is designed to work **without OpenAI API keys**, by using the **consumer Codex GitHub integration** via `@codex` mentions.
+
+### Prerequisites
+
+- **GitHub Actions enabled** for your repo
+- **Codex GitHub integration installed** and authorized for the repo/org
+
+### GitHub Actions permissions
+
+Phosphene workflows create Issues and apply Labels, so set:
+- Repo → **Settings** → **Actions** → **General** → **Workflow permissions**
+  - **Read and write permissions** for `GITHUB_TOKEN`
+
+### Optional: PAT fallback if Codex ignores bot comments
+
+Some Codex configurations may ignore `github-actions[bot]` comments. If you see that behavior, set a repo secret so Phosphene can post the `@codex` summon comment **as a human identity**.
+
+#### 1) Create a Personal Access Token (PAT)
+
+- **Fine-grained PAT** (recommended):
+  - Repository access: **only** this repo
+  - Permissions: **Issues: Read and write** (minimum)
+
+#### 2) Add the PAT to repo secrets
+
+- Repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+  - **Name**: `PHOSPHENE_HUMAN_TOKEN`
+  - **Value**: the PAT you generated
+
+### How to test the first handoff
+
+1. Create a PR that adds a v1 handoff signal under:
+   - `phosphene/domains/research/signals/`
+2. Merge the PR into `main`.
+3. Confirm the workflow runs and creates a `<product-marketing>` issue:
+   - `.github/workflows/phosphene_handoff_research_to_product_marketing.yml`
