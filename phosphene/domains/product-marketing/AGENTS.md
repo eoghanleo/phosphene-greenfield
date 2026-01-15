@@ -6,8 +6,13 @@ This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
 
 ## What you produce
 
+- `value-proposition-design` (VPD-###) bundles (WTBD parent)
 - `persona` (PER-*) artifacts
 - `proposition` (PROP-*) artifacts
+
+WTBD parent rule (non-negotiable):
+- Every `PER-*` and `PROP-*` must have a `VPD-###` in its `Dependencies:` header.
+- Creation scripts require `--vpd VPD-###` and validators enforce this.
 
 ## Workflow policy (script-first; no manual edits)
 

@@ -116,6 +116,9 @@ validate_file() {
   echo "$head" | grep -qE '^Owner:' || fail "$(basename "$f"): missing 'Owner:'"
   echo "$head" | grep -qE '^EditPolicy:[[:space:]]*DO_NOT_EDIT_DIRECTLY' || fail "$(basename "$f"): missing 'EditPolicy: DO_NOT_EDIT_DIRECTLY ...' (script-first policy)"
 
+  # <product-marketing> WTBD parent requirement: every PROP belongs to a VPD.
+  dependencies_ids "$f" | grep -qE '^VPD-[0-9]{3}$' || fail "$(basename "$f"): missing VPD parent in Dependencies (expected VPD-###)"
+
   if [[ "$STRICT" -eq 1 ]]; then
     code_fences_balanced "$f" || fail "$(basename "$f"): unbalanced fenced code blocks (code fence count must be even)"
     fp="$(extract_block "## Formal Pitch")"
@@ -280,8 +283,8 @@ fi
 
 if [[ "${1:-}" == "--all" ]]; then
   if [[ "${2:-}" == "--strict" ]]; then STRICT=1; fi
-  dir="$ROOT/phosphene/domains/product-marketing/docs/propositions"
-  [[ -d "$dir" ]] || fail "Missing propositions dir: $dir"
+  dir="$ROOT/phosphene/domains/product-marketing/docs"
+  [[ -d "$dir" ]] || fail "Missing docs dir: $dir"
   found=0
   while IFS= read -r -d '' f; do
     found=1

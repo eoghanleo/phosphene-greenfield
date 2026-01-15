@@ -10,7 +10,7 @@ set -euo pipefail
 # Commands:
 #   build                Build/refresh index TSV (default)
 #   validate             Fail if duplicate authoritative definitions exist
-#   next --type <t>      Print next legal ID for type (ra|pitch|evidence|refsol|segment|cpe|persona|proposition)
+#   next --type <t>      Print next legal ID for type (ra|vpd|pitch|evidence|refsol|segment|cpe|persona|proposition)
 #   where <ID>           Print authoritative path(s) for an ID (any type)
 #
 # Output:
@@ -30,7 +30,7 @@ Usage:
   ./phosphene/phosphene-core/bin/id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
-  ra | pitch | evidence | refsol | segment | cpe | persona | proposition
+  ra | vpd | pitch | evidence | refsol | segment | cpe | persona | proposition
 EOF
 }
 
@@ -61,6 +61,10 @@ build_index() {
         ra_id="$(grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
         if [[ -n "${ra_id:-}" ]]; then
           printf "ra\t%s\t%s\n" "$ra_id" "$rel" >> "$tmp"
+        fi
+        vpd_id="$(grep -E '^ID:[[:space:]]*VPD-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        if [[ -n "${vpd_id:-}" ]]; then
+          printf "vpd\t%s\t%s\n" "$vpd_id" "$rel" >> "$tmp"
         fi
         ;;
       10-reference-solutions.md)
@@ -187,6 +191,11 @@ next_id() {
       max="$(awk -F'\t' '$1=="ra"{ sub(/^RA-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
       next=$((max + 1))
       printf "RA-%03d\n" "$next"
+      ;;
+    vpd)
+      max="$(awk -F'\t' '$1=="vpd"{ sub(/^VPD-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "VPD-%03d\n" "$next"
       ;;
     pitch)
       max="$(awk -F'\t' '$1=="pitch"{ sub(/^PITCH-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"

@@ -5,7 +5,7 @@ set -euo pipefail
 # Creates a Proposition (PROP-*) doc from the canonical template, allocating IDs via the global registry.
 #
 # Usage:
-#   ./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." [--id PROP-0001] [--owner "..."] [--status Draft] [--dependencies "PER-0001,RA-001"] [--output-dir <dir>]
+#   ./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." --vpd VPD-001 [--id PROP-0001] [--owner "..."] [--status Draft] [--dependencies "PER-0001,RA-001"] [--output-dir <dir>]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LIB_DIR="$(cd "$SCRIPT_DIR/../../../phosphene-core/lib" && pwd)"
@@ -15,7 +15,7 @@ source "$LIB_DIR/phosphene_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." [--id PROP-0001] [--owner "..."] [--status Draft] [--dependencies "..."] [--output-dir <dir>]
+  ./phosphene/domains/product-marketing/scripts/create_new_proposition.sh --title "..." --vpd VPD-001 [--id PROP-0001] [--owner "..."] [--status Draft] [--dependencies "..."] [--output-dir <dir>]
 EOF
 }
 
@@ -32,7 +32,8 @@ ID=""
 OWNER=""
 STATUS="Draft"
 DEPENDENCIES=""
-OUT_DIR="$ROOT/phosphene/domains/product-marketing/docs/propositions"
+VPD=""
+OUT_DIR=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -40,6 +41,7 @@ while [[ $# -gt 0 ]]; do
     --id) ID="${2:-}"; shift 2 ;;
     --owner) OWNER="${2:-}"; shift 2 ;;
     --status) STATUS="${2:-}"; shift 2 ;;
+    --vpd) VPD="${2:-}"; shift 2 ;;
     --dependencies) DEPENDENCIES="${2:-}"; shift 2 ;;
     --output-dir) OUT_DIR="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
@@ -49,8 +51,28 @@ done
 
 [[ -n "$TITLE" ]] || { echo "Error: --title is required" >&2; usage; exit 2; }
 
-if [[ "$OUT_DIR" != /* ]]; then OUT_DIR="$ROOT/$OUT_DIR"; fi
+[[ -n "${VPD}" ]] || { echo "Error: --vpd is required (WTBD parent; expected VPD-001)" >&2; usage; exit 2; }
+if ! [[ "$VPD" =~ ^VPD-[0-9]{3}$ ]]; then
+  echo "Error: --vpd must look like VPD-001" >&2
+  exit 2
+fi
+
+if [[ -n "${OUT_DIR}" && "$OUT_DIR" != /* ]]; then OUT_DIR="$ROOT/$OUT_DIR"; fi
+if [[ -z "${OUT_DIR}" ]]; then
+  vpd_cover="$("$ROOT/phosphene/phosphene-core/bin/phosphene" id where "$VPD" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}')"
+  [[ -n "${vpd_cover:-}" ]] || { echo "Error: cannot locate $VPD in repo. Create a VPD bundle first." >&2; exit 1; }
+  OUT_DIR="$ROOT/$(dirname "$vpd_cover")/20-propositions"
+fi
 mkdir -p "$OUT_DIR"
+
+# Ensure VPD is always present in Dependencies.
+if ! echo ",${DEPENDENCIES}," | grep -qF ",${VPD},"; then
+  if [[ -n "${DEPENDENCIES}" ]]; then
+    DEPENDENCIES="${VPD},${DEPENDENCIES}"
+  else
+    DEPENDENCIES="${VPD}"
+  fi
+fi
 
 if [[ -z "${ID}" ]]; then
   "$ROOT/phosphene/phosphene-core/bin/phosphene" id validate >/dev/null
