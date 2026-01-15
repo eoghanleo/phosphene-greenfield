@@ -1,0 +1,205 @@
+name: "PHOSPHENE / Handoff / research → product-marketing (on merge)"
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+    paths:
+      - "phosphene/domains/research/signals/**"
+
+permissions:
+  contents: read
+  pull-requests: read
+  issues: write
+
+concurrency:
+  group: phosphene-handoff-research-to-pm-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  handoff:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout merge commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          fetch-depth: 1
+
+      - name: Create product-marketing issue from research handoff signal(s)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+
+            const pr = context.payload.pull_request;
+            const { owner, repo } = context.repo;
+            const pull_number = pr.number;
+
+            // --- 1) Require at least one APPROVED review (canonical rule: approval + merge)
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            // Take each user's latest review state.
+            const latestByUser = new Map();
+            for (const r of reviews) {
+              if (!r.user?.login) continue;
+              latestByUser.set(r.user.login, r.state);
+            }
+            const approvedCount = Array.from(latestByUser.values()).filter(s => s === "APPROVED").length;
+            if (approvedCount < 1) {
+              core.notice(`PHOSPHENE: PR merged but has no APPROVED reviews (approvedCount=${approvedCount}). Skipping handoff.`);
+              return;
+            }
+
+            // --- 2) Find signal files changed in this PR
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner,
+              repo,
+              pull_number,
+              per_page: 100,
+            });
+
+            const candidateSignalPaths = files
+              .map(f => f.filename)
+              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
+
+            if (candidateSignalPaths.length === 0) {
+              core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
+              return;
+            }
+
+            // --- 3) Load template (hard-coded for this signal type)
+            const templatePath = ".github/phosphene/cerulean/templates/issue_product_marketing_proposition_development.md";
+            if (!fs.existsSync(templatePath)) {
+              throw new Error(`Missing template file: ${templatePath}`);
+            }
+            const template = fs.readFileSync(templatePath, "utf8");
+
+            // --- 4) Helpers: ensure labels exist (labels are required by PHOSPHENE)
+            const labelCatalog = [
+              { name: "phosphene", color: "111111", description: "PHOSPHENE system label" },
+              { name: "phosphene:domain:product-marketing", color: "2563EB", description: "Domain: product-marketing (Cerulean lane)" },
+              { name: "phosphene:handoff", color: "7C3AED", description: "Created by a PHOSPHENE handoff signal" },
+            ];
+
+            async function ensureLabel(l) {
+              try {
+                await github.rest.issues.getLabel({ owner, repo, name: l.name });
+              } catch (e) {
+                if (e.status !== 404) throw e;
+                await github.rest.issues.createLabel({
+                  owner,
+                  repo,
+                  name: l.name,
+                  color: l.color,
+                  description: l.description,
+                });
+              }
+            }
+
+            for (const l of labelCatalog) await ensureLabel(l);
+
+            // --- 5) Parse signals and create issues
+            const created = [];
+            for (const signalPath of candidateSignalPaths) {
+              // Only accept JSON v1 handoff signals of this exact type.
+              if (!signalPath.endsWith(".json")) continue;
+
+              let raw;
+              try {
+                raw = fs.readFileSync(signalPath, "utf8");
+              } catch {
+                // If the file changed but doesn't exist in the merge commit, ignore.
+                continue;
+              }
+
+              let sig;
+              try {
+                sig = JSON.parse(raw);
+              } catch {
+                core.notice(`PHOSPHENE: skipping non-JSON signal: ${signalPath}`);
+                continue;
+              }
+
+              const ok =
+                sig?.signal_version === 1 &&
+                sig?.signal_type === "phosphene.handoff.research_to_product_marketing.v1" &&
+                sig?.from_domain === "research" &&
+                sig?.to_domain === "product-marketing";
+
+              if (!ok) continue;
+
+              const workId = sig.work_id || "UNKNOWN";
+              const upstreamTitle = pr.title || "(no title)";
+              const upstreamUrl = pr.html_url;
+
+              const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
+              const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
+              const pointersBullets = pointers.length
+                ? pointers.map(p => `- \`${p}\``).join("\n")
+                : "- (no pointers provided)";
+
+              const dedupeMarker = `phosphene-handoff:research->product-marketing;pr=${pull_number};signal=${signalPath};merge=${pr.merge_commit_sha}`;
+
+              // Dedupe: if an issue already exists with this marker, skip.
+              const search = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
+                per_page: 5,
+              });
+              if (search.data.items.length > 0) {
+                core.notice(`PHOSPHENE: issue already exists for ${signalPath} (dedupe hit).`);
+                continue;
+              }
+
+              const titleSuffix = sig.title || upstreamTitle;
+              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for PR #${pull_number} — ${titleSuffix}`;
+
+              const body = template
+                .replaceAll("{{UPSTREAM_PR_NUMBER}}", String(pull_number))
+                .replaceAll("{{UPSTREAM_PR_TITLE}}", upstreamTitle)
+                .replaceAll("{{UPSTREAM_PR_URL}}", upstreamUrl)
+                .replaceAll("{{RESEARCH_WORK_ID}}", workId)
+                .replaceAll("{{SIGNAL_PATH}}", signalPath)
+                .replaceAll("{{POINTERS_BULLETS}}", pointersBullets)
+                .replaceAll("{{NOTES_BLOCK}}", notesBlock.trim() ? notesBlock : "")
+                .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker);
+
+              const extraLabels = Array.isArray(sig.labels) ? sig.labels : [];
+              const labels = ["phosphene", "phosphene:domain:product-marketing", "phosphene:handoff", ...extraLabels];
+
+              const issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: issueTitle,
+                body,
+                labels,
+              });
+
+              // Ensure the consumer Codex GitHub integration triggers reliably by putting @codex in a COMMENT too.
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.data.number,
+                body: [
+                  "@codex",
+                  "",
+                  "PHOSPHENE: please take this issue. Full instructions + inputs are in the issue body.",
+                ].join("\n"),
+              });
+
+              created.push({ number: issue.data.number, url: issue.data.html_url, signalPath });
+            }
+
+            if (created.length === 0) {
+              core.notice("PHOSPHENE: no matching handoff signals found (or all were deduped).");
+              return;
+            }
+
+            core.notice(`PHOSPHENE: created ${created.length} product-marketing issue(s): ${created.map(i => `#${i.number}`).join(", ")}`);
+

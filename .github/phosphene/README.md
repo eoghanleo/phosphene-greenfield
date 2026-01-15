@@ -22,7 +22,9 @@ Add/modify a signal file under:
 - `phosphene/domains/research/signals/**` (Beryl)
 - `phosphene/domains/product-marketing/signals/**` (Cerulean)
 
-On PRs that change these paths, the relevant workflow will post a comment that mentions `@codex` and points it at the signals.
+Canonical flow is **merge-driven**:
+- A domain run PR includes a specific signal file under the domain’s `signals/` folder.
+- On **PR approval + merge**, PHOSPHENE workflows consume that signal and create the next work item (usually an Issue), then mention `@codex` there.
 
 ### 2) Manual summon via comment
 
