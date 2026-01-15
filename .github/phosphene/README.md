@@ -9,6 +9,8 @@ Key idea:
 
 No `OPENAI_API_KEY` is used here.
 
+Note: the consumer Codex GitHub integration may ignore bot-authored comments in some configurations. If that happens, set the repo secret `PHOSPHENE_HUMAN_TOKEN` (a GitHub PAT for a user who can comment) so PHOSPHENE can post the `@codex` summon comment as a human identity.
+
 ## Color → domain mapping
 
 - **Beryl** → `phosphene/domains/research/`

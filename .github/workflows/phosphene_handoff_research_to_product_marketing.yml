@@ -29,9 +29,14 @@ jobs:
 
       - name: Create product-marketing issue from research handoff signal(s)
         uses: actions/github-script@v7
+        env:
+          # Optional: if set, we will post the @codex summon comment using this token
+          # (so it appears authored by a human user instead of github-actions[bot]).
+          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
         with:
           script: |
             const fs = require("fs");
+            const { getOctokit } = require("@actions/github");
 
             const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
@@ -161,13 +166,18 @@ jobs:
                 labels,
               });
 
-              // Ensure the consumer Codex GitHub integration triggers reliably by putting @codex in a COMMENT too.
-              await github.rest.issues.createComment({
+              // Trigger the consumer Codex GitHub integration:
+              // 1) use the canonical phrase '@codex take issue.'
+              // 2) optionally post using a human token if Codex ignores bot-authored comments
+              const humanToken = (process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
+              const octokit = humanToken ? getOctokit(humanToken) : github;
+
+              await octokit.rest.issues.createComment({
                 owner,
                 repo,
                 issue_number: issue.data.number,
                 body: [
-                  "@codex",
+                  "@codex take issue.",
                   "",
                   "PHOSPHENE: please take this issue. Full instructions + inputs are in the issue body.",
                 ].join("\n"),

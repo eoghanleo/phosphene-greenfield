@@ -3,7 +3,7 @@ Template: product-marketing proposition development issue (hard-coded for this s
 Placeholders are replaced by GitHub Actions.
 -->
 
-@codex
+@codex take issue.
 
 PHOSPHENE handoff detected: **`<research>` → `<product-marketing>`**
 
