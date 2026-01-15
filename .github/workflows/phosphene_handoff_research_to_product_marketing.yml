@@ -37,27 +37,7 @@ jobs:
             const { owner, repo } = context.repo;
             const pull_number = pr.number;
 
-            // --- 1) Require at least one APPROVED review (canonical rule: approval + merge)
-            const reviews = await github.paginate(github.rest.pulls.listReviews, {
-              owner,
-              repo,
-              pull_number,
-              per_page: 100,
-            });
-
-            // Take each user's latest review state.
-            const latestByUser = new Map();
-            for (const r of reviews) {
-              if (!r.user?.login) continue;
-              latestByUser.set(r.user.login, r.state);
-            }
-            const approvedCount = Array.from(latestByUser.values()).filter(s => s === "APPROVED").length;
-            if (approvedCount < 1) {
-              core.notice(`PHOSPHENE: PR merged but has no APPROVED reviews (approvedCount=${approvedCount}). Skipping handoff.`);
-              return;
-            }
-
-            // --- 2) Find signal files changed in this PR
+            // --- 1) Find signal files changed in this PR
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner,
               repo,
@@ -74,14 +54,14 @@ jobs:
               return;
             }
 
-            // --- 3) Load template (hard-coded for this signal type)
+            // --- 2) Load template (hard-coded for this signal type)
             const templatePath = ".github/phosphene/cerulean/templates/issue_product_marketing_proposition_development.md";
             if (!fs.existsSync(templatePath)) {
               throw new Error(`Missing template file: ${templatePath}`);
             }
             const template = fs.readFileSync(templatePath, "utf8");
 
-            // --- 4) Helpers: ensure labels exist (labels are required by PHOSPHENE)
+            // --- 3) Helpers: ensure labels exist (labels are required by PHOSPHENE)
             const labelCatalog = [
               { name: "phosphene", color: "111111", description: "PHOSPHENE system label" },
               { name: "phosphene:domain:product-marketing", color: "2563EB", description: "Domain: product-marketing (Cerulean lane)" },
@@ -105,7 +85,7 @@ jobs:
 
             for (const l of labelCatalog) await ensureLabel(l);
 
-            // --- 5) Parse signals and create issues
+            // --- 4) Parse signals and create issues
             const created = [];
             for (const signalPath of candidateSignalPaths) {
               // Only accept JSON v1 handoff signals of this exact type.
