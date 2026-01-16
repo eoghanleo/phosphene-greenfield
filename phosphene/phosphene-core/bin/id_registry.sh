@@ -58,11 +58,11 @@ build_index() {
 
     case "$(basename "$f")" in
       00-coversheet.md)
-        ra_id="$(grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        ra_id="$((grep -E '^ID:[[:space:]]*RA-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -n "${ra_id:-}" ]]; then
           printf "ra\t%s\t%s\n" "$ra_id" "$rel" >> "$tmp"
         fi
-        vpd_id="$(grep -E '^ID:[[:space:]]*VPD-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        vpd_id="$((grep -E '^ID:[[:space:]]*VPD-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -n "${vpd_id:-}" ]]; then
           printf "vpd\t%s\t%s\n" "$vpd_id" "$rel" >> "$tmp"
         fi
@@ -99,7 +99,7 @@ build_index() {
         ;;
       CPE-*.md)
         # Candidate personas: prefer ID line; fall back to filename.
-        cpe_id="$(grep -E '^ID:[[:space:]]*CPE-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        cpe_id="$((grep -E '^ID:[[:space:]]*CPE-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -z "${cpe_id:-}" ]]; then
           base="$(basename "$f" .md)"
           if [[ "$base" =~ ^(CPE-[0-9]{4}) ]]; then cpe_id="${BASH_REMATCH[1]}"; fi
@@ -110,7 +110,7 @@ build_index() {
         ;;
       PER-*.md)
         # Canonical personas (product-marketing): prefer ID line; fall back to filename.
-        per_id="$(grep -E '^ID:[[:space:]]*PER-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        per_id="$((grep -E '^ID:[[:space:]]*PER-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -z "${per_id:-}" ]]; then
           base="$(basename "$f" .md)"
           if [[ "$base" =~ ^PER-[0-9]{4}$ ]]; then per_id="$base"; fi
@@ -121,7 +121,7 @@ build_index() {
         ;;
       PROP-*.md)
         # Canonical propositions (product-marketing): prefer ID line; fall back to filename.
-        prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        prop_id="$((grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -z "${prop_id:-}" ]]; then
           base="$(basename "$f" .md)"
           if [[ "$base" =~ ^PROP-[0-9]{4}$ ]]; then prop_id="$base"; fi
@@ -132,7 +132,7 @@ build_index() {
         ;;
       PITCH-*.md)
         # Prefer ID line; fall back to filename.
-        pid="$(grep -E '^ID:[[:space:]]*PITCH-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+        pid="$((grep -E '^ID:[[:space:]]*PITCH-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -z "${pid:-}" ]]; then
           base="$(basename "$f" .md)"
           if [[ "$base" =~ ^PITCH-[0-9]{4}$ ]]; then pid="$base"; fi
