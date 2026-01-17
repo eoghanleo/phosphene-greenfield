@@ -59,8 +59,8 @@ jobs:
               return;
             }
 
-            // --- 2) Load template (hard-coded for this signal type)
-            const templatePath = ".github/phosphene/cerulean/templates/issue_product_marketing_proposition_development.md";
+            // --- 2) Load prompt template (parameterized; used as Issue body)
+            const templatePath = ".github/prompts/domain_delegation_prompt.md";
             if (!fs.existsSync(templatePath)) {
               throw new Error(`Missing template file: ${templatePath}`);
             }
@@ -125,6 +125,12 @@ jobs:
               const upstreamUrl = pr.html_url;
               const intent = (sig.intent || "proposition-development").trim();
               const doneScoreMin = (sig.done_score_min != null) ? String(sig.done_score_min) : "80";
+              const domainTag = "<product-marketing>";
+              const upstreamDomainTag = "<research>";
+              const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
+              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
+              const domainDoneSignalPath = "phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json";
+              const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
 
               const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
               const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
@@ -189,9 +195,15 @@ jobs:
                 .replaceAll("{{UPSTREAM_PR_NUMBER}}", String(pull_number))
                 .replaceAll("{{UPSTREAM_PR_TITLE}}", upstreamTitle)
                 .replaceAll("{{UPSTREAM_PR_URL}}", upstreamUrl)
-                .replaceAll("{{RESEARCH_WORK_ID}}", workId)
-                .replaceAll("{{INTENT}}", intent)
+                .replaceAll("{{UPSTREAM_WORK_ID}}", workId)
+                .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
+                .replaceAll("{{DOMAIN_TAG}}", domainTag)
+                .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
+                .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
+                .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", domainDoneSignalPath)
                 .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
+                .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
+                .replaceAll("{{INTENT}}", intent)
                 .replaceAll("{{SIGNAL_PATH}}", signalPath)
                 .replaceAll("{{POINTERS_BULLETS}}", pointersBullets)
                 .replaceAll("{{NOTES_BLOCK}}", notesBlock.trim() ? notesBlock : "")
