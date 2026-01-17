@@ -98,7 +98,7 @@ done < "$TARGETS_FILE"
 overall_percent="$(awk -v h="$overall_hit" -v e="$overall_exec" 'BEGIN{ if (e<=0) printf "0.00"; else printf "%.2f", (100.0*h/e) }')"
 
 {
-  echo "PHOSPHENE — bash line-hit coverage"
+  echo "PHOSPHENE - bash line-hit coverage"
   echo "============================================================"
   echo "Targets: $(wc -l < "$TARGETS_FILE" | awk '{print $1}') files"
   echo "Hits:    $(wc -l < "$HITS_ALL" | awk '{print $1}') unique (file,line) pairs"
@@ -111,3 +111,17 @@ overall_percent="$(awk -v h="$overall_hit" -v e="$overall_exec" 'BEGIN{ if (e<=0
 
 cat "$SUMMARY_TXT"
 
+echo ""
+echo "Coverage by script (sorted: lowest -> highest)"
+echo "============================================================"
+printf "percent\thit_lines\texecutable_lines\tscript\n"
+
+# Keep it TSV for copy/paste into sheets/tools.
+tail -n +2 "$REPORT_TSV" \
+  | awk -F'\t' '
+      NF>=4 {
+        file=$1; exec=$2+0; hit=$3+0; pct=$4+0;
+        printf "%.2f\t%d\t%d\t%s\n", pct, hit, exec, file;
+      }
+    ' \
+  | LC_ALL=C sort -n -k1,1
