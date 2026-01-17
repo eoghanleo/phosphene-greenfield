@@ -44,75 +44,86 @@ if [[ "$BOOSTER" == *"|"* ]]; then fail "--booster must not contain '|'"; fi
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" BOOSTER_TEXT="$BOOSTER" MAPPED_INPUT="$MAPPED" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$PROP" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${prop_id:-}" ]] || fail "$(basename "$PROP"): missing/invalid 'ID: PROP-####'"
 
-p = Path(os.environ["PROP_PATH"])
-booster = os.environ["BOOSTER_TEXT"].strip()
-mapped_in = os.environ.get("MAPPED_INPUT", "").strip()
+# Normalize mapped gains list (optional).
+mapped_norm=""
+if [[ -n "${MAPPED:-}" && "${MAPPED}" != "<...>" ]]; then
+  tmp_list="$(mktemp)"
+  # Split by comma, trim, validate, emit one per line
+  IFS=',' read -ra PARTS <<< "$MAPPED"
+  for part in "${PARTS[@]:-}"; do
+    x="$(printf "%s" "$part" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    [[ -z "$x" ]] && continue
+    [[ "$x" =~ ^JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}$ ]] || { rm -f "$tmp_list" || true; fail "invalid mapped gain id: $x"; }
+    printf "%s\n" "$x" >> "$tmp_list"
+  done
+  mapped_norm="$(sort -u "$tmp_list" | awk 'BEGIN{first=1}{ if(!first) printf ", "; printf $0; first=0 } END{ if(!first) print "" }')"
+  rm -f "$tmp_list" || true
+fi
 
-content = p.read_text(encoding="utf-8")
-m = re.search(r"^ID:\s*(PROP-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PROP-####'", file=sys.stderr)
-  sys.exit(1)
-prop_id = m.group(1)
+max_num="$(
+  grep -oE "BOOST-[0-9]{4}-${prop_id}" "$PROP" 2>/dev/null \
+    | sed -E "s/^BOOST-//; s/-${prop_id}\$//" \
+    | sort -n \
+    | tail -n 1 \
+    || true
+)"
+if [[ -z "${max_num:-}" ]]; then
+  next_num=1
+else
+  next_num=$((10#${max_num} + 1))
+fi
+bid="BOOST-$(printf "%04d" "$next_num")-${prop_id}"
 
-def normalize_jtbd_list(s: str, kind: str):
-  if not s or s == "<...>":
-    return ""
-  parts = [x.strip() for x in s.split(",") if x.strip()]
-  for x in parts:
-    if kind == "GAIN" and not re.fullmatch(r"JTBD-GAIN-\d{4}-PER-\d{4}", x):
-      print(f"FAIL: invalid mapped gain id: {x}", file=sys.stderr); sys.exit(1)
-  # stable order, keep unique
-  return ", ".join(sorted(set(parts)))
+TMP_OUT="$(mktemp)"
+row="| ${bid} | ${BOOSTER} | ${mapped_norm} |"
 
-mapped = normalize_jtbd_list(mapped_in, "GAIN")
+if ! awk -v section="## Gain Boosters" -v row="$row" '
+  function flush_buf(   i, insert_at) {
+    insert_at = -1
+    for (i = n; i >= 1; i--) {
+      if (buf[i] ~ /^\\|[[:space:]]*BOOST-[0-9]{4}-/) { insert_at = i + 1; break }
+    }
+    if (insert_at == -1) {
+      for (i = 1; i <= n; i++) {
+        if (buf[i] ~ /^\\|[[:space:]]*---/) { insert_at = i + 1; break }
+      }
+    }
+    if (insert_at == -1) {
+      print "FAIL: could not find boosters table to insert into" > "/dev/stderr"
+      exit 1
+    }
+    for (i = 1; i <= n + 1; i++) {
+      if (i == insert_at) print row
+      if (i <= n) print buf[i]
+    }
+  }
+  BEGIN { in_section=0; found=0; n=0; }
+  {
+    if ($0 == section) { found=1; in_section=1; n=0; print; next }
+    if (in_section) {
+      if ($0 ~ /^## /) { flush_buf(); in_section=0; print; next }
+      n++; buf[n]=$0; next
+    }
+    print
+  }
+  END { if (!found) exit 2; if (in_section) flush_buf() }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Gain Boosters'"
+  exit $rc
+fi
 
-nums = [int(mm.group(1)) for mm in re.finditer(rf"BOOST-(\d{{4}})-{re.escape(prop_id)}", content)]
-next_num = (max(nums) + 1) if nums else 1
-bid = f"BOOST-{next_num:04d}-{prop_id}"
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-lines = content.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact("## Gain Boosters")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Gain Boosters'", file=sys.stderr)
-  sys.exit(1)
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-# Find insertion point: after last BOOST row in this section, else after header separator line.
-insert_at = None
-for i in range(end - 1, start, -1):
-  if re.match(r"^\|\s*BOOST-\d{4}-PROP-\d{4}\s*\|", lines[i]):
-    insert_at = i + 1
-    break
-if insert_at is None:
-  for i in range(start, end):
-    if re.match(r"^\|\s*---", lines[i]):
-      insert_at = i + 1
-      break
-if insert_at is None:
-  print(f"FAIL: {p.name}: could not find boosters table to insert into", file=sys.stderr)
-  sys.exit(1)
-
-row = f"| {bid} | {booster} | {mapped if mapped else '<...>'} |\n"
-lines.insert(insert_at, row)
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added gain booster {bid} -> {p}")
-PY
+mv "$TMP_OUT" "$PROP"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
 echo "OK: validated $PROP"

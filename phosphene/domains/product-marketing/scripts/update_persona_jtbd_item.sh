@@ -53,85 +53,60 @@ if [[ -n "$TEXT" && "$TEXT" == *"|"* ]]; then
   fail "--text must not contain '|' (pipe) characters; markdown tables will break"
 fi
 
-PERSONA_PATH="$PERSONA" JTBD_ID="$JTBD_ID" NEW_TEXT="$TEXT" NEW_IMPORTANCE="$IMPORTANCE" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+persona_id="$(grep -E '^ID:[[:space:]]*PER-[0-9]{4}[[:space:]]*$' "$PERSONA" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${persona_id:-}" ]] || fail "$(basename "$PERSONA"): missing/invalid 'ID: PER-####'"
 
-p = Path(os.environ["PERSONA_PATH"])
-jtbd_id = os.environ["JTBD_ID"].strip()
-new_text = os.environ.get("NEW_TEXT", "")
-new_imp = os.environ.get("NEW_IMPORTANCE", "")
+if ! [[ "$JTBD_ID" =~ ^JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-(PER-[0-9]{4})$ ]]; then
+  fail "invalid jtbd-id format: $JTBD_ID"
+fi
 
-content = p.read_text(encoding="utf-8")
+jtbd_type="${BASH_REMATCH[1]}"
+jtbd_persona="${BASH_REMATCH[2]}"
+[[ "$jtbd_persona" == "$persona_id" ]] || fail "$(basename "$PERSONA"): jtbd-id suffix must match persona ID ($persona_id): $JTBD_ID"
 
-pm = re.search(r"^ID:\s*(PER-\d{4})\s*$", content, flags=re.M)
-if not pm:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PER-####'", file=sys.stderr)
-  sys.exit(1)
-persona_id = pm.group(1)
+case "$jtbd_type" in
+  JOB) section="## Jobs" ;;
+  PAIN) section="## Pains" ;;
+  GAIN) section="## Gains" ;;
+esac
 
-# Ensure suffix matches persona ID
-if not jtbd_id.endswith(f"-{persona_id}"):
-  print(f"FAIL: {p.name}: jtbd-id suffix must match persona ID ({persona_id}): {jtbd_id}", file=sys.stderr)
-  sys.exit(1)
+TMP_OUT="$(mktemp)"
+if ! awk -v section="$section" -v jtbd="$JTBD_ID" -v new_text="$TEXT" -v new_imp="$IMPORTANCE" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN { in_section=0; found_section=0; updated=0; }
+  {
+    if ($0 == section) { in_section=1; found_section=1; print; next }
+    if (in_section && $0 ~ /^## /) { in_section=0 }
 
-m = re.match(r"^(JTBD-(JOB|PAIN|GAIN)-\d{4})-" + re.escape(persona_id) + r"$", jtbd_id)
-if not m:
-  print(f"FAIL: invalid jtbd-id format: {jtbd_id}", file=sys.stderr)
-  sys.exit(1)
+    if (in_section && $0 ~ ("^\\|[[:space:]]*" jtbd "[[:space:]]*\\|")) {
+      n = split($0, a, "|")
+      id = trim(a[2]); txt = trim(a[3]); imp = trim(a[4])
+      if (new_text != "") txt = new_text
+      if (new_imp != "") imp = new_imp
+      print "| " id " | " txt " | " imp " |"
+      updated=1
+      next
+    }
+    print
+  }
+  END {
+    if (!found_section) exit 2
+    if (!updated) exit 3
+  }
+' "$PERSONA" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  if [[ $rc -eq 2 ]]; then fail "$(basename "$PERSONA"): missing section $section"; fi
+  if [[ $rc -eq 3 ]]; then fail "$(basename "$PERSONA"): JTBD row not found: $JTBD_ID"; fi
+  exit $rc
+fi
 
-jtbd_type = m.group(2)
-section = {"JOB":"## Jobs", "PAIN":"## Pains", "GAIN":"## Gains"}[jtbd_type]
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-lines = content.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact(section)
-if start is None:
-  print(f"FAIL: {p.name}: missing section {section}", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-changed = False
-for i in range(start, end):
-  ln = lines[i]
-  # Match a row like: | JTBD-PAIN-0001-PER-0003 | text | 4 |
-  if re.match(r"^\|\s*" + re.escape(jtbd_id) + r"\s*\|", ln):
-    parts = [p.strip() for p in ln.strip("\n").split("|")]
-    # parts: ["", id, text, importance, ""]
-    if len(parts) < 5:
-      print(f"FAIL: malformed table row: {ln.rstrip()}", file=sys.stderr)
-      sys.exit(1)
-    if new_text:
-      parts[2] = new_text
-      changed = True
-    if new_imp:
-      parts[3] = new_imp
-      changed = True
-    # Reconstruct with canonical spacing
-    lines[i] = f"| {parts[1]} | {parts[2]} | {parts[3]} |\n"
-    break
-else:
-  print(f"FAIL: {p.name}: JTBD row not found: {jtbd_id}", file=sys.stderr)
-  sys.exit(1)
-
-if not changed:
-  print(f"WARN: no changes applied (empty updates?)", file=sys.stderr)
-
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Updated JTBD row: {jtbd_id} -> {p}")
-PY
-
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
+mv "$TMP_OUT" "$PERSONA"
 echo "OK: validated $PERSONA"
 

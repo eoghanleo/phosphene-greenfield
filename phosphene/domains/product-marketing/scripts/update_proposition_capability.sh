@@ -54,69 +54,49 @@ if [[ -n "$CAP" && "$CAP" == *"|"* ]]; then fail "--capability must not contain 
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" CAPABILITY_ID="$CID" NEW_TYPE="$CTYPE" NEW_CAP="$CAP" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$PROP" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${prop_id:-}" ]] || fail "$(basename "$PROP"): missing/invalid 'ID: PROP-####'"
 
-p = Path(os.environ["PROP_PATH"])
-cid = os.environ["CAPABILITY_ID"].strip()
-new_type = os.environ.get("NEW_TYPE", "").strip()
-new_cap = os.environ.get("NEW_CAP", "").strip()
+[[ "$CID" =~ ^CAP-[0-9]{4}-${prop_id}$ ]] || fail "capability-id must match proposition ID suffix (${prop_id}): ${CID}"
 
-content = p.read_text(encoding="utf-8")
-m = re.search(r"^ID:\s*(PROP-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PROP-####'", file=sys.stderr)
-  sys.exit(1)
-prop_id = m.group(1)
+TMP_OUT="$(mktemp)"
+if ! awk -v section="## Capabilities" -v cid="$CID" -v new_type="$CTYPE" -v new_cap="$CAP" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN { in_section=0; found_section=0; updated=0; }
+  {
+    if ($0 == section) { in_section=1; found_section=1; print; next }
+    if (in_section && $0 ~ /^## /) { in_section=0 }
 
-if not re.fullmatch(rf"CAP-\d{{4}}-{re.escape(prop_id)}", cid):
-  print(f"FAIL: capability-id must match proposition ID suffix ({prop_id}): {cid}", file=sys.stderr)
-  sys.exit(1)
+    if (in_section && $0 ~ ("^\\|[[:space:]]*" cid "[[:space:]]*\\|")) {
+      n = split($0, a, "|")
+      id = trim(a[2]); ctype = trim(a[3]); cap = trim(a[4])
+      if (new_type != "") ctype = new_type
+      if (new_cap != "") cap = new_cap
+      print "| " id " | " ctype " | " cap " |"
+      updated=1
+      next
+    }
+    print
+  }
+  END {
+    if (!found_section) exit 2
+    if (!updated) exit 3
+  }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Capabilities'"
+  [[ $rc -eq 3 ]] && fail "$(basename "$PROP"): CapabilityID row not found: $CID"
+  exit $rc
+fi
 
-lines = content.splitlines(True)
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-def bounds(h):
-  s = None
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == h:
-      s = i
-      break
-  if s is None:
-    return None, None
-  e = len(lines)
-  for i in range(s + 1, len(lines)):
-    if lines[i].startswith("## "):
-      e = i
-      break
-  return s, e
-
-start, end = bounds("## Capabilities")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Capabilities'", file=sys.stderr)
-  sys.exit(1)
-
-row_re = re.compile(r"^\|\s*" + re.escape(cid) + r"\s*\|")
-for i in range(start, end):
-  ln = lines[i]
-  if row_re.match(ln):
-    parts = [x.strip() for x in ln.strip("\n").split("|")]
-    if len(parts) < 5:
-      print(f"FAIL: malformed table row: {ln.rstrip()}", file=sys.stderr)
-      sys.exit(1)
-    if new_type:
-      parts[2] = new_type
-    if new_cap:
-      parts[3] = new_cap
-    lines[i] = f"| {parts[1]} | {parts[2]} | {parts[3]} |\n"
-    break
-else:
-  print(f"FAIL: {p.name}: CapabilityID row not found: {cid}", file=sys.stderr)
-  sys.exit(1)
-
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Updated capability {cid} -> {p}")
-PY
+mv "$TMP_OUT" "$PROP"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
 echo "OK: validated $PROP"

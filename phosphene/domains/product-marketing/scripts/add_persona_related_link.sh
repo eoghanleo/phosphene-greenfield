@@ -41,81 +41,87 @@ done
 if [[ "$PERSONA" != /* ]]; then PERSONA="$ROOT/$PERSONA"; fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 
-PERSONA_PATH="$PERSONA" LINK_VALUE="$LINK" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+LINK_CLEAN="$(printf "%s" "$LINK" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+[[ -n "$LINK_CLEAN" ]] || fail "empty link"
 
-p = Path(os.environ["PERSONA_PATH"])
-link = os.environ["LINK_VALUE"].strip()
-if not link:
-  print("FAIL: empty link", file=sys.stderr)
-  sys.exit(1)
+bucket="### Links"
+TMP_ITEMS="$(mktemp)"
+TMP_SORTED="$(mktemp)"
+TMP_OUT="$(mktemp)"
 
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
+awk -v bucket="$bucket" '
+  BEGIN { in_ev=0; in_bucket=0; }
+  $0 == "## Evidence and links" { in_ev=1; next }
+  in_ev && $0 ~ /^## / { in_ev=0; in_bucket=0 }
+  in_ev {
+    if ($0 == bucket) { in_bucket=1; next }
+    if (in_bucket && ($0 ~ /^### / || $0 ~ /^## /)) { in_bucket=0 }
+    if (in_bucket && $0 ~ /^-[[:space:]]+/) {
+      sub(/^-+[[:space:]]+/, "", $0)
+      gsub(/[[:space:]]+$/, "", $0)
+      if ($0 != "") print
+    }
+  }
+' "$PERSONA" > "$TMP_ITEMS"
 
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
+printf "%s\n" "$LINK_CLEAN" >> "$TMP_ITEMS"
+sort -u "$TMP_ITEMS" > "$TMP_SORTED"
 
-evidence_start = find_line_exact("## Evidence and links")
-if evidence_start is None:
-  print(f"FAIL: {p.name}: missing '## Evidence and links'", file=sys.stderr)
-  sys.exit(1)
+if ! awk -v bucket="$bucket" -v items_file="$TMP_SORTED" '
+  function print_items(path,   line) {
+    while ((getline line < path) > 0) {
+      gsub(/[[:space:]]+$/, "", line)
+      if (line != "") print "- " line
+    }
+    close(path)
+  }
+  BEGIN { in_ev=0; in_bucket=0; found_bucket=0; inserted=0; }
+  {
+    if ($0 == "## Evidence and links") { in_ev=1; print; next }
+    if (in_ev && $0 ~ /^## /) { in_ev=0; in_bucket=0 }
 
-evidence_end = len(lines)
-for i in range(evidence_start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    evidence_end = i
-    break
+    if (in_ev && $0 == bucket) {
+      found_bucket=1
+      in_bucket=1
+      inserted=0
+      print
+      next
+    }
 
-block = lines[evidence_start:evidence_end]
+    if (in_bucket) {
+      if ($0 ~ /^### / || $0 ~ /^## /) {
+        if (!inserted) {
+          print_items(items_file)
+          print ""
+          inserted=1
+        }
+        in_bucket=0
+        print
+        next
+      }
+      if ($0 ~ /^-[[:space:]]+/) next
+      print
+      next
+    }
 
-links_h = "### Links"
-links_i = None
-for i, ln in enumerate(block):
-  if ln.rstrip("\n") == links_h:
-    links_i = i
-    break
-if links_i is None:
-  print(f"FAIL: {p.name}: missing '{links_h}' under Evidence and links", file=sys.stderr)
-  sys.exit(1)
+    print
+  }
+  END {
+    if (!found_bucket) exit 2
+    if (in_bucket && !inserted) {
+      print_items(items_file)
+      print ""
+    }
+  }
+' "$PERSONA" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_ITEMS" "$TMP_SORTED" "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PERSONA"): missing '### Links' under '## Evidence and links'"
+  exit $rc
+fi
 
-# Determine the range of bullet lines after "### Links" until next heading or end.
-end = len(block)
-for j in range(links_i + 1, len(block)):
-  if block[j].startswith("### "):
-    end = j
-    break
-
-items = []
-for j in range(links_i + 1, end):
-  m = re.match(r"^\-\s+(.*)\s*$", block[j].rstrip("\n"))
-  if m:
-    items.append(m.group(1))
-
-normalized = [x for x in items if x != "<...>"]
-if link not in normalized:
-  normalized.append(link)
-normalized = sorted(set(normalized))
-
-# Remove existing bullets in Links subsection
-for j in reversed(range(links_i + 1, end)):
-  if re.match(r"^\-\s+", block[j]):
-    del block[j]
-
-insert_pos = links_i + 1
-for x in normalized:
-  block.insert(insert_pos, f"- {x}\n")
-  insert_pos += 1
-block.insert(insert_pos, "\n")
-
-lines[evidence_start:evidence_end] = block
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added link: {link} -> {p}")
-PY
+rm -f "$TMP_ITEMS" "$TMP_SORTED" || true
+mv "$TMP_OUT" "$PERSONA"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
 echo "OK: validated $PERSONA"

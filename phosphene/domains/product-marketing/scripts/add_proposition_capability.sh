@@ -50,62 +50,70 @@ if [[ "$CAP" == *"|"* ]]; then fail "--capability must not contain '|'"; fi
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" CAP_TEXT="$CAP" CAP_TYPE="$CTYPE" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$PROP" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${prop_id:-}" ]] || fail "$(basename "$PROP"): missing/invalid 'ID: PROP-####'"
 
-p = Path(os.environ["PROP_PATH"])
-cap = os.environ["CAP_TEXT"].strip()
-ctype = os.environ["CAP_TYPE"].strip()
+max_num="$(
+  grep -oE "CAP-[0-9]{4}-${prop_id}" "$PROP" 2>/dev/null \
+    | sed -E "s/^CAP-//; s/-${prop_id}\$//" \
+    | sort -n \
+    | tail -n 1 \
+    || true
+)"
+if [[ -z "${max_num:-}" ]]; then
+  next_num=1
+else
+  next_num=$((10#${max_num} + 1))
+fi
+cid="CAP-$(printf "%04d" "$next_num")-${prop_id}"
 
-content = p.read_text(encoding="utf-8")
-m = re.search(r"^ID:\s*(PROP-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PROP-####'", file=sys.stderr)
-  sys.exit(1)
-prop_id = m.group(1)
+TMP_OUT="$(mktemp)"
+row="| ${cid} | ${CTYPE} | ${CAP} |"
 
-nums = [int(mm.group(1)) for mm in re.finditer(rf"CAP-(\d{{4}})-{re.escape(prop_id)}", content)]
-next_num = (max(nums) + 1) if nums else 1
-cid = f"CAP-{next_num:04d}-{prop_id}"
+if ! awk -v section="## Capabilities" -v row="$row" '
+  function flush_buf(   i, insert_at) {
+    insert_at = -1
+    for (i = n; i >= 1; i--) {
+      if (buf[i] ~ /^\\|[[:space:]]*CAP-[0-9]{4}-/) { insert_at = i + 1; break }
+    }
+    if (insert_at == -1) {
+      for (i = 1; i <= n; i++) {
+        if (buf[i] ~ /^\\|[[:space:]]*---/) { insert_at = i + 1; break }
+      }
+    }
+    if (insert_at == -1) {
+      print "FAIL: could not find capabilities table to insert into" > "/dev/stderr"
+      exit 1
+    }
+    for (i = 1; i <= n + 1; i++) {
+      if (i == insert_at) print row
+      if (i <= n) print buf[i]
+    }
+  }
+  BEGIN { in_section=0; found=0; n=0; }
+  {
+    if ($0 == section) { found=1; in_section=1; n=0; print; next }
+    if (in_section) {
+      if ($0 ~ /^## /) { flush_buf(); in_section=0; print; next }
+      n++; buf[n]=$0; next
+    }
+    print
+  }
+  END { if (!found) exit 2; if (in_section) flush_buf() }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Capabilities'"
+  exit $rc
+fi
 
-lines = content.splitlines(True)
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact("## Capabilities")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Capabilities'", file=sys.stderr)
-  sys.exit(1)
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-insert_at = None
-for i in range(end - 1, start, -1):
-  if re.match(r"^\|\s*CAP-\d{4}-PROP-\d{4}\s*\|", lines[i]):
-    insert_at = i + 1
-    break
-if insert_at is None:
-  for i in range(start, end):
-    if re.match(r"^\|\s*---", lines[i]):
-      insert_at = i + 1
-      break
-if insert_at is None:
-  print(f"FAIL: {p.name}: could not find capabilities table to insert into", file=sys.stderr)
-  sys.exit(1)
-
-row = f"| {cid} | {ctype} | {cap} |\n"
-lines.insert(insert_at, row)
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added capability {cid} -> {p}")
-PY
+mv "$TMP_OUT" "$PROP"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
 echo "OK: validated $PROP"

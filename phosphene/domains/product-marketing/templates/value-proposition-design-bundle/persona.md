@@ -29,7 +29,6 @@ Each item has:
 
 | JTBD-ID | Job | Importance |
 |---|---|---:|
-|  |  |  |
 
 ## Pains
 
@@ -41,7 +40,6 @@ update_persona_jtbd_item.sh
 
 | JTBD-ID | Pain | Importance |
 |---|---|---:|
-|  |  |  |
 
 ## Gains
 
@@ -53,7 +51,6 @@ update_persona_jtbd_item.sh
 
 | JTBD-ID | Gain | Importance |
 |---|---|---:|
-|  |  |  |
 
 ## Evidence and links
 

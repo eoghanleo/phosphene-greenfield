@@ -53,126 +53,94 @@ if [[ "$SID" =~ [[:space:]] ]]; then
   fail "--id must not contain whitespace"
 fi
 
-PERSONA_PATH="$PERSONA" SUPPORTING_ID="$SID" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+bucket="### DocumentIDs"
+if [[ "$SID" =~ ^E-[0-9]{4}$ ]]; then bucket="### EvidenceIDs"; fi
+if [[ "$SID" =~ ^CPE-[0-9]{4}$ ]]; then bucket="### CandidatePersonaIDs"; fi
 
-p = Path(os.environ["PERSONA_PATH"])
-sid = os.environ["SUPPORTING_ID"].strip()
+TMP_ITEMS="$(mktemp)"
+TMP_SORTED="$(mktemp)"
+TMP_OUT="$(mktemp)"
 
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
+awk -v bucket="$bucket" '
+  BEGIN { in_ev=0; in_bucket=0; }
+  $0 == "## Evidence and links" { in_ev=1; next }
+  in_ev && $0 ~ /^## / { in_ev=0; in_bucket=0 }
+  in_ev {
+    if ($0 == bucket) { in_bucket=1; next }
+    if (in_bucket && ($0 ~ /^### / || $0 ~ /^## /)) { in_bucket=0 }
+    if (in_bucket && $0 ~ /^-[[:space:]]+/) {
+      sub(/^-+[[:space:]]+/, "", $0)
+      gsub(/[[:space:]]+$/, "", $0)
+      if ($0 != "" && $0 != "<...>") print
+    }
+  }
+' "$PERSONA" > "$TMP_ITEMS"
 
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
+printf "%s\n" "$SID" >> "$TMP_ITEMS"
+sort -u "$TMP_ITEMS" > "$TMP_SORTED"
 
-evidence_start = find_line_exact("## Evidence and links")
-if evidence_start is None:
-  print(f"FAIL: {p.name}: missing '## Evidence and links'", file=sys.stderr)
-  sys.exit(1)
+if ! awk -v bucket="$bucket" -v items_file="$TMP_SORTED" '
+  function print_items(path,   line) {
+    while ((getline line < path) > 0) {
+      gsub(/[[:space:]]+$/, "", line)
+      if (line != "") print "- " line
+    }
+    close(path)
+  }
+  BEGIN { in_ev=0; in_bucket=0; found_bucket=0; inserted=0; }
+  {
+    if ($0 == "## Evidence and links") { in_ev=1; print; next }
+    if (in_ev && $0 ~ /^## /) { in_ev=0; in_bucket=0 }
 
-evidence_end = len(lines)
-for i in range(evidence_start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    evidence_end = i
-    break
+    if (in_ev && $0 == bucket) {
+      found_bucket=1
+      in_bucket=1
+      inserted=0
+      print
+      next
+    }
 
-block = lines[evidence_start:evidence_end]
+    if (in_bucket) {
+      if ($0 ~ /^### / || $0 ~ /^## /) {
+        if (!inserted) {
+          print_items(items_file)
+          print ""
+          inserted=1
+        }
+        in_bucket=0
+        print
+        next
+      }
+      if ($0 ~ /^-[[:space:]]+/) next
+      print
+      next
+    }
 
-def bucket_for(x: str) -> str:
-  if re.fullmatch(r"E-\d{4}", x):
-    return "### EvidenceIDs"
-  if re.fullmatch(r"CPE-\d{4}", x):
-    return "### CandidatePersonaIDs"
-  return "### DocumentIDs"
+    print
+  }
+  END {
+    if (!found_bucket) exit 2
+    if (in_bucket && !inserted) {
+      print_items(items_file)
+      print ""
+    }
+  }
+' "$PERSONA" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_ITEMS" "$TMP_SORTED" "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PERSONA"): missing bucket heading $bucket under '## Evidence and links'"
+  exit $rc
+fi
 
-bucket = bucket_for(sid)
+rm -f "$TMP_ITEMS" "$TMP_SORTED" || true
 
-def ensure_subheading(h: str):
-  if any(ln.rstrip("\n") == h for ln in block):
-    return
-  # Insert missing subheading just before "### Links" if possible, else before end.
-  insert_at = None
-  for j, ln in enumerate(block):
-    if ln.rstrip("\n") == "### Links":
-      insert_at = j
-      break
-  if insert_at is None:
-    insert_at = len(block)
-  block.insert(insert_at, h + "\n")
-  block.insert(insert_at + 1, "\n")
-  block.insert(insert_at + 2, "- <...>\n")
-  block.insert(insert_at + 3, "\n")
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-# Ensure all expected headings exist
-for h in ["### EvidenceIDs", "### CandidatePersonaIDs", "### DocumentIDs", "### Links"]:
-  if not any(ln.rstrip("\n") == h for ln in block):
-    # Create empty list placeholder
-    idx = len(block)
-    # Keep Links last if present
-    for j, ln in enumerate(block):
-      if ln.rstrip("\n") == "### Links":
-        idx = j
-        break
-    block.insert(idx, h + "\n")
-    block.insert(idx + 1, "- <...>\n")
-    block.insert(idx + 2, "\n")
-
-def collect_items(h: str):
-  # Return (start_idx, end_idx, items, item_line_idxs)
-  start = None
-  for j, ln in enumerate(block):
-    if ln.rstrip("\n") == h:
-      start = j
-      break
-  if start is None:
-    return None
-  end = len(block)
-  for j in range(start + 1, len(block)):
-    if block[j].startswith("### "):
-      end = j
-      break
-  items = []
-  item_idxs = []
-  for j in range(start + 1, end):
-    m = re.match(r"^\-\s+(.*)\s*$", block[j].rstrip("\n"))
-    if m:
-      items.append(m.group(1))
-      item_idxs.append(j)
-  return start, end, items, item_idxs
-
-start, end, items, item_idxs = collect_items(bucket)
-if start is None:
-  print(f"FAIL: {p.name}: could not locate bucket heading {bucket}", file=sys.stderr)
-  sys.exit(1)
-
-normalized = [x for x in items if x != "<...>"]
-if sid in normalized:
-  print(f"OK: already present: {sid}", file=sys.stderr)
-else:
-  normalized.append(sid)
-  normalized = sorted(set(normalized))
-
-  # Remove old bullet lines in this bucket
-  for j in reversed(range(start + 1, end)):
-    if re.match(r"^\-\s+", block[j]):
-      del block[j]
-
-  # Insert bullets right after heading
-  insert_pos = start + 1
-  for x in normalized:
-    block.insert(insert_pos, f"- {x}\n")
-    insert_pos += 1
-  block.insert(insert_pos, "\n")
-
-# Write back the modified block
-lines[evidence_start:evidence_end] = block
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added supporting ID: {sid} -> {p}")
-PY
+mv "$TMP_OUT" "$PERSONA"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
 echo "OK: validated $PERSONA"

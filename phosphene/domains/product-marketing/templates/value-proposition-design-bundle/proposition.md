@@ -43,7 +43,6 @@ MappedGainIDs is an array encoded as a comma-separated list of JTBD IDs.
 
 | BoosterID | Booster | MappedGainIDs[] |
 |---|---|---|
-|  |  |  |
 
 ## Pain Relievers
 
@@ -57,7 +56,6 @@ MappedPainIDs is an array encoded as a comma-separated list of JTBD IDs.
 
 | RelieverID | Reliever | MappedPainIDs[] |
 |---|---|---|
-|  |  |  |
 
 ## Capabilities
 
@@ -71,7 +69,6 @@ CapabilityType must be one of: `feature|function|standard|experience`.
 
 | CapabilityID | CapabilityType | Capability |
 |---|---|---|
-|  | feature |  |
 
 ## Notes
 

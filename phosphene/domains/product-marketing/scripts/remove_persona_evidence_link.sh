@@ -43,51 +43,23 @@ done
 if [[ "$PERSONA" != /* ]]; then PERSONA="$ROOT/$PERSONA"; fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 
-PERSONA_PATH="$PERSONA" SUPPORTING_ID="$SID" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+TMP_OUT="$(mktemp)"
+awk -v sid="$SID" '
+  BEGIN { in_ev=0; removed=0; }
+  $0 == "## Evidence and links" { in_ev=1; print; next }
+  in_ev && $0 ~ /^## / { in_ev=0 }
+  in_ev {
+    if ($0 ~ ("^-+[[:space:]]+" sid "[[:space:]]*$")) { removed++; next }
+  }
+  { print }
+  END {
+    if (removed == 0) {
+      # no-op is ok
+    }
+  }
+' "$PERSONA" > "$TMP_OUT"
 
-p = Path(os.environ["PERSONA_PATH"])
-sid = os.environ["SUPPORTING_ID"].strip()
-
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-evidence_start = find_line_exact("## Evidence and links")
-if evidence_start is None:
-  print(f"FAIL: {p.name}: missing '## Evidence and links'", file=sys.stderr)
-  sys.exit(1)
-
-evidence_end = len(lines)
-for i in range(evidence_start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    evidence_end = i
-    break
-
-block = lines[evidence_start:evidence_end]
-
-# Remove from any bucket where it appears (EvidenceIDs/CandidatePersonaIDs/DocumentIDs)
-removed = 0
-for i, ln in enumerate(block):
-  if re.match(r"^\-\s+" + re.escape(sid) + r"\s*$", ln.rstrip("\n")):
-    block[i] = ""  # mark
-    removed += 1
-
-block = [ln for ln in block if ln != ""]
-lines[evidence_start:evidence_end] = block
-p.write_text("".join(lines), encoding="utf-8")
-
-if removed == 0:
-  print(f"WARN: not found (no-op): {sid}", file=sys.stderr)
-else:
-  print(f"Removed supporting ID: {sid} ({removed} occurrence(s)) -> {p}")
-PY
+mv "$TMP_OUT" "$PERSONA"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
 echo "OK: validated $PERSONA"

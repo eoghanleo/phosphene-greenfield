@@ -24,7 +24,6 @@ Checklist:
 
 | Timestamp | Query / path | What you were testing | Sources opened |
 |---|---|---|---|
-| YYYY-MM-DD | <...> | <...> | <...> |
 
 ## I) Quantification anchors (value ranges)
 
@@ -77,5 +76,4 @@ Checklist:
 
 | Canonical term | Disallowed synonyms | Notes |
 |---|---|---|
-| <term> | <synonyms> | <...> |
 

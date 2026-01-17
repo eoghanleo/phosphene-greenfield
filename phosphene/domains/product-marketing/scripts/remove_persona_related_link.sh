@@ -41,50 +41,24 @@ done
 if [[ "$PERSONA" != /* ]]; then PERSONA="$ROOT/$PERSONA"; fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 
-PERSONA_PATH="$PERSONA" LINK_VALUE="$LINK" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+LINK_CLEAN="$(printf "%s" "$LINK" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+[[ -n "$LINK_CLEAN" ]] || fail "empty link"
 
-p = Path(os.environ["PERSONA_PATH"])
-link = os.environ["LINK_VALUE"].strip()
+TMP_OUT="$(mktemp)"
+awk -v link="$LINK_CLEAN" '
+  BEGIN { in_ev=0; }
+  $0 == "## Evidence and links" { in_ev=1; print; next }
+  in_ev && $0 ~ /^## / { in_ev=0 }
+  in_ev && $0 ~ /^-[[:space:]]+/ {
+    x=$0
+    sub(/^-+[[:space:]]+/, "", x)
+    gsub(/[[:space:]]+$/, "", x)
+    if (x == link) next
+  }
+  { print }
+' "$PERSONA" > "$TMP_OUT"
 
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-evidence_start = find_line_exact("## Evidence and links")
-if evidence_start is None:
-  print(f"FAIL: {p.name}: missing '## Evidence and links'", file=sys.stderr)
-  sys.exit(1)
-
-evidence_end = len(lines)
-for i in range(evidence_start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    evidence_end = i
-    break
-
-block = lines[evidence_start:evidence_end]
-
-removed = 0
-for i, ln in enumerate(block):
-  if re.match(r"^\-\s+" + re.escape(link) + r"\s*$", ln.rstrip("\n")):
-    block[i] = ""
-    removed += 1
-
-block = [ln for ln in block if ln != ""]
-lines[evidence_start:evidence_end] = block
-p.write_text("".join(lines), encoding="utf-8")
-
-if removed == 0:
-  print(f"WARN: not found (no-op): {link}", file=sys.stderr)
-else:
-  print(f"Removed link: {link} ({removed} occurrence(s)) -> {p}")
-PY
+mv "$TMP_OUT" "$PERSONA"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
 echo "OK: validated $PERSONA"

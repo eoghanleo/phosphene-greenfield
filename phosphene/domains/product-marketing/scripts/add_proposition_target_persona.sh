@@ -43,99 +43,53 @@ if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
 TMP_OUT="$(mktemp)"
-set +e
-PROP_PATH="$PROP" OUT_PATH="$TMP_OUT" ITEM="$PER" HEADING="## Target Persona(s)" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+if ! awk -v per="$PER" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN { in_header=1; dep_done=0; in_tp=0; tp_found=0; has_item=0; }
+  {
+    if (in_header && $0 ~ /^Dependencies:/ && dep_done==0) {
+      dep_done=1
+      raw=$0
+      sub(/^Dependencies:[[:space:]]*/, "", raw)
+      n=split(raw, a, ",")
+      m=0; found=0
+      for (i=1; i<=n; i++) {
+        x=trim(a[i])
+        if (x!="") { m++; list[m]=x; if (x==per) found=1 }
+      }
+      if (!found) { m++; list[m]=per }
+      out=""
+      for (i=1; i<=m; i++) { if (i>1) out=out", "; out=out list[i] }
+      print "Dependencies: " out
+      next
+    }
+    if (in_header && $0 == "") { in_header=0 }
 
-p = Path(os.environ["PROP_PATH"])
-out_path = Path(os.environ["OUT_PATH"])
-item = os.environ["ITEM"].strip()
-heading = os.environ["HEADING"]
-
-txt = p.read_text(encoding="utf-8")
-lines = txt.splitlines(True)
-
-def update_dependencies(item_id: str):
-  # Update first Dependencies: line in the header region.
-  for i, ln in enumerate(lines[:60]):
-    if ln.startswith("Dependencies:"):
-      raw = ln.split(":", 1)[1]
-      parts = [x.strip() for x in raw.split(",") if x.strip()]
-      if item_id not in parts:
-        parts.append(item_id)
-      new = ", ".join(parts)
-      lines[i] = f"Dependencies: {new}\n"
-      return
-  print(f"FAIL: {p.name}: missing 'Dependencies:' header", file=sys.stderr)
-  sys.exit(1)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact(heading)
-if start is None:
-  print(f"FAIL: {p.name}: missing '{heading}'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-block = lines[start:end]
-
-items = []
-for ln in block:
-  m = re.match(r"^\-\s+(PER-\d{4})\s*$", ln.rstrip("\n"))
-  if m:
-    items.append(m.group(1))
-
-items = [x for x in items if x != "<...>"]
-items.append(item)
-items = sorted(set(items))
-
-# Remove all existing PER bullet lines
-new_block = []
-for ln in block:
-  if re.match(r"^\-\s+PER-\d{4}\s*$", ln.rstrip("\n")):
-    continue
-  new_block.append(ln)
-
-# Insert after optional fenced block if present
-insert_at = len(new_block)
-for i, ln in enumerate(new_block):
-  if ln.strip() == "```":
-    # last fence end
-    insert_at = i + 1
-  if i > 0 and new_block[i-1].strip() == "```" and ln.strip() == "":
-    insert_at = i + 1
-
-while insert_at < len(new_block) and new_block[insert_at].strip() == "":
-  insert_at += 1
-
-bullet_lines = [f"- {x}\n" for x in items] + ["\n"]
-new_block[insert_at:insert_at] = bullet_lines
-
-lines[start:end] = new_block
-update_dependencies(item)
-out_path.write_text("".join(lines), encoding="utf-8")
-print(f"Added target persona {item} -> {out_path}")
-PY
-
-py_rc=$?
-if [[ $py_rc -ne 0 ]]; then
-  rm -f "$TMP_OUT"
-  exit $py_rc
+    if ($0 == "## Target Persona(s)") { in_tp=1; tp_found=1; has_item=0; print; next }
+    if (in_tp && $0 ~ /^## /) {
+      if (!has_item) { print "- " per; print "" }
+      in_tp=0
+      print
+      next
+    }
+    if (in_tp && $0 ~ ("^-+[[:space:]]+" per "[[:space:]]*$")) has_item=1
+    print
+  }
+  END {
+    if (!dep_done) exit 2
+    if (!tp_found) exit 3
+    if (in_tp && !has_item) { print "- " per; print "" }
+  }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing 'Dependencies:' header"
+  [[ $rc -eq 3 ]] && fail "$(basename "$PROP"): missing '## Target Persona(s)'"
+  exit $rc
 fi
 
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null
-val_rc=$?
-if [[ $val_rc -ne 0 ]]; then
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null; then
+  val_rc=$?
   rm -f "$TMP_OUT"
   exit $val_rc
 fi

@@ -43,67 +43,49 @@ if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
 TMP_OUT="$(mktemp)"
-set +e
-PROP_PATH="$PROP" OUT_PATH="$TMP_OUT" ITEM="$PER" HEADING="## Target Persona(s)" python3 - <<'PY'
-import os, re
-from pathlib import Path
+if ! awk -v per="$PER" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN { in_header=1; dep_done=0; in_tp=0; tp_found=0; }
+  {
+    if (in_header && $0 ~ /^Dependencies:/ && dep_done==0) {
+      dep_done=1
+      raw=$0
+      sub(/^Dependencies:[[:space:]]*/, "", raw)
+      n=split(raw, a, ",")
+      out=""
+      first=1
+      for (i=1; i<=n; i++) {
+        x=trim(a[i])
+        if (x=="" || x==per) continue
+        if (!first) out=out", "
+        out=out x
+        first=0
+      }
+      print "Dependencies: " out
+      next
+    }
+    if (in_header && $0 == "") { in_header=0 }
 
-p = Path(os.environ["PROP_PATH"])
-out_path = Path(os.environ["OUT_PATH"])
-item = os.environ["ITEM"].strip()
-heading = os.environ["HEADING"]
+    if ($0 == "## Target Persona(s)") { in_tp=1; tp_found=1; print; next }
+    if (in_tp && $0 ~ /^## /) { in_tp=0; print; next }
+    if (in_tp && $0 ~ ("^-+[[:space:]]+" per "[[:space:]]*$")) next
 
-txt = p.read_text(encoding="utf-8")
-lines = txt.splitlines(True)
-
-def remove_from_dependencies(item_id: str):
-  for i, ln in enumerate(lines[:60]):
-    if ln.startswith("Dependencies:"):
-      raw = ln.split(":", 1)[1]
-      parts = [x.strip() for x in raw.split(",") if x.strip()]
-      parts = [x for x in parts if x != item_id]
-      new = ", ".join(parts)
-      lines[i] = f"Dependencies: {new}\n"
-      return
-  # If missing Dependencies:, leave (validator will catch).
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact(heading)
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-block = lines[start:end]
-new_block = []
-removed = 0
-for ln in block:
-  if re.match(r"^\-\s+" + re.escape(item) + r"\s*$", ln.rstrip("\n")):
-    removed += 1
-    continue
-  new_block.append(ln)
-
-lines[start:end] = new_block
-remove_from_dependencies(item)
-out_path.write_text("".join(lines), encoding="utf-8")
-print(f"Removed target persona {item} ({removed} occurrence(s)) -> {out_path}")
-PY
-
-py_rc=$?
-if [[ $py_rc -ne 0 ]]; then
-  rm -f "$TMP_OUT"
-  exit $py_rc
+    print
+  }
+  END {
+    if (!dep_done) exit 2
+    if (!tp_found) exit 3
+  }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing 'Dependencies:' header"
+  [[ $rc -eq 3 ]] && fail "$(basename "$PROP"): missing '## Target Persona(s)'"
+  exit $rc
 fi
 
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null
-val_rc=$?
-if [[ $val_rc -ne 0 ]]; then
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" --strict "$TMP_OUT" >/dev/null; then
+  val_rc=$?
   rm -f "$TMP_OUT"
   exit $val_rc
 fi

@@ -29,5 +29,4 @@ Rubrics:
 
 | EvidenceID | Type | CandidatePersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| E-XXXX | Quote | CPE-XXXX | SEG-XXXX | P-XXXX | "<...>" | <link> | E1 | C1 |
 

@@ -70,87 +70,90 @@ if [[ "$PERSONA" != /* ]]; then
 fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 
-PERSONA_PATH="$PERSONA" JTBD_TYPE="$TYPE" JTBD_TEXT="$TEXT" JTBD_IMPORTANCE="$IMPORTANCE" python3 - <<'PY'
-import os
-import re
-import sys
-from pathlib import Path
+persona_id="$(grep -E '^ID:[[:space:]]*PER-[0-9]{4}[[:space:]]*$' "$PERSONA" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${persona_id:-}" ]] || fail "$(basename "$PERSONA"): missing/invalid 'ID: PER-####'"
 
-persona_path = Path(os.environ["PERSONA_PATH"])
-jtbd_type = os.environ["JTBD_TYPE"]
-text = os.environ["JTBD_TEXT"]
-importance = os.environ["JTBD_IMPORTANCE"]
+case "$TYPE" in
+  JOB) section="## Jobs" ;;
+  PAIN) section="## Pains" ;;
+  GAIN) section="## Gains" ;;
+  *) fail "internal error: unsupported JTBD type: $TYPE" ;;
+esac
 
-content = persona_path.read_text(encoding="utf-8")
-lines = content.splitlines(True)  # keep newlines
+max_num="$(
+  grep -oE "JTBD-${TYPE}-[0-9]{4}-${persona_id}" "$PERSONA" 2>/dev/null \
+    | sed -E "s/^JTBD-${TYPE}-//; s/-${persona_id}\$//" \
+    | sort -n \
+    | tail -n 1 \
+    || true
+)"
+if [[ -z "${max_num:-}" ]]; then
+  next_num=1
+else
+  next_num=$((10#${max_num} + 1))
+fi
+next_id="JTBD-${TYPE}-$(printf "%04d" "$next_num")-${persona_id}"
 
-# Parse persona ID from header
-m = re.search(r"^ID:\s*(PER-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {persona_path.name}: missing/invalid 'ID: PER-####'", file=sys.stderr)
-  sys.exit(1)
-persona_id = m.group(1)
+TMP_OUT="$(mktemp)"
+if ! awk -v section="$section" -v row="| ${next_id} | ${TEXT} | ${IMPORTANCE} |" -v type="$TYPE" '
+  function flush_buf(   i, insert_at, pref) {
+    pref = "^\\|[[:space:]]*JTBD-" type "-"
+    insert_at = -1
+    for (i = n; i >= 1; i--) {
+      if (buf[i] ~ pref) { insert_at = i + 1; break }
+    }
+    if (insert_at == -1) {
+      for (i = 1; i <= n; i++) {
+        if (buf[i] ~ /^\\|[[:space:]]*---/) { insert_at = i + 1; break }
+      }
+    }
+    if (insert_at == -1) {
+      print "FAIL: could not find a markdown table to insert into under '"'"'" section "'"'"'" > "/dev/stderr"
+      exit 1
+    }
+    for (i = 1; i <= n + 1; i++) {
+      if (i == insert_at) print row
+      if (i <= n) print buf[i]
+    }
+  }
 
-section_map = {
-  "JOB": "## Jobs",
-  "PAIN": "## Pains",
-  "GAIN": "## Gains",
-}
-section_header = section_map[jtbd_type]
+  BEGIN { in_section=0; found=0; n=0; }
+  {
+    if ($0 == section) {
+      found=1
+      in_section=1
+      n=0
+      print
+      next
+    }
+    if (in_section) {
+      if ($0 ~ /^## /) {
+        flush_buf()
+        in_section=0
+        print
+        next
+      }
+      n++
+      buf[n]=$0
+      next
+    }
+    print
+  }
+  END {
+    if (!found) exit 2
+    if (in_section) flush_buf()
+  }
+' "$PERSONA" > "$TMP_OUT"; then
+  rm -f "$TMP_OUT" || true
+  fail "$(basename "$PERSONA"): failed to insert JTBD row"
+fi
 
-# Determine next local counter for this TYPE within this persona
-pat = re.compile(rf"JTBD-{jtbd_type}-(\d{{4}})-{re.escape(persona_id)}")
-nums = [int(mm.group(1)) for mm in pat.finditer(content)]
-next_num = (max(nums) + 1) if nums else 1
-next_id = f"JTBD-{jtbd_type}-{next_num:04d}-{persona_id}"
-row = f"| {next_id} | {text} | {importance} |\n"
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-# Find section block [start, end)
-start = None
-for i, ln in enumerate(lines):
-  if ln.rstrip("\n") == section_header:
-    start = i
-    break
-if start is None:
-  print(f"FAIL: {persona_path.name}: missing section '{section_header}'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-block = lines[start:end]
-
-# Find insertion point inside the table
-insert_at = None
-
-# Prefer after the last JTBD row in the block
-row_prefix = f"| JTBD-{jtbd_type}-"
-for j in range(len(block) - 1, -1, -1):
-  if block[j].lstrip().startswith(row_prefix):
-    insert_at = start + j + 1
-    break
-
-# Otherwise, insert after the markdown table separator line
-if insert_at is None:
-  for j, ln in enumerate(block):
-    if re.match(r"^\|\s*---", ln):
-      insert_at = start + j + 1
-      break
-
-if insert_at is None:
-  print(f"FAIL: {persona_path.name}: could not find a markdown table to insert into under '{section_header}'", file=sys.stderr)
-  sys.exit(1)
-
-lines.insert(insert_at, row)
-persona_path.write_text("".join(lines), encoding="utf-8")
-
-print(f"Added: {next_id} -> {persona_path}")
-PY
-
-# Re-validate after insertion (best-effort; keep deterministic)
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
+mv "$TMP_OUT" "$PERSONA"
 echo "OK: validated $PERSONA"
 

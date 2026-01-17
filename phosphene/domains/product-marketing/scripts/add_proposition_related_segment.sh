@@ -42,70 +42,37 @@ done
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" ITEM="$SEG" HEADING="## Related Segment(s)" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+TMP_OUT="$(mktemp)"
+if ! awk -v seg="$SEG" '
+  BEGIN { in_sec=0; found=0; has_item=0; }
+  {
+    if ($0 == "## Related Segment(s)") { in_sec=1; found=1; has_item=0; print; next }
+    if (in_sec && $0 ~ /^## /) {
+      if (!has_item) { print "- " seg; print "" }
+      in_sec=0
+      print
+      next
+    }
+    if (in_sec && $0 ~ ("^-+[[:space:]]+" seg "[[:space:]]*$")) has_item=1
+    print
+  }
+  END {
+    if (!found) exit 2
+    if (in_sec && !has_item) { print "- " seg; print "" }
+  }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Related Segment(s)'"
+  exit $rc
+fi
 
-p = Path(os.environ["PROP_PATH"])
-item = os.environ["ITEM"].strip()
-heading = os.environ["HEADING"]
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-txt = p.read_text(encoding="utf-8")
-lines = txt.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact(heading)
-if start is None:
-  print(f"FAIL: {p.name}: missing '{heading}'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-block = lines[start:end]
-
-items = []
-for ln in block:
-  m = re.match(r"^\-\s+(SEG-\d{4})\s*$", ln.rstrip("\n"))
-  if m:
-    items.append(m.group(1))
-
-items = [x for x in items if x != "<...>"]
-items.append(item)
-items = sorted(set(items))
-
-new_block = []
-for ln in block:
-  if re.match(r"^\-\s+SEG-\d{4}\s*$", ln.rstrip("\n")):
-    continue
-  new_block.append(ln)
-
-insert_at = len(new_block)
-for i, ln in enumerate(new_block):
-  if ln.strip() == "```":
-    insert_at = i + 1
-  if i > 0 and new_block[i-1].strip() == "```" and ln.strip() == "":
-    insert_at = i + 1
-
-while insert_at < len(new_block) and new_block[insert_at].strip() == "":
-  insert_at += 1
-
-bullet_lines = [f"- {x}\n" for x in items] + ["\n"]
-new_block[insert_at:insert_at] = bullet_lines
-
-lines[start:end] = new_block
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added related segment {item} -> {p}")
-PY
-
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
+mv "$TMP_OUT" "$PROP"
 echo "OK: validated $PROP"
 

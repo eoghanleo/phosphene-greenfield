@@ -43,96 +43,45 @@ if [[ "$NOTES_FILE" != /* ]]; then NOTES_FILE="$ROOT/$NOTES_FILE"; fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 [[ -f "$NOTES_FILE" ]] || fail "Not a file: $NOTES_FILE"
 
-CONTENT="$(cat "$NOTES_FILE")"
-
-TMP_OUT="$(mktemp)"
-set +e
-PERSONA_PATH="$PERSONA" OUT_PATH="$TMP_OUT" NEW_NOTES="$CONTENT" python3 - <<'PY'
-import os, sys
-from pathlib import Path
-
-p = Path(os.environ["PERSONA_PATH"])
-out_path = Path(os.environ["OUT_PATH"])
-new_notes = os.environ["NEW_NOTES"].rstrip("\n") + "\n"
-
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-def extract_vscript_block(start: int, end: int):
-  i = start + 1
-  while i < end and lines[i].strip() == "":
-    i += 1
-  if i < end and lines[i].startswith("```"):
-    j = i
-    block = [lines[j]]
-    j += 1
-    while j < end:
-      block.append(lines[j])
-      if lines[j].startswith("```"):
-        j += 1
-        break
-      j += 1
-    if any("[V-SCRIPT]:" in ln for ln in block):
-      return block
-  return None
-
-def assert_balanced_fences(s: str, label: str):
-  n = sum(1 for ln in s.splitlines() if ln.startswith("```"))
-  if n % 2 != 0:
-    print(f"FAIL: {p.name}: {label} contains an unbalanced ``` fence count", file=sys.stderr)
-    sys.exit(1)
-
-start = find_line_exact("## Notes")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Notes'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-vscript = extract_vscript_block(start, end)
-if vscript is None:
-  vscript = [
-    "```text\n",
-    "[V-SCRIPT]:\n",
-    "add_persona_note.sh\n",
-    "overwrite_persona_notes.sh\n",
-    "```\n",
-  ]
-
-assert_balanced_fences(new_notes, "notes content")
-
-out = []
-out.extend(lines[: start + 1])
-out.append("\n")
-out.extend(vscript)
-out.append("\n")
-out.append(new_notes if new_notes.strip() else "\n")
-out.append("\n")
-out.extend(lines[end:])
-
-out_path.write_text("".join(out), encoding="utf-8")
-print(f"Overwrote notes -> {out_path}")
-PY
-
-py_rc=$?
-if [[ $py_rc -ne 0 ]]; then
-  rm -f "$TMP_OUT"
-  exit $py_rc
+# Balanced fence check (bash-only).
+fences="$(grep -c '^```' "$NOTES_FILE" || true)"
+if [[ $((fences % 2)) -ne 0 ]]; then
+  fail "Notes content contains an unbalanced code fence count"
 fi
 
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" --strict "$TMP_OUT" >/dev/null
-val_rc=$?
-if [[ $val_rc -ne 0 ]]; then
+TMP_OUT="$(mktemp)"
+awk -v notes_file="$NOTES_FILE" '
+  function print_file(path,   line) {
+    while ((getline line < path) > 0) print line;
+    close(path)
+  }
+  BEGIN { replacing=0; found=0; }
+  {
+    if ($0 == "## Notes") {
+      found=1
+      print $0
+      print ""
+      print "```text"
+      print "[V-SCRIPT]:"
+      print "add_persona_note.sh"
+      print "overwrite_persona_notes.sh"
+      print "```"
+      print ""
+      print_file(notes_file)
+      print ""
+      replacing=1
+      next
+    }
+    if (replacing) {
+      if ($0 ~ /^## /) { replacing=0 } else { next }
+    }
+    print
+  }
+  END { if (!found) exit 1; }
+' "$PERSONA" > "$TMP_OUT" || { rm -f "$TMP_OUT" || true; fail "$(basename "$PERSONA"): missing '## Notes'"; }
+
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" --strict "$TMP_OUT" >/dev/null; then
+  val_rc=$?
   rm -f "$TMP_OUT"
   exit $val_rc
 fi

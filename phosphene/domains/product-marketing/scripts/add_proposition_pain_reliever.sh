@@ -44,73 +44,85 @@ if [[ "$RELIEVER" == *"|"* ]]; then fail "--reliever must not contain '|'"; fi
 if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 [[ -f "$PROP" ]] || fail "Not a file: $PROP"
 
-PROP_PATH="$PROP" RELIEVER_TEXT="$RELIEVER" MAPPED_INPUT="$MAPPED" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$PROP" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${prop_id:-}" ]] || fail "$(basename "$PROP"): missing/invalid 'ID: PROP-####'"
 
-p = Path(os.environ["PROP_PATH"])
-reliever = os.environ["RELIEVER_TEXT"].strip()
-mapped_in = os.environ.get("MAPPED_INPUT", "").strip()
+# Normalize mapped pains list (optional).
+mapped_norm=""
+if [[ -n "${MAPPED:-}" && "${MAPPED}" != "<...>" ]]; then
+  tmp_list="$(mktemp)"
+  IFS=',' read -ra PARTS <<< "$MAPPED"
+  for part in "${PARTS[@]:-}"; do
+    x="$(printf "%s" "$part" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+    [[ -z "$x" ]] && continue
+    [[ "$x" =~ ^JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}$ ]] || { rm -f "$tmp_list" || true; fail "invalid mapped pain id: $x"; }
+    printf "%s\n" "$x" >> "$tmp_list"
+  done
+  mapped_norm="$(sort -u "$tmp_list" | awk 'BEGIN{first=1}{ if(!first) printf ", "; printf $0; first=0 } END{ if(!first) print "" }')"
+  rm -f "$tmp_list" || true
+fi
 
-content = p.read_text(encoding="utf-8")
-m = re.search(r"^ID:\s*(PROP-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PROP-####'", file=sys.stderr)
-  sys.exit(1)
-prop_id = m.group(1)
+max_num="$(
+  grep -oE "REL-[0-9]{4}-${prop_id}" "$PROP" 2>/dev/null \
+    | sed -E "s/^REL-//; s/-${prop_id}\$//" \
+    | sort -n \
+    | tail -n 1 \
+    || true
+)"
+if [[ -z "${max_num:-}" ]]; then
+  next_num=1
+else
+  next_num=$((10#${max_num} + 1))
+fi
+rid="REL-$(printf "%04d" "$next_num")-${prop_id}"
 
-def normalize_jtbd_list(s: str):
-  if not s or s == "<...>":
-    return ""
-  parts = [x.strip() for x in s.split(",") if x.strip()]
-  for x in parts:
-    if not re.fullmatch(r"JTBD-PAIN-\d{4}-PER-\d{4}", x):
-      print(f"FAIL: invalid mapped pain id: {x}", file=sys.stderr); sys.exit(1)
-  return ", ".join(sorted(set(parts)))
+TMP_OUT="$(mktemp)"
+row="| ${rid} | ${RELIEVER} | ${mapped_norm} |"
 
-mapped = normalize_jtbd_list(mapped_in)
+if ! awk -v section="## Pain Relievers" -v row="$row" '
+  function flush_buf(   i, insert_at) {
+    insert_at = -1
+    for (i = n; i >= 1; i--) {
+      if (buf[i] ~ /^\\|[[:space:]]*REL-[0-9]{4}-/) { insert_at = i + 1; break }
+    }
+    if (insert_at == -1) {
+      for (i = 1; i <= n; i++) {
+        if (buf[i] ~ /^\\|[[:space:]]*---/) { insert_at = i + 1; break }
+      }
+    }
+    if (insert_at == -1) {
+      print "FAIL: could not find relievers table to insert into" > "/dev/stderr"
+      exit 1
+    }
+    for (i = 1; i <= n + 1; i++) {
+      if (i == insert_at) print row
+      if (i <= n) print buf[i]
+    }
+  }
+  BEGIN { in_section=0; found=0; n=0; }
+  {
+    if ($0 == section) { found=1; in_section=1; n=0; print; next }
+    if (in_section) {
+      if ($0 ~ /^## /) { flush_buf(); in_section=0; print; next }
+      n++; buf[n]=$0; next
+    }
+    print
+  }
+  END { if (!found) exit 2; if (in_section) flush_buf() }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Pain Relievers'"
+  exit $rc
+fi
 
-nums = [int(mm.group(1)) for mm in re.finditer(rf"REL-(\d{{4}})-{re.escape(prop_id)}", content)]
-next_num = (max(nums) + 1) if nums else 1
-rid = f"REL-{next_num:04d}-{prop_id}"
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-lines = content.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact("## Pain Relievers")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Pain Relievers'", file=sys.stderr)
-  sys.exit(1)
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-insert_at = None
-for i in range(end - 1, start, -1):
-  if re.match(r"^\|\s*REL-\d{4}-PROP-\d{4}\s*\|", lines[i]):
-    insert_at = i + 1
-    break
-if insert_at is None:
-  for i in range(start, end):
-    if re.match(r"^\|\s*---", lines[i]):
-      insert_at = i + 1
-      break
-if insert_at is None:
-  print(f"FAIL: {p.name}: could not find relievers table to insert into", file=sys.stderr)
-  sys.exit(1)
-
-row = f"| {rid} | {reliever} | {mapped if mapped else '<...>'} |\n"
-lines.insert(insert_at, row)
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added pain reliever {rid} -> {p}")
-PY
+mv "$TMP_OUT" "$PROP"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
 echo "OK: validated $PROP"

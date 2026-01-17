@@ -45,11 +45,9 @@ Note:
 
 | SegmentID | Segment name | Rank | In-scope? | Buyer map notes | Top pains (IDs) | Top gains (IDs) |
 |---|---|---:|---|---|---|---|
-| SEG-XXXX | <...> | 1 | Yes | <...> | P-... | G-... |
 
 ## Appendix: Candidate persona index (stable IDs)
 
 | CandidatePersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| CPE-XXXX | <...> | SEG-XXXX | <...> | P-... | G-... | <...> |
 

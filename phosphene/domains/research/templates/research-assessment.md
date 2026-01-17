@@ -123,7 +123,6 @@ Checklist:
 Table:
 | RefSolID | Type (Market/Academic) | Name | 1–2 line summary | What to borrow | What to avoid | Pointer |
 |---|---|---|---|---|---|---|
-| RS-0001 | Market | <...> | <...> | <...> | <...> | <link> |
 
 ### B) Competitive landscape + relative competition — second objective
 
@@ -136,7 +135,6 @@ Checklist:
 Table:
 | Competitor | Category | ICP/segment | Positioning claim | Key strengths | Key weaknesses | “We lose when…” | Pointer |
 |---|---|---|---|---|---|---|---|
-| <...> | <...> | <...> | <...> | <...> | <...> | <...> | <link> |
 
 ### C) Research intent + method (web) + source profile + bias notes
 
@@ -158,7 +156,6 @@ Checklist:
 Table (optional):
 | Timestamp | Query / path | What you were testing | Sources opened |
 |---|---|---|---|
-| YYYY-MM-DD | <...> | <...> | <...> |
 
 ### D) Segmentation prioritization logic (incl. deprioritized segments)
 
@@ -255,23 +252,19 @@ Checklist:
 
 | SegmentID | Segment name | Rank | In-scope? | Buyer map notes | Top pains (IDs) | Top gains (IDs) |
 |---|---|---:|---|---|---|---|
-| SEG-0001 | <...> | 1 | Yes | <...> | P-... | G-... |
 
 ### 2) Candidate persona index (stable IDs)
 
 | CandidatePersonaID | Persona name | SegmentID | Role tags | Rank pains | Rank gains | Objections (top) |
 |---|---|---|---|---|---|---|
-| CPE-0001 | <...> | SEG-0001 | <...> | P-... | G-... | <...> |
 
 ### 3) Glossary + naming table
 
 | Canonical term | Disallowed synonyms | Notes |
 |---|---|---|
-| <term> | <synonyms> | <...> |
 
 ### 4) Quote + incident evidence bank
 
 | EvidenceID | Type | CandidatePersonaID | SegmentID | Tag (job/pain/gain) | Excerpt | Pointer | E-strength | Confidence |
 |---|---|---|---|---|---|---|---|---|
-| E-0001 | Quote | CPE-0001 | SEG-0001 | P-... | "<...>" | <link/path> | E2 | C2 |
 

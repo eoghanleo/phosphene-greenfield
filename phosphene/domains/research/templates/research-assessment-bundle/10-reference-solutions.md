@@ -17,7 +17,6 @@ Checklist:
 
 | RefSolID | Type (Market/Academic) | Name | 1–2 line summary | What to borrow | What to avoid | Pointer |
 |---|---|---|---|---|---|---|
-| RS-XXXX | Market | <...> | <...> | <...> | <...> | <link> |
 
 ## Notes
 

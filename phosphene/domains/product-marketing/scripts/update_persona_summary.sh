@@ -47,100 +47,60 @@ CONTENT=""
 if [[ -n "$SUMMARY_FILE" ]]; then
   if [[ "$SUMMARY_FILE" != /* ]]; then SUMMARY_FILE="$ROOT/$SUMMARY_FILE"; fi
   [[ -f "$SUMMARY_FILE" ]] || fail "Not a file: $SUMMARY_FILE"
-  CONTENT="$(cat "$SUMMARY_FILE")"
+  CONTENT_FILE="$SUMMARY_FILE"
 else
   [[ -n "$SUMMARY" ]] || fail "Provide --summary-file or --summary"
-  CONTENT="$SUMMARY"
+  CONTENT_FILE="$(mktemp)"
+  printf "%s\n" "$SUMMARY" > "$CONTENT_FILE"
 fi
 
 TMP_OUT="$(mktemp)"
-set +e
-PERSONA_PATH="$PERSONA" OUT_PATH="$TMP_OUT" NEW_BLOCK="$CONTENT" python3 - <<'PY'
-import os, sys
-from pathlib import Path
 
-p = Path(os.environ["PERSONA_PATH"])
-out_path = Path(os.environ["OUT_PATH"])
-new_block = os.environ["NEW_BLOCK"].rstrip("\n") + "\n"
-
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-def extract_vscript_block(start: int, end: int):
-  i = start + 1
-  while i < end and lines[i].strip() == "":
-    i += 1
-  if i < end and lines[i].startswith("```"):
-    j = i
-    block = [lines[j]]
-    j += 1
-    # Find the closing fence (must be after the opening fence line).
-    while j < end:
-      block.append(lines[j])
-      if lines[j].startswith("```"):
-        j += 1
-        break
-      j += 1
-    if any("[V-SCRIPT]:" in ln for ln in block):
-      return block
-  return None
-
-def assert_balanced_fences(s: str, label: str):
-  n = sum(1 for ln in s.splitlines() if ln.startswith("```"))
-  if n % 2 != 0:
-    print(f"FAIL: {p.name}: {label} contains an unbalanced ``` fence count", file=sys.stderr)
-    sys.exit(1)
-
-start = find_line_exact("## Snapshot summary")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Snapshot summary'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-vscript = extract_vscript_block(start, end)
-if vscript is None:
-  vscript = [
-    "```text\n",
-    "[V-SCRIPT]:\n",
-    "update_persona_summary.sh\n",
-    "```\n",
-  ]
-
-assert_balanced_fences(new_block, "summary content")
-
-# Replace content after heading with: blank line + vscript + blank line + new block + blank line, preserving next sections.
-out = []
-out.extend(lines[: start + 1])
-out.append("\n")
-out.extend(vscript)
-out.append("\n")
-out.append(new_block if new_block.strip() else "\n")
-out.append("\n")
-out.extend(lines[end:])
-
-out_path.write_text("".join(out), encoding="utf-8")
-print(f"Updated snapshot summary -> {out_path}")
-PY
-py_rc=$?
-if [[ $py_rc -ne 0 ]]; then
-  rm -f "$TMP_OUT"
-  exit $py_rc
+# Validate balanced fences in new content (bash-only).
+fences="$(grep -c '^```' "$CONTENT_FILE" || true)"
+if [[ $((fences % 2)) -ne 0 ]]; then
+  rm -f "$TMP_OUT" || true
+  [[ "${CONTENT_FILE}" == "${SUMMARY_FILE:-}" ]] || rm -f "$CONTENT_FILE" || true
+  fail "Summary content contains an unbalanced code fence count"
 fi
 
-"$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" --strict "$TMP_OUT" >/dev/null
-val_rc=$?
-if [[ $val_rc -ne 0 ]]; then
+awk -v content_file="$CONTENT_FILE" '
+  function print_file(path,   line) {
+    while ((getline line < path) > 0) print line;
+    close(path)
+  }
+  BEGIN { replacing=0; found=0; }
+  {
+    if ($0 == "## Snapshot summary") {
+      found=1
+      print $0
+      print ""
+      print "```text"
+      print "[V-SCRIPT]:"
+      print "update_persona_summary.sh"
+      print "```"
+      print ""
+      print_file(content_file)
+      print ""
+      replacing=1
+      next
+    }
+    if (replacing) {
+      if ($0 ~ /^## /) { replacing=0 } else { next }
+    }
+    print
+  }
+  END { if (!found) exit 1; }
+' "$PERSONA" > "$TMP_OUT" || {
+  rm -f "$TMP_OUT" || true
+  [[ "${CONTENT_FILE}" == "${SUMMARY_FILE:-}" ]] || rm -f "$CONTENT_FILE" || true
+  fail "$(basename "$PERSONA"): missing '## Snapshot summary'"
+}
+
+[[ "${CONTENT_FILE}" == "${SUMMARY_FILE:-}" ]] || rm -f "$CONTENT_FILE" || true
+
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" --strict "$TMP_OUT" >/dev/null; then
+  val_rc=$?
   rm -f "$TMP_OUT"
   exit $val_rc
 fi

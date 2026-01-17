@@ -41,49 +41,40 @@ done
 if [[ "$PERSONA" != /* ]]; then PERSONA="$ROOT/$PERSONA"; fi
 [[ -f "$PERSONA" ]] || fail "Not a file: $PERSONA"
 
-PERSONA_PATH="$PERSONA" NOTE_VALUE="$NOTE" python3 - <<'PY'
-import os, sys
-from datetime import datetime, timezone
-from pathlib import Path
+NOTE_CLEAN="$(printf "%s" "$NOTE" | sed -E 's/[[:space:]]+$//')"
+[[ -n "$NOTE_CLEAN" ]] || fail "empty note"
 
-p = Path(os.environ["PERSONA_PATH"])
-note = os.environ["NOTE_VALUE"].rstrip()
-if not note:
-  print("FAIL: empty note", file=sys.stderr)
-  sys.exit(1)
+ts="$(date -u +%FT%TZ)"
+entry="- ${ts}: ${NOTE_CLEAN}"
 
-ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-entry = f"- {ts}: {note}\n"
+TMP_OUT="$(mktemp)"
+awk -v entry="$entry" '
+  BEGIN { in_notes=0; found=0; inserted=0; last_blank=1; }
+  {
+    if ($0 == "## Notes") { found=1; in_notes=1; print; next }
+    if (in_notes && $0 ~ /^## /) {
+      if (last_blank == 0) print ""
+      print entry
+      inserted=1
+      in_notes=0
+      print
+      next
+    }
+    if (in_notes) {
+      if ($0 == "") last_blank=1; else last_blank=0
+    }
+    print
+  }
+  END {
+    if (found && inserted == 0) {
+      if (last_blank == 0) print ""
+      print entry
+    }
+    if (!found) exit 1
+  }
+' "$PERSONA" > "$TMP_OUT" || { rm -f "$TMP_OUT" || true; fail "$(basename "$PERSONA"): missing '## Notes'"; }
 
-text = p.read_text(encoding="utf-8")
-lines = text.splitlines(True)
-
-def find_line_exact(s):
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == s:
-      return i
-  return None
-
-start = find_line_exact("## Notes")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Notes'", file=sys.stderr)
-  sys.exit(1)
-
-end = len(lines)
-for i in range(start + 1, len(lines)):
-  if lines[i].startswith("## "):
-    end = i
-    break
-
-# Append at the end of Notes block (ensure it ends with a newline)
-if end > 0 and lines[end-1] != "\n":
-  lines.insert(end, "\n")
-  end += 1
-
-lines.insert(end, entry)
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Added note -> {p}")
-PY
+mv "$TMP_OUT" "$PERSONA"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_persona.sh" "$PERSONA" >/dev/null
 echo "OK: validated $PERSONA"

@@ -17,7 +17,6 @@ Checklist:
 
 | Competitor | Category | ICP/segment | Positioning claim | Key strengths | Key weaknesses | “We lose when…” | Pointer |
 |---|---|---|---|---|---|---|---|
-| <...> | <...> | <...> | <...> | <...> | <...> | <...> | <link> |
 
 ## Notes
 

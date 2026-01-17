@@ -48,81 +48,69 @@ if [[ "$PROP" != /* ]]; then PROP="$ROOT/$PROP"; fi
 
 if [[ -n "$RELIEVER" && "$RELIEVER" == *"|"* ]]; then fail "--reliever must not contain '|'"; fi
 
-PROP_PATH="$PROP" RELIEVER_ID="$RID" NEW_TEXT="$RELIEVER" NEW_MAPPED="$MAPPED" python3 - <<'PY'
-import os, re, sys
-from pathlib import Path
+prop_id="$(grep -E '^ID:[[:space:]]*PROP-[0-9]{4}[[:space:]]*$' "$PROP" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"
+[[ -n "${prop_id:-}" ]] || fail "$(basename "$PROP"): missing/invalid 'ID: PROP-####'"
 
-p = Path(os.environ["PROP_PATH"])
-rid = os.environ["RELIEVER_ID"].strip()
-new_text = os.environ.get("NEW_TEXT", "").strip()
-new_mapped_in = os.environ.get("NEW_MAPPED", "").strip()
+[[ "$RID" =~ ^REL-[0-9]{4}-${prop_id}$ ]] || fail "reliever-id must match proposition ID suffix (${prop_id}): ${RID}"
 
-content = p.read_text(encoding="utf-8")
-m = re.search(r"^ID:\s*(PROP-\d{4})\s*$", content, flags=re.M)
-if not m:
-  print(f"FAIL: {p.name}: missing/invalid 'ID: PROP-####'", file=sys.stderr)
-  sys.exit(1)
-prop_id = m.group(1)
+mapped_norm=""
+mapped_set=0
+if [[ -n "${MAPPED:-}" ]]; then
+  mapped_set=1
+  if [[ "${MAPPED}" == "<...>" ]]; then
+    mapped_norm=""
+  else
+    tmp_list="$(mktemp)"
+    IFS=',' read -ra PARTS <<< "$MAPPED"
+    for part in "${PARTS[@]:-}"; do
+      x="$(printf "%s" "$part" | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//')"
+      [[ -z "$x" ]] && continue
+      [[ "$x" =~ ^JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}$ ]] || { rm -f "$tmp_list" || true; fail "invalid mapped pain id: $x"; }
+      printf "%s\n" "$x" >> "$tmp_list"
+    done
+    mapped_norm="$(sort -u "$tmp_list" | awk 'BEGIN{first=1}{ if(!first) printf ", "; printf $0; first=0 } END{ if(!first) print "" }')"
+    rm -f "$tmp_list" || true
+  fi
+fi
 
-if not re.fullmatch(rf"REL-\d{{4}}-{re.escape(prop_id)}", rid):
-  print(f"FAIL: reliever-id must match proposition ID suffix ({prop_id}): {rid}", file=sys.stderr)
-  sys.exit(1)
+TMP_OUT="$(mktemp)"
+if ! awk -v section="## Pain Relievers" -v rid="$RID" -v new_text="$RELIEVER" -v mapped_set="$mapped_set" -v new_mapped="$mapped_norm" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN { in_section=0; found_section=0; updated=0; }
+  {
+    if ($0 == section) { in_section=1; found_section=1; print; next }
+    if (in_section && $0 ~ /^## /) { in_section=0 }
 
-def normalize_jtbd_list(s: str):
-  if not s or s == "<...>":
-    return ""
-  parts = [x.strip() for x in s.split(",") if x.strip()]
-  for x in parts:
-    if not re.fullmatch(r"JTBD-PAIN-\d{4}-PER-\d{4}", x):
-      print(f"FAIL: invalid mapped pain id: {x}", file=sys.stderr)
-      sys.exit(1)
-  return ", ".join(sorted(set(parts)))
+    if (in_section && $0 ~ ("^\\|[[:space:]]*" rid "[[:space:]]*\\|")) {
+      n = split($0, a, "|")
+      id = trim(a[2]); txt = trim(a[3]); mapped = trim(a[4])
+      if (new_text != "") txt = new_text
+      if (mapped_set == 1) mapped = new_mapped
+      print "| " id " | " txt " | " mapped " |"
+      updated=1
+      next
+    }
+    print
+  }
+  END {
+    if (!found_section) exit 2
+    if (!updated) exit 3
+  }
+' "$PROP" > "$TMP_OUT"; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  [[ $rc -eq 2 ]] && fail "$(basename "$PROP"): missing '## Pain Relievers'"
+  [[ $rc -eq 3 ]] && fail "$(basename "$PROP"): RelieverID row not found: $RID"
+  exit $rc
+fi
 
-new_mapped = normalize_jtbd_list(new_mapped_in) if new_mapped_in else None
+if ! "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$TMP_OUT" >/dev/null; then
+  rc=$?
+  rm -f "$TMP_OUT" || true
+  exit $rc
+fi
 
-lines = content.splitlines(True)
-
-def find_section_bounds(h):
-  start = None
-  for i, ln in enumerate(lines):
-    if ln.rstrip("\n") == h:
-      start = i
-      break
-  if start is None:
-    return None, None
-  end = len(lines)
-  for i in range(start + 1, len(lines)):
-    if lines[i].startswith("## "):
-      end = i
-      break
-  return start, end
-
-start, end = find_section_bounds("## Pain Relievers")
-if start is None:
-  print(f"FAIL: {p.name}: missing '## Pain Relievers'", file=sys.stderr)
-  sys.exit(1)
-
-row_re = re.compile(r"^\|\s*" + re.escape(rid) + r"\s*\|")
-for i in range(start, end):
-  ln = lines[i]
-  if row_re.match(ln):
-    parts = [x.strip() for x in ln.strip("\n").split("|")]
-    if len(parts) < 5:
-      print(f"FAIL: malformed table row: {ln.rstrip()}", file=sys.stderr)
-      sys.exit(1)
-    if new_text:
-      parts[2] = new_text
-    if new_mapped is not None:
-      parts[3] = new_mapped if new_mapped else "<...>"
-    lines[i] = f"| {parts[1]} | {parts[2]} | {parts[3]} |\n"
-    break
-else:
-  print(f"FAIL: {p.name}: RelieverID row not found: {rid}", file=sys.stderr)
-  sys.exit(1)
-
-p.write_text("".join(lines), encoding="utf-8")
-print(f"Updated pain reliever {rid} -> {p}")
-PY
+mv "$TMP_OUT" "$PROP"
 
 "$ROOT/phosphene/domains/product-marketing/scripts/validate_proposition.sh" "$PROP" >/dev/null
 echo "OK: validated $PROP"
