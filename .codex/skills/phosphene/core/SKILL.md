@@ -1,6 +1,6 @@
 ---
 name: phosphene-core
-description: PHOSPHENE core harness: PR-gated officialization, repo-as-shared-memory, domains (<domain>), receipts (DONE.json), and signals conventions.
+description: PHOSPHENE core harness: PR-gated officialization, repo-as-shared-memory, domains (<domain>), DONE signals (<WORK_ID>-DONE.json), and signals conventions.
 metadata:
   short-description: PHOSPHENE core harness conventions
 ---
@@ -54,18 +54,19 @@ This repo treats skills as a **required execution contract**, not optional conte
 
 Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
-## Receipts (completion manifests) — `DONE.json` (recommended)
+## DONE signals (completion + registration) — `<WORK_ID>-DONE.json` (required)
 
-`DONE.json` is a completion receipt written by the assigned agent at the end of work as:
+`<WORK_ID>-DONE.json` is a completion signal written by the assigned agent at the end of work as:
 
 - a final checklist / hallucination check
 - a machine-checkable “I believe I’m done” handshake
 - a compact audit manifest (inputs, outputs, checks run)
+- the **registration event** for automation (signal bus)
 
-Important:
+Required:
 
-- `DONE.json` is **not** a signal.
-- Place the receipt at the **domain root**: `phosphene/domains/<domain>/DONE.json` (not inside `docs/**` or other subfolders).
+- Location: `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
+- Naming: `<WORK_ID>` is the parent/top-level artifact ID (e.g. `RA-001`, `VPD-001`, `SPEC-012`).
 
 ## Signals (optional add-ons)
 

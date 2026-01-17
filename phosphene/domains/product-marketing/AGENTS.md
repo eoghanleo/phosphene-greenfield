@@ -40,7 +40,8 @@ Do not do a single pass.
   - expand the persona pool where justified (splits/merges/missing implied personas),
   - generate many overlapping propositions,
   - strengthen mapping density between propositions and JTBD IDs.
-- Only write `DONE.json` (at `phosphene/domains/product-marketing/DONE.json`) after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist).
+- Only write your DONE signal after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist):
+  - `phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json`
 - Use the score tool to force iteration:
   - Treat it as a **validator gate** (not an FYI).
   - The harness prompt provides your minimum threshold as `done_score_min` — use that value.

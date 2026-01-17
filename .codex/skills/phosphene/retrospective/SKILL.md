@@ -30,9 +30,12 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 No domain scripts yet (templates-first):
 - Use `phosphene/domains/retrospective/templates/postmortem.md` and `phosphene/domains/retrospective/templates/playbook.md`.
 
-## Receipts (recommended)
+## DONE signal (required)
 
-Write a **single domain receipt** at `phosphene/domains/retrospective/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the retrospective artifact you produced:
+- `phosphene/domains/retrospective/signals/<PM-###>-DONE.json` or `phosphene/domains/retrospective/signals/<PB-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (PRs/issues/notes)
 - outputs (PM/PB docs)

@@ -62,9 +62,12 @@ If an ID doesn’t resolve, you must either:
 - fix the reference, or
 - create the authoritative upstream artifact first (in its correct domain).
 
-## Receipts (required for PR-ready work)
+## DONE signal (required for PR-ready work)
 
-Write a **single domain receipt** at `phosphene/domains/product-management/DONE.json` (domain root; do not place receipts in subfolders) listing:
+Write a DONE signal named after the SPEC you produced:
+- `phosphene/domains/product-management/signals/<SPEC-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (ROADMAP + persona/proposition + RA pointers)
 - outputs (SPEC doc)

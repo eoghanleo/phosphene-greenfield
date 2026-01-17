@@ -45,9 +45,12 @@ Before finalizing a SPEC for PR, run:
 
 And run `where <ID>` for any ID you cite in the SPEC.
 
-## Receipts (required for PR-ready work)
+## DONE signal (required for PR-ready work)
 
-Write `DONE.json` at `phosphene/domains/product-management/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the SPEC you produced:
+- `phosphene/domains/product-management/signals/<SPEC-###>-DONE.json`
+
+Include (minimum):
 - inputs (RA/ROADMAP/PER/PROP pointers; EvidenceIDs used)
 - outputs (SPEC path)
 - checks run (ID registry validate; any domain validators)

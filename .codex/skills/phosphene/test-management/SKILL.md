@@ -27,11 +27,14 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 ## Scripts (entrypoints and purpose)
 
 No domain scripts yet (templates-first):
-- Use `phosphene/domains/test-management/templates/test-plan.md` and write TP artifacts directly (then add a `DONE.json` receipt if desired).
+- Use `phosphene/domains/test-management/templates/test-plan.md` and write TP artifacts directly (then write a DONE signal when complete).
 
-## Receipts (recommended)
+## DONE signal (required)
 
-Write a **single domain receipt** at `phosphene/domains/test-management/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the TP you produced:
+- `phosphene/domains/test-management/signals/<TP-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (SPEC/FR pointers)
 - outputs (TP doc)

@@ -28,11 +28,14 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 ## Scripts (entrypoints and purpose)
 
 No domain scripts yet (templates-first):
-- Use `phosphene/domains/ideation/templates/idea.md` and write IDEA artifacts directly (then add a `DONE.json` receipt if desired).
+- Use `phosphene/domains/ideation/templates/idea.md` and write IDEA artifacts directly (then write a DONE signal when complete).
 
-## Receipts (recommended)
+## DONE signal (required)
 
-Write a **single domain receipt** at `phosphene/domains/ideation/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the IDEA you produced:
+- `phosphene/domains/ideation/signals/<IDEA-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (prompt/context)
 - outputs (the IDEA file)

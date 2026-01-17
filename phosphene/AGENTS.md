@@ -19,7 +19,7 @@ If you need the deeper model (contracts + workflows), start with:
 - Read the domain skill (mandatory): `.codex/skills/phosphene/<domain>/SKILL.md`
 - Use **control scripts** (don’t hand-edit script-managed artifacts).
 - Run the domain validator(s).
-- Write a **receipt** at `phosphene/domains/<domain>/DONE.json` (domain root; **not** in subdirectories like `docs/**`).
+- Write a **DONE signal** at `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json` (required for “registration”).
 - Open a PR. Nothing is canonical until merged.
 
 ### Repo layout (canonical)
@@ -41,12 +41,16 @@ Refer to domains using angle brackets:
 - `<test-management>` → test plans (TP)
 - `<retrospective>` → postmortems (PM) + playbooks (PB)
 
-### Receipts vs signals (important)
+### DONE signals (completion + registration)
 
-- `DONE.json` is a **receipt** (completion manifest + hallucination check). It is **not** a signal.
-- Receipt location (standard): `phosphene/domains/<domain>/DONE.json` (one per domain run; do not scatter receipts into subfolders).
-- Signals are optional add-ons for routing automation:
-  - `phosphene/domains/<domain>/signals/**`
+PHOSPHENE uses a **DONE signal** as the completion handshake *and* the “register this work” event.
+
+- **Location (required)**: `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
+- **Naming (required)**: `<WORK_ID>` is the **parent/top-level artifact ID** you completed (examples: `RA-001`, `VPD-001`, `SPEC-012`, `FR-012`).
+- **Scope**: keep it small and machine-checkable (JSON with stable fields).
+
+Other signals (optional routing add-ons) also live under:
+- `phosphene/domains/<domain>/signals/**`
 
 ### Identity and uniqueness (central tenet)
 

@@ -29,9 +29,12 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 No domain scripts yet (templates-first):
 - Use `phosphene/domains/scrum-management/templates/issue.md` for ISSUE mirror docs when/if you mirror operational state into the repo.
 
-## Receipts (recommended)
+## DONE signal (required)
 
-Write a **single domain receipt** at `phosphene/domains/scrum-management/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the ISSUE mirror you produced/updated:
+- `phosphene/domains/scrum-management/signals/<ISSUE-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (issue URLs, labels/status)
 - outputs (ISSUE mirror doc)

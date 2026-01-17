@@ -76,9 +76,12 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `add_reference_solution.sh`: Append a new RefSol row (`RS-####`) to `10-reference-solutions.md` (allocates ID).
 - `create_candidate_persona.sh`: Create a new Candidate Persona (`CPE-####`) doc inside an RA bundle (allocates ID).
 
-## Receipts (recommended)
+## DONE signal (required)
 
-When done, write a **single domain receipt** at `phosphene/domains/research/DONE.json` (domain root; not inside bundle folders) enumerating:
+When done, write a DONE signal named after the RA you completed:
+- `phosphene/domains/research/signals/<RA-###>-DONE.json`
+
+Include (minimum) enumerating:
 
 - inputs (idea stub, constraints, etc.)
 - outputs (bundle files)

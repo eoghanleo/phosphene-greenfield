@@ -561,6 +561,12 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "PHOSPHENE — Done Score  <product-marketing>"
   echo "============================================================"
   echo "Result:    ${result}   Overall: ${overall}/100   Threshold: ${MIN_SCORE}"
+  if [[ "$result" == "PASS" ]]; then
+    echo ""
+    echo "Next (registration): write your DONE signal when you’re truly complete:"
+    echo "  - phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json"
+    echo "    (name it after the VPD you’re delivering; include inputs/outputs/checks)"
+  fi
   echo ""
   echo "Inputs:"
   echo "  - research: ${INPUT_RESEARCH_ARTIFACTS} markdown artifacts, ${INPUT_RESEARCH_WORDS} cleaned words"

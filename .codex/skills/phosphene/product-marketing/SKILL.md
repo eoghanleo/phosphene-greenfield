@@ -83,11 +83,11 @@ This domain is only valuable when you **recursively map the value space**.
   - expand propositions (many overlapping),
   - expand mappings (each prop maps to multiple JTBDs for its target personas).
 
-## Coverage targets (minimum gates; report in DONE.json)
+## Coverage targets (minimum gates; report in your DONE signal)
 
 These are **minimum** gates intended to force multi-pass enrichment. If you cannot meet them due to limited upstream evidence, you must:
 - still perform the iterations, and
-- explicitly justify the shortfall in `DONE.json` (what prevented it; what would be needed).
+- explicitly justify the shortfall in your DONE signal (what prevented it; what would be needed).
 
 ### Personas (PER-*) — minimum per persona
 
@@ -143,12 +143,12 @@ You must be able to point to propositions/persona JTBDs that cover each axis bel
 
 ## Definition of done (domain-specific, producing mode)
 
-You must not write `DONE.json` until:
+You must not write your DONE signal until:
 
 - All validators are green (and strict variants if required by the run).
 - The **coverage targets** above are met (or explicitly justified).
 - The domain done-score is **PASS** (threshold comes from the harness prompt via `done_score_min`).
-- Your `DONE.json` includes:
+- Your DONE signal includes:
   - counts per persona: Jobs/Pains/Gains
   - counts per proposition: boosters/relievers/capabilities
   - a checklist note stating how each qualitative axis was addressed (reference PROP IDs)
@@ -267,7 +267,10 @@ For repeatability, prefer using these scripts instead of manual edits:
 
 ## Receipts (recommended)
 
-Write a **single domain receipt** at `phosphene/domains/product-marketing/DONE.json` (domain root; do not place receipts in `docs/**`) listing:
+Write a DONE signal named after the VPD you completed:
+- `phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (pointers to research bundle files / EvidenceIDs)
 - outputs (PER/PROP docs)

@@ -46,9 +46,12 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `update_backlog_tree.sh`: Regenerate `docs/backlog_tree.md` (auto-generated view).
 - `feature_request_dependency_tracker.sh`: Regenerate `docs/fr_dependencies.md` (auto-generated dependency report).
 
-## Receipts (recommended)
+## DONE signal (required)
 
-When completing an FR change, add a **single domain receipt** at `phosphene/domains/feature-management/DONE.json` (domain root; not in subfolders) enumerating:
+When completing an FR change, add a DONE signal named after the FR you updated/approved:
+- `phosphene/domains/feature-management/signals/<FR-###>-DONE.json`
+
+Include (minimum) enumerating:
 
 - inputs (links/constraints)
 - outputs (FR dossier + refreshed reports)

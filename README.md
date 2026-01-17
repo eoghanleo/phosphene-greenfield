@@ -170,20 +170,22 @@ Common expectations:
 - Run validators when available
 - Keep IDs stable and consistent
 
-## Completion receipts: `DONE.json` (recommended, not a signal)
+## Completion signals: `<WORK_ID>-DONE.json` (required)
 
-`DONE.json` is a completion receipt: a compact “I believe I’m done” handshake + audit manifest.
+`<WORK_ID>-DONE.json` is a **completion signal**: a compact “I believe I’m done” handshake + audit manifest **and** the registration event for automation.
 
-Put the receipt at the **domain root**:
-- `phosphene/domains/<domain>/DONE.json`
+Put the DONE signal in the **domain signals folder**:
+- `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
 
-Do **not** put receipts inside `docs/**` or deeper subdirectories.
+`<WORK_ID>` must be the **parent/top-level artifact ID** (e.g. `RA-001`, `VPD-001`, `SPEC-012`), so you get files like:
+- `phosphene/domains/research/signals/RA-001-DONE.json`
 
-Minimal baseline shape:
+Minimal baseline shape (suggested):
 
 ```json
 {
-  "receipt_version": 1,
+  "signal_version": 1,
+  "signal_type": "DONE",
   "work_id": "RA-001",
   "domain": "research",
   "artifact_type": "research-assessment",

@@ -28,11 +28,14 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 ## Scripts (entrypoints and purpose)
 
 No domain scripts yet (templates-first):
-- Use `phosphene/domains/product-strategy/templates/product-roadmap.md` and write ROADMAP artifacts directly (then add a `DONE.json` receipt if desired).
+- Use `phosphene/domains/product-strategy/templates/product-roadmap.md` and write ROADMAP artifacts directly (then write a DONE signal when complete).
 
-## Receipts (recommended)
+## DONE signal (required)
 
-Write a **single domain receipt** at `phosphene/domains/product-strategy/DONE.json` (domain root; not in subfolders) listing:
+Write a DONE signal named after the ROADMAP you produced:
+- `phosphene/domains/product-strategy/signals/<ROADMAP-###>-DONE.json`
+
+Include (minimum) listing:
 
 - inputs (pointers to RA coversheet/pitches; persona/proposition docs)
 - outputs (ROADMAP doc)
