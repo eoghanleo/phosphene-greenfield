@@ -64,16 +64,22 @@ if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
   fail "--min-score must be numeric (0..100)"
 fi
 
-PERSONAS_DIR="$DOCS_ROOT/personas"
-PROPS_DIR="$DOCS_ROOT/propositions"
-[[ -d "$PERSONAS_DIR" ]] || fail "Missing personas dir: $PERSONAS_DIR"
-[[ -d "$PROPS_DIR" ]] || fail "Missing propositions dir: $PROPS_DIR"
+# Collect PER/PROP artifacts anywhere under docs root.
+# Supports both legacy layout (docs/personas + docs/propositions) and VPD bundles
+# (docs/value-proposition-designs/**/10-personas + 20-propositions).
+PERSONA_FILES=()
+PROP_FILES=()
 
-# Collect files (stable ordering, bash 3.2 friendly)
-shopt -s nullglob
-PERSONA_FILES=( "$PERSONAS_DIR"/PER-*.md )
-PROP_FILES=( "$PROPS_DIR"/PROP-*.md )
-shopt -u nullglob
+# Stable ordering, bash 3.2 friendly (no mapfile/readarray).
+while IFS= read -r f; do
+  [[ -n "${f:-}" ]] || continue
+  PERSONA_FILES+=("$f")
+done < <(find "$DOCS_ROOT" -type f -name "PER-*.md" 2>/dev/null | sort)
+
+while IFS= read -r f; do
+  [[ -n "${f:-}" ]] || continue
+  PROP_FILES+=("$f")
+done < <(find "$DOCS_ROOT" -type f -name "PROP-*.md" 2>/dev/null | sort)
 
 N_PER="${#PERSONA_FILES[@]}"
 N_PROP="${#PROP_FILES[@]}"
