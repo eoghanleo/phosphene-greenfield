@@ -193,60 +193,64 @@ clean_markdown_tree_words() {
 }
 
 # PERSONAS: counts + traceability density
-for f in "${PERSONA_FILES[@]:-}"; do
-  per_id="$(awk -F': ' '/^ID: PER-[0-9]{4}$/{print $2; exit}' "$f")"
-  [[ -n "${per_id:-}" ]] || continue
+# NOTE: bash 3.2 + `set -u` treats empty arrays as "unbound" on `${arr[@]}` expansion.
+if [[ "$N_PER" -gt 0 ]]; then
+  for f in "${PERSONA_FILES[@]}"; do
+    per_id="$(awk -F': ' '/^ID: PER-[0-9]{4}$/{print $2; exit}' "$f")"
+    [[ -n "${per_id:-}" ]] || continue
 
-  words="$(wc -w < "$f" | awk '{print $1}')"
-  chars="$(wc -c < "$f" | awk '{print $1}')"
-  sum_words=$((sum_words + words))
-  sum_chars=$((sum_chars + chars))
+    words="$(wc -w < "$f" | awk '{print $1}')"
+    chars="$(wc -c < "$f" | awk '{print $1}')"
+    sum_words=$((sum_words + words))
+    sum_chars=$((sum_chars + chars))
 
-  jobs="$(grep -cE "^[|][[:space:]]*JTBD-JOB-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
-  pains="$(grep -cE "^[|][[:space:]]*JTBD-PAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
-  gains="$(grep -cE "^[|][[:space:]]*JTBD-GAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
+    jobs="$(grep -cE "^[|][[:space:]]*JTBD-JOB-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
+    pains="$(grep -cE "^[|][[:space:]]*JTBD-PAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
+    gains="$(grep -cE "^[|][[:space:]]*JTBD-GAIN-[0-9]{4}-${per_id}[[:space:]]*[|]" "$f" || true)"
 
-  # Corpus: JTBD fragment text (column 3) only
-  # Table shape: | JTBD-ID | Job/Pain/Gain | Importance |
-  awk -F'|' -v per="$per_id" '
-    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-    $0 ~ /^[|][[:space:]]*JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-/ && $0 ~ ("-" per "[[:space:]]*[|]") {
-      txt=trim($3);
-      if (txt!="" && txt!="<...>") print txt;
-    }
-  ' "$f" >> "$CORPUS_TXT"
+    # Corpus: JTBD fragment text (column 3) only
+    # Table shape: | JTBD-ID | Job/Pain/Gain | Importance |
+    awk -F'|' -v per="$per_id" '
+      function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+      $0 ~ /^[|][[:space:]]*JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-/ && $0 ~ ("-" per "[[:space:]]*[|]") {
+        txt=trim($3);
+        if (txt!="" && txt!="<...>") print txt;
+      }
+    ' "$f" >> "$CORPUS_TXT"
 
-  # Corpus: include all agent-composed prose (snapshot summary + notes)
-  append_section_text "$f" "## Snapshot summary" >> "$CORPUS_TXT" || true
-  append_section_text "$f" "## Notes" >> "$CORPUS_TXT" || true
+    # Corpus: include all agent-composed prose (snapshot summary + notes)
+    append_section_text "$f" "## Snapshot summary" >> "$CORPUS_TXT" || true
+    append_section_text "$f" "## Notes" >> "$CORPUS_TXT" || true
 
-  evidence_ids="$(awk '
-    $0=="### EvidenceIDs" {inside=1; next}
-    inside && $0 ~ /^### / {exit}
-    inside && $0 ~ /^## / {exit}
-    inside && $0 ~ /^-[[:space:]]+E-[0-9]{4}[[:space:]]*$/ {c++}
-    END{print c+0}
-  ' "$f")"
-  cpe_ids="$(awk '
-    $0=="### CandidatePersonaIDs" {inside=1; next}
-    inside && $0 ~ /^### / {exit}
-    inside && $0 ~ /^## / {exit}
-    inside && $0 ~ /^-[[:space:]]+CPE-[0-9]{4}[[:space:]]*$/ {c++}
-    END{print c+0}
-  ' "$f")"
-  doc_ids="$(awk '
-    $0=="### DocumentIDs" {inside=1; next}
-    inside && $0 ~ /^### / {exit}
-    inside && $0 ~ /^## / {exit}
-    inside && $0 ~ /^-[[:space:]]+[^[:space:]].*$/ {c++}
-    END{print c+0}
-  ' "$f")"
+    evidence_ids="$(awk '
+      $0=="### EvidenceIDs" {inside=1; next}
+      inside && $0 ~ /^### / {exit}
+      inside && $0 ~ /^## / {exit}
+      inside && $0 ~ /^-[[:space:]]+E-[0-9]{4}[[:space:]]*$/ {c++}
+      END{print c+0}
+    ' "$f")"
+    cpe_ids="$(awk '
+      $0=="### CandidatePersonaIDs" {inside=1; next}
+      inside && $0 ~ /^### / {exit}
+      inside && $0 ~ /^## / {exit}
+      inside && $0 ~ /^-[[:space:]]+CPE-[0-9]{4}[[:space:]]*$/ {c++}
+      END{print c+0}
+    ' "$f")"
+    doc_ids="$(awk '
+      $0=="### DocumentIDs" {inside=1; next}
+      inside && $0 ~ /^### / {exit}
+      inside && $0 ~ /^## / {exit}
+      inside && $0 ~ /^-[[:space:]]+[^[:space:]].*$/ {c++}
+      END{print c+0}
+    ' "$f")"
 
-  printf "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n" "$per_id" "$jobs" "$pains" "$gains" "$evidence_ids" "$cpe_ids" "$doc_ids" "$(basename "$f")" >> "$PERSONAS_TSV"
-done
+    printf "%s\t%d\t%d\t%d\t%d\t%d\t%d\t%s\n" "$per_id" "$jobs" "$pains" "$gains" "$evidence_ids" "$cpe_ids" "$doc_ids" "$(basename "$f")" >> "$PERSONAS_TSV"
+  done
+fi
 
 # PROPS: counts + mapping density + target graph
-for f in "${PROP_FILES[@]:-}"; do
+if [[ "$N_PROP" -gt 0 ]]; then
+for f in "${PROP_FILES[@]}"; do
   prop_id="$(awk -F': ' '/^ID: PROP-[0-9]{4}$/{print $2; exit}' "$f")"
   [[ -n "${prop_id:-}" ]] || continue
 
@@ -333,6 +337,7 @@ for f in "${PROP_FILES[@]:-}"; do
   append_section_text "$f" "## Formal Pitch" >> "$CORPUS_TXT" || true
   append_section_text "$f" "## Notes" >> "$CORPUS_TXT" || true
 done
+fi
 
 EDGES="$(wc -l < "$EDGES_TSV" | awk '{print $1}')"
 
@@ -438,16 +443,33 @@ avg_persona_docs="$(awk -F'\t' '{s+=$7} END{ if (NR<=0) print 0; else printf "%.
 avg_persona_upstream_refs="$(awk -v a="$avg_persona_evidence" -v b="$avg_persona_cpe" -v c="$avg_persona_docs" 'BEGIN{ printf "%.4f\n", (a+b+c) }')"
 
 # Mapping coverage ratios (scale with persona pool size)
-total_gain_ids="$(cat "${PERSONA_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
-total_pain_ids="$(cat "${PERSONA_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
-mapped_gain_ids="$(cat "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
-mapped_pain_ids="$(cat "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' | sort -u | wc -l | awk '{print $1}')"
+if [[ "$N_PER" -gt 0 ]]; then
+  total_gain_ids="$(cat "${PERSONA_FILES[@]}" 2>/dev/null | { grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' || true; } | sort -u | wc -l | awk '{print $1}')"
+  total_pain_ids="$(cat "${PERSONA_FILES[@]}" 2>/dev/null | { grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' || true; } | sort -u | wc -l | awk '{print $1}')"
+else
+  total_gain_ids=0
+  total_pain_ids=0
+fi
+
+if [[ "$N_PROP" -gt 0 ]]; then
+  mapped_gain_ids="$(cat "${PROP_FILES[@]}" 2>/dev/null | { grep -hoE 'JTBD-GAIN-[0-9]{4}-PER-[0-9]{4}' || true; } | sort -u | wc -l | awk '{print $1}')"
+  mapped_pain_ids="$(cat "${PROP_FILES[@]}" 2>/dev/null | { grep -hoE 'JTBD-PAIN-[0-9]{4}-PER-[0-9]{4}' || true; } | sort -u | wc -l | awk '{print $1}')"
+else
+  mapped_gain_ids=0
+  mapped_pain_ids=0
+fi
 mapped_gain_ratio="$(awk -v m="$mapped_gain_ids" -v t="$total_gain_ids" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (m/t) }')"
 mapped_pain_ratio="$(awk -v m="$mapped_pain_ids" -v t="$total_pain_ids" 'BEGIN{ if (t<=0) print 0; else printf "%.4f\n", (m/t) }')"
 
 # Input-linkage ratio: how many distinct research IDs are referenced by product-marketing artifacts,
 # scaled against the number of available research artifacts.
-research_refs_unique="$(cat "${PERSONA_FILES[@]:-}" "${PROP_FILES[@]:-}" 2>/dev/null | grep -hoE '(RA|PITCH|E|SEG|CPE)-[0-9]{3,4}' | sort -u | wc -l | awk '{print $1}')"
+research_refs_unique=0
+refs_files=()
+if [[ "$N_PER" -gt 0 ]]; then refs_files+=( "${PERSONA_FILES[@]}" ); fi
+if [[ "$N_PROP" -gt 0 ]]; then refs_files+=( "${PROP_FILES[@]}" ); fi
+if [[ "${#refs_files[@]}" -gt 0 ]]; then
+  research_refs_unique="$(cat "${refs_files[@]}" 2>/dev/null | { grep -hoE '(RA|PITCH|E|SEG|CPE)-[0-9]{3,4}' || true; } | sort -u | wc -l | awk '{print $1}')"
+fi
 conn_density_persona_input="$(awk -v r="$research_refs_unique" -v n="$INPUT_RESEARCH_ARTIFACTS" 'BEGIN{ if (n<=0) print 0; x=(r/n); if (x>1) x=1; printf "%.4f\n", x }')"
 
 scores="$(awk -v out_words="$corpus_words" \

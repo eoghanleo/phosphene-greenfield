@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ROOT-ONLY TEMP TEST SCRIPT (not part of final build)
+# E2E TEST
 # Chains the full <research> script lifecycle and culminates in validation.
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=/dev/null
+source "$SCRIPT_DIR/../lib/test_helpers.sh"
+
+ROOT="$PHOSPHENE_REPO_ROOT"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 
@@ -15,6 +19,9 @@ cleanup() {
     [[ -e "$p" ]] || continue
     rm -rf "$p" || true
   done
+
+  # Ensure we don't leave the repo-wide index in a state that references deleted test artifacts.
+  phos_id_validate_quiet || true
 }
 trap cleanup EXIT
 

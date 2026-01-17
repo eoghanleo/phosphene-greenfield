@@ -78,16 +78,8 @@ if ! awk -v bucket="$bucket" -v items_file="$TMP_SORTED" '
   BEGIN { in_ev=0; in_bucket=0; found_bucket=0; inserted=0; }
   {
     if ($0 == "## Evidence and links") { in_ev=1; print; next }
-    if (in_ev && $0 ~ /^## /) { in_ev=0; in_bucket=0 }
 
-    if (in_ev && $0 == bucket) {
-      found_bucket=1
-      in_bucket=1
-      inserted=0
-      print
-      next
-    }
-
+    # If we are in the Links bucket, handle bucket termination BEFORE we drop out of the evidence block.
     if (in_bucket) {
       if ($0 ~ /^### / || $0 ~ /^## /) {
         if (!inserted) {
@@ -96,10 +88,21 @@ if ! awk -v bucket="$bucket" -v items_file="$TMP_SORTED" '
           inserted=1
         }
         in_bucket=0
+        if ($0 ~ /^## /) { in_ev=0 }
         print
         next
       }
       if ($0 ~ /^-[[:space:]]+/) next
+      print
+      next
+    }
+
+    if (in_ev && $0 ~ /^## /) { in_ev=0 }
+
+    if (in_ev && $0 == bucket) {
+      found_bucket=1
+      in_bucket=1
+      inserted=0
       print
       next
     }
