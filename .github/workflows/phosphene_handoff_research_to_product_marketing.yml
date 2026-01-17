@@ -123,6 +123,8 @@ jobs:
               const workId = sig.work_id || "UNKNOWN";
               const upstreamTitle = pr.title || "(no title)";
               const upstreamUrl = pr.html_url;
+              const intent = (sig.intent || "proposition-development").trim();
+              const doneScoreMin = (sig.done_score_min != null) ? String(sig.done_score_min) : "80";
 
               const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
               const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
@@ -188,6 +190,8 @@ jobs:
                 .replaceAll("{{UPSTREAM_PR_TITLE}}", upstreamTitle)
                 .replaceAll("{{UPSTREAM_PR_URL}}", upstreamUrl)
                 .replaceAll("{{RESEARCH_WORK_ID}}", workId)
+                .replaceAll("{{INTENT}}", intent)
+                .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
                 .replaceAll("{{SIGNAL_PATH}}", signalPath)
                 .replaceAll("{{POINTERS_BULLETS}}", pointersBullets)
                 .replaceAll("{{NOTES_BLOCK}}", notesBlock.trim() ? notesBlock : "")
