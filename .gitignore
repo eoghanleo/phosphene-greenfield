@@ -9,4 +9,3 @@
 
 # Local-only harness prompts / design notes (avoid contaminating agent test runs)
 /PARAMETER_PROMPT.md
-/PHOSPHENE_STATE_MACHINE_WORKING.md

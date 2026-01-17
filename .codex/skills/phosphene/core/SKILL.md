@@ -77,5 +77,4 @@ Signals are explicit, parseable events used to route automation; they are **addi
 ## What to read first
 
 - Canonical handoff: `phosphene/AGENTS.md`
-- Living design note: `PHOSPHENE_STATE_MACHINE_WORKING.md`
 - Root overview: `README.md`

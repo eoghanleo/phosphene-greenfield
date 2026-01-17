@@ -8,8 +8,9 @@ PHOSPHENE is a lightweight agentic harness built on a simple premise:
 - **The repo is shared memory**
 - **PR merge is the officialization point**
 
-If you need the deeper model (state machine + contracts), read:
-- `PHOSPHENE_STATE_MACHINE_WORKING.md`
+If you need the deeper model (contracts + workflows), start with:
+- Domain docs + templates under: `phosphene/domains/<domain>/{docs,templates}/`
+- The domain skill (if present): `.codex/skills/phosphene/<domain>/SKILL.md`
 
 
 ### How to work (agent checklist)
