@@ -8,6 +8,7 @@ set -euo pipefail
 #   bash tests/run.sh
 #   bash tests/run.sh --e2e
 #   bash tests/run.sh --product-marketing
+#   bash tests/run.sh --coverage
 #
 # Notes:
 # - Tests are allowed to create temporary artifacts under canonical `docs/` trees.
@@ -21,20 +22,39 @@ source "$SCRIPT_DIR/lib/test_helpers.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  bash tests/run.sh [--all|--e2e|--product-marketing]
+  bash tests/run.sh [--all|--e2e|--product-marketing] [--coverage]
 EOF
 }
 
 MODE="all"
+ENABLE_COVERAGE=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --all) MODE="all"; shift ;;
     --e2e) MODE="e2e"; shift ;;
     --product-marketing) MODE="product-marketing"; shift ;;
+    --coverage) ENABLE_COVERAGE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
   esac
 done
+
+if [[ "$ENABLE_COVERAGE" -eq 1 ]]; then
+  COV_ROOT="$SCRIPT_DIR/.coverage"
+  COV_RAW="$COV_ROOT/raw"
+  rm -rf "$COV_ROOT" 2>/dev/null || true
+  mkdir -p "$COV_RAW"
+
+  export PHOS_COVERAGE_ENABLED=1
+  export PHOS_COVERAGE_DIR="$COV_RAW"
+  export PHOS_COVERAGE_OUT="$COV_ROOT"
+
+  # Ensure children shells pick up the DEBUG trap.
+  export BASH_ENV="$SCRIPT_DIR/lib/coverage_env.sh"
+
+  # Ensure subprocesses can resolve repo-relative paths for filtering + reporting.
+  export PHOSPHENE_REPO_ROOT
+fi
 
 roots=()
 case "$MODE" in
@@ -81,6 +101,12 @@ done
 
 # Final sanity: leave the index in a consistent state after all temp artifacts are gone.
 phos_id_validate_quiet || true
+
+if [[ "$ENABLE_COVERAGE" -eq 1 ]]; then
+  echo ""
+  echo "=== COVERAGE ==="
+  bash "$SCRIPT_DIR/lib/coverage_report.sh"
+fi
 
 echo ""
 echo "OK: all tests passed."

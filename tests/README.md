@@ -23,6 +23,12 @@ Run everything:
 bash tests/run.sh
 ```
 
+Run everything with line-hit coverage:
+
+```bash
+bash tests/run.sh --coverage
+```
+
 Run only end-to-end:
 
 ```bash
