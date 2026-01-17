@@ -49,12 +49,12 @@ jobs:
               beryl: {
                 domainTag: "<research>",
                 domainPath: "phosphene/domains/research/",
-                doneReceipt: "phosphene/domains/research/DONE.json",
+                doneSignal: "phosphene/domains/research/signals/<RA-###>-DONE.json",
               },
               cerulean: {
                 domainTag: "<product-marketing>",
                 domainPath: "phosphene/domains/product-marketing/",
-                doneReceipt: "phosphene/domains/product-marketing/DONE.json",
+                doneSignal: "phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json",
               },
             };
 
@@ -71,7 +71,7 @@ jobs:
               "- Read `phosphene/phosphene/AGENTS.md`",
               "- Prefer domain control scripts; avoid hand-editing script-managed artifacts",
               "- Validate as appropriate + `./phosphene/phosphene-core/bin/phosphene id validate`",
-              `- Write receipt: \`${m.doneReceipt}\` (domain root; not under \`docs/**\`)`,
+              `- Write DONE signal: \`${m.doneSignal}\` (required; name it after the parent artifact WORK_ID)`,
               "",
               `**Domain path:** \`${m.domainPath}\``,
               "",

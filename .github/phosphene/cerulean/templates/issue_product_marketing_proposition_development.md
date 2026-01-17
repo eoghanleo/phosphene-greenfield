@@ -29,12 +29,12 @@ Constraints:
 - Read `phosphene/phosphene/AGENTS.md`
 - Prefer PHOSPHENE control scripts under `phosphene/domains/product-marketing/scripts/` when applicable
 - Validate + update IDs as appropriate (`./phosphene/phosphene-core/bin/phosphene id validate`)
-- Write receipt: `phosphene/domains/product-marketing/DONE.json` (domain root; not under `docs/**`)
+- Write DONE signal: `phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json` (required; name it after the VPD WORK_ID)
 
 ## Definition of done
 
 - Outputs committed in a PR linked to this issue
-- Receipt exists (`DONE.json`) and is honest about what was/wasn’t validated
+- DONE signal exists (`<VPD-###>-DONE.json` under `signals/`) and is honest about what was/wasn’t validated
 
 <!-- {{PHOSPHENE_DEDUPE_MARKER}} -->
 
