@@ -21,7 +21,7 @@ Primary domain: `<product-marketing>`
   - Candidate Personas: `CPE-*` docs inside the RA bundle (`60-candidate-personas/`)
   - Segments/persona hypotheses, EvidenceIDs, and the pitch set
 - You may (and should) also link and cite **any other `<research>` artifacts** you consulted (e.g. methods, evidence bank, hypothesis notes, assembled bundles) via `DocumentIDs` / `Links` to drive deeper reading and higher connectivity-to-input.
-- Use templates under `phosphene/domains/product-marketing/templates/value-proposition-design-bundle/`.
+- Creation is script-driven (no runtime templates): use the `create_*` scripts below to emit canonical artifacts.
 - Treat personas/segments as hypotheses unless validated; include confidence and EvidenceIDs when making claims.
 - When creating a canonical Persona (PER-*), treat it as a **promotion** of one or more CPE candidates (cite source CPE IDs).
 - Treat the **domain done-score** as a first-class validator:
@@ -156,7 +156,7 @@ You must not write your DONE signal until:
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
-Persona templates include fenced code blocks that begin with `[V-SCRIPT]:` listing the relevant script entrypoints for that section.
+Persona artifacts include fenced code blocks that begin with `[V-SCRIPT]:` listing the relevant script entrypoints for that section.
 Search for `[V-SCRIPT]` when scanning a persona artifact to discover the right control scripts quickly.
 
 JTBD IDs convention (natural keys):
@@ -185,7 +185,7 @@ All scripts are **control scripts** (script-first; avoid hand-editing). Most scr
 
 ### Personas (PER-*)
 
-- `create_new_persona.sh`: Create a new persona doc from the template; allocates the next `PER-####`.
+- `create_new_persona.sh`: Create a new persona doc (canonical skeleton is hard-coded); allocates the next `PER-####`.
 - `validate_persona.sh`: Validate persona headers/sections/JTBD tables and ID conventions.
 - `update_persona_summary.sh`: Replace the `## Snapshot summary` section.
 - `add_persona_jtbd_item.sh`: Append a new JOB/PAIN/GAIN row with the next `JTBD-<TYPE>-####-<PersonaID>`.
@@ -199,7 +199,7 @@ All scripts are **control scripts** (script-first; avoid hand-editing). Most scr
 
 ### Propositions (PROP-*)
 
-- `create_new_proposition.sh`: Create a new proposition doc from the template; allocates the next `PROP-####`.
+- `create_new_proposition.sh`: Create a new proposition doc (canonical skeleton is hard-coded); allocates the next `PROP-####`.
 - `validate_proposition.sh`: Validate proposition headers/sections/tables and ID conventions.
 - `update_proposition_formal_pitch.sh`: Replace the `## Formal Pitch` section (keeps the `[V-SCRIPT]` block).
 - `add_proposition_target_persona.sh`: Add a `PER-####` bullet under `## Target Persona(s)`.

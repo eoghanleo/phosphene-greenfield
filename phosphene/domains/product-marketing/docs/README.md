@@ -8,7 +8,7 @@ Primary artifacts:
 - `proposition` — what we promise and why it’s compelling.
 
 Canonical locations:
-- Templates: `phosphene/domains/product-marketing/templates/`
+- Creation + updates are script-driven (no runtime templates).
 - Working artifacts (scoped under a VPD bundle):
   - `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-<slug>/00-coversheet.md`
   - `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-<slug>/10-personas/PER-*.md`

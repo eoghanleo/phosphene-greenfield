@@ -9,7 +9,8 @@ PHOSPHENE is a lightweight agentic harness built on a simple premise:
 - **PR merge is the officialization point**
 
 If you need the deeper model (contracts + workflows), start with:
-- Domain docs + templates under: `phosphene/domains/<domain>/{docs,templates}/`
+- Domain docs under: `phosphene/domains/<domain>/docs/`
+- Domain scripts under: `phosphene/domains/<domain>/scripts/` (script-first; creation + mutation)
 - The domain skill (if present): `.codex/skills/phosphene/<domain>/SKILL.md`
 
 
@@ -24,9 +25,10 @@ If you need the deeper model (contracts + workflows), start with:
 
 ### Repo layout (canonical)
 
-- Domains live under: `phosphene/domains/<domain>/{docs,templates,scripts,signals}/`
+- Domains live under: `phosphene/domains/<domain>/{docs,scripts,signals}/`
 - Skills live under: `.codex/skills/phosphene/<domain>/`
-- Templates are authoritative under: `phosphene/domains/<domain>/templates/`
+- Some domains may still include `templates/` as transitional scaffolding.
+- Where control scripts exist, **scripts are the single source of truth** for canonical artifact structure (avoid relying on templates at runtime).
 
 ### Domains (nine-domain execution model)
 
@@ -77,7 +79,7 @@ Build / validate / query:
 
 ### In-doc script hints (`[V-SCRIPT]`)
 
-Some templates/artifacts include fenced code blocks that begin with:
+Some artifacts include fenced code blocks that begin with:
 
 ```text
 [V-SCRIPT]:

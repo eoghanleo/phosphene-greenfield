@@ -69,16 +69,47 @@ if [[ -e "$OUT_FILE" ]]; then
 fi
 
 DATE="$(date +%F)"
-TEMPLATE="$ROOT/phosphene/domains/research/templates/candidate-persona.md"
-[[ -f "$TEMPLATE" ]] || { echo "Error: missing template: $TEMPLATE" >&2; exit 1; }
 
-sed \
-  -e "s/^ID: CPE-XXXX$/ID: ${CPE_ID}/" \
-  -e "s/^Title: Candidate Persona — <name>$/Title: Candidate Persona — ${NAME}/" \
-  -e "s/^Updated: YYYY-MM-DD$/Updated: ${DATE}/" \
-  -e "s/^Dependencies: RA-XXX$/Dependencies: ${RA_ID}/" \
-  -e "s/^\\- SegmentID: SEG-XXXX$/- SegmentID: ${SEGMENT}/" \
-  "$TEMPLATE" > "$OUT_FILE"
+# Templates are intentionally not used (bash-only; script is the single source of truth).
+cat > "$OUT_FILE" <<EOF
+ID: ${CPE_ID}
+Title: Candidate Persona — ${NAME}
+Status: Draft
+Updated: ${DATE}
+Dependencies: ${RA_ID}
+Owner:
+
+## Snapshot
+- SegmentID: ${SEGMENT}
+- Role tags: <economic buyer / champion / end user / implementer / approver / blocker>
+- Role:
+- Context:
+- Primary goals:
+
+## Jobs-to-be-done
+- <JTBD 1>
+
+## Pain points
+- <pain 1>
+
+## Current alternatives
+- <alternative 1>
+
+## Success looks like
+- <success 1>
+
+## Promotion notes (to <product-marketing>)
+- Intended canonical persona: PER-XXXX (allocate on promotion)
+- What must survive the promotion:
+  - <non-negotiable 1>
+
+## Notes / evidence
+- EvidenceIDs: <E-0001, E-0002, ...>
+- Confidence: <C1/C2/C3>
+- Source notes (web-only):
+  - <key excerpt or paraphrase + pointer>
+
+EOF
 
 echo "Created candidate persona: $OUT_FILE"
 echo "Next:"

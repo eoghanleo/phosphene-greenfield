@@ -62,12 +62,12 @@ Use the registry:
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
-Some templates/artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
+Some artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control scripts for that section.
 
 ## Scripts (entrypoints and purpose)
 
-- `create_research_assessment_bundle.sh`: Create a new RA bundle folder from templates; allocates the next `RA-###` if omitted.
+- `create_research_assessment_bundle.sh`: Create a new RA bundle folder (canonical skeleton is hard-coded); allocates the next `RA-###` if omitted.
 - `validate_research_assessment_bundle.sh`: Validate RA bundle structure, headings, cross-references, and required folders.
 - `assemble_research_assessment_bundle.sh`: Generate the assembled `RA-###.md` view from bundle parts (non-authoritative).
 - `research_id_registry.sh`: Build/validate/query the global `id_index.tsv`, and allocate the next IDs (`ra|pitch|evidence|refsol|segment|cpe|persona|proposition`).

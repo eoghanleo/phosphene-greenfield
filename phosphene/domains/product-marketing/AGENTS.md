@@ -87,13 +87,13 @@ Propositions must be **aggregateable** by downstream agents into product visions
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
-Persona/proposition templates may include fenced code blocks that begin with `[V-SCRIPT]:`.
+Persona/proposition artifacts may include fenced code blocks that begin with `[V-SCRIPT]:`.
 Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the relevant script entrypoints.
 
 ## Operating boundary
 
 - Use the `<product-marketing>` tag to indicate scope/boundaries in handoffs.
 - Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
-- Artifacts for this domain live in canonical `docs/`, `templates/`, `scripts/`, and `signals/` areas within the repo.
+- Artifacts for this domain live in canonical `docs/`, `scripts/`, and `signals/` areas within the repo.
 
 
