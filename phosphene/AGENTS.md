@@ -10,7 +10,7 @@ PHOSPHENE is a lightweight agentic harness built on a simple premise:
 
 If you need the deeper model (contracts + workflows), start with:
 - Domain outputs under: `phosphene/domains/<domain>/output/`
-- Domain scripts under: `phosphene/domains/<domain>/scripts/` (script-first; creation + mutation)
+- Domain scripts under: `phosphene/domains/<domain>/tools/` (script-first; creation + mutation)
 - The domain skill (if present): `.codex/skills/phosphene/<domain>/SKILL.md`
 
 
@@ -25,7 +25,7 @@ If you need the deeper model (contracts + workflows), start with:
 
 ### Repo layout (canonical)
 
-- Domains live under: `phosphene/domains/<domain>/{output,scripts,signals}/`
+- Domains live under: `phosphene/domains/<domain>/{output,tools,signals}/`
 - Skills live under: `.codex/skills/phosphene/<domain>/`
 - Some domains may still include `templates/` as transitional scaffolding.
 - Where control scripts exist, **scripts are the single source of truth** for canonical artifact structure (avoid relying on templates at runtime).

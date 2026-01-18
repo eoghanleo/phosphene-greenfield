@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/../lib/test_helpers.sh"
 
 ROOT="$PHOSPHENE_REPO_ROOT"
-PM_SCRIPTS="$ROOT/phosphene/domains/product-marketing/scripts"
+PM_SCRIPTS="$ROOT/phosphene/domains/product-marketing/tools"
 RESEARCH_DOCS="$ROOT/phosphene/domains/research/output"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
