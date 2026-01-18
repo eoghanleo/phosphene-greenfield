@@ -4,7 +4,6 @@ Primary artifacts:
 - `product-roadmap` — sequencing, bets, and outcomes.
 
 Canonical locations:
-- Templates: `phosphene/domains/product-strategy/templates/`
 - Working artifacts: `phosphene/domains/product-strategy/docs/product-roadmaps/`
 
 Handoff (default):

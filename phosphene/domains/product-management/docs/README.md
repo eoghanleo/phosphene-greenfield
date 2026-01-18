@@ -4,7 +4,6 @@ Primary artifacts:
 - `product-spec` — what to build, why, and how we’ll verify it.
 
 Canonical locations:
-- Templates: `phosphene/domains/product-management/templates/`
 - Working artifacts: `phosphene/domains/product-management/docs/product-specs/`
 
 Handoff (default):

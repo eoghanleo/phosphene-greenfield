@@ -17,7 +17,7 @@ Primary domain: `<product-strategy>`
 
 - Start from `<research>` pitch set + competitive constraints + unknowns.
 - Incorporate `<product-marketing>` constraints (ICP, messaging constraints, objections).
-- Use templates under `phosphene/domains/product-strategy/templates/`.
+- Create artifacts directly under `phosphene/domains/product-strategy/docs/product-roadmaps/` (templates are intentionally not used).
 - Keep bets explicit, with assumptions, risks, and “we lose when…” constraints.
 
 ## In-doc script hints (`[V-SCRIPT]`)
@@ -27,8 +27,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/product-strategy/templates/product-roadmap.md` and write ROADMAP artifacts directly (then write a DONE signal when complete).
+No domain scripts yet:
+- Write ROADMAP artifacts directly (then write a DONE signal when complete).
 
 ## DONE signal (required)
 

@@ -17,7 +17,7 @@ Primary domain: `<scrum-management>`
 
 - Treat Issues (GitHub/Linear) as optional UX; keep the automation contract portable (labels + PR events).
 - If mirroring state into repo headers, do so via PR (audit trail).
-- Use templates under `phosphene/domains/scrum-management/templates/`.
+- Create artifacts directly under `phosphene/domains/scrum-management/docs/issues/` (if/when you mirror issues into the repo).
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -26,8 +26,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/scrum-management/templates/issue.md` for ISSUE mirror docs when/if you mirror operational state into the repo.
+No domain scripts yet:
+- Write ISSUE mirror docs directly when/if you mirror operational state into the repo.
 
 ## DONE signal (required)
 

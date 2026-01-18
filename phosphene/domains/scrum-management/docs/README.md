@@ -4,7 +4,6 @@ Primary artifacts:
 - `issue` — operational work item (usually mirrored to GitHub Issues).
 
 Canonical locations:
-- Templates: `phosphene/domains/scrum-management/templates/`
 - Working artifacts (optional local mirror): `phosphene/domains/scrum-management/docs/issues/`
 
 Handoff (default):

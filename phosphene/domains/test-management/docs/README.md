@@ -4,7 +4,6 @@ Primary artifacts:
 - `test-plan` — what to test, how to test it, and coverage expectations.
 
 Canonical locations:
-- Templates: `phosphene/domains/test-management/templates/`
 - Working artifacts: `phosphene/domains/test-management/docs/test-plans/`
 
 Handoff (default):

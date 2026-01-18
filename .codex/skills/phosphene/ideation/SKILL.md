@@ -16,7 +16,7 @@ Primary domain: `<ideation>`
 
 ## How to work
 
-- Use templates under `phosphene/domains/ideation/templates/`.
+- Create artifacts directly under `phosphene/domains/ideation/docs/ideas/` (templates are intentionally not used).
 - Keep the artifact short: problem/opportunity framing, target user hypotheses, and what to research next.
 - Avoid over-committing to product definitions; treat as hypotheses for `<research>`.
 
@@ -27,8 +27,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/ideation/templates/idea.md` and write IDEA artifacts directly (then write a DONE signal when complete).
+No domain scripts yet:
+- Write IDEA artifacts directly (then write a DONE signal when complete).
 
 ## DONE signal (required)
 

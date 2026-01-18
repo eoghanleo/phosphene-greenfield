@@ -16,7 +16,7 @@ Primary domain: `<test-management>`
 ## How to work
 
 - Start from `<product-management>` acceptance criteria and `<feature-management>` FR constraints.
-- Use templates under `phosphene/domains/test-management/templates/`.
+- Create artifacts directly under `phosphene/domains/test-management/docs/test-plans/` (templates are intentionally not used).
 - Keep test scope explicit (unit/integration/e2e) and the “definition of done” checkable.
 
 ## In-doc script hints (`[V-SCRIPT]`)
@@ -26,8 +26,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/test-management/templates/test-plan.md` and write TP artifacts directly (then write a DONE signal when complete).
+No domain scripts yet:
+- Write TP artifacts directly (then write a DONE signal when complete).
 
 ## DONE signal (required)
 

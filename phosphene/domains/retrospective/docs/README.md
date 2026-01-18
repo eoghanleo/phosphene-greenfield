@@ -5,7 +5,6 @@ Primary artifacts:
 - `playbook` — reusable runbooks / checklists / “how we do X”.
 
 Canonical locations:
-- Templates: `phosphene/domains/retrospective/templates/`
 - Working artifacts:
   - `phosphene/domains/retrospective/docs/postmortems/`
   - `phosphene/domains/retrospective/docs/playbooks/`

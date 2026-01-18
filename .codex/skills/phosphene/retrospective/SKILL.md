@@ -17,7 +17,9 @@ Primary domain: `<retrospective>`
 ## How to work
 
 - Start from merged PRs, incident reports, and outcomes.
-- Use templates under `phosphene/domains/retrospective/templates/`.
+- Create artifacts directly under:
+  - `phosphene/domains/retrospective/docs/postmortems/`
+  - `phosphene/domains/retrospective/docs/playbooks/`
 - Keep learnings actionable: what changed, what to keep, what to automate/validate next time.
 
 ## In-doc script hints (`[V-SCRIPT]`)
@@ -27,8 +29,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/retrospective/templates/postmortem.md` and `phosphene/domains/retrospective/templates/playbook.md`.
+No domain scripts yet:
+- Write PM/PB artifacts directly (then write a DONE signal when complete).
 
 ## DONE signal (required)
 

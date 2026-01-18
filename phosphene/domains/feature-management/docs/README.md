@@ -8,7 +8,6 @@ Canonical locations:
 - Auto-generated:
   - `phosphene/domains/feature-management/docs/backlog_tree.md`
   - `phosphene/domains/feature-management/docs/fr_dependencies.md`
-- Templates: `phosphene/domains/feature-management/templates/`
 
 Primary commands:
 - `./phosphene/domains/feature-management/scripts/create_feature_request.sh`

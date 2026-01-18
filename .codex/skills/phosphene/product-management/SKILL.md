@@ -19,7 +19,7 @@ Primary domain: `<product-management>`
   - `<product-strategy>` defines the bet + sequencing constraints.
   - `<product-marketing>` defines persona + proposition constraints (what must be true for the pitch to land).
   - `<research>` defines evidence + unknowns (what is known vs hypothesized).
-- Use templates under `phosphene/domains/product-management/templates/`.
+- Create artifacts directly under `phosphene/domains/product-management/docs/product-specs/` (templates are intentionally not used).
 - Keep acceptance criteria and validation experiments explicit.
 - Keep the output **bash-parseable and reviewable** (stable header block; consistent IDs).
 
@@ -30,8 +30,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet (templates-first):
-- Use `phosphene/domains/product-management/templates/product-spec.md` and write SPEC artifacts directly.
+No domain scripts yet:
+- Write SPEC artifacts directly.
 - Do **not** hand-edit upstream script-managed artifacts (PER/PROP/RA bundles); treat them as inputs.
 
 ## Tightening moves (from observed agent output failures)
