@@ -128,9 +128,9 @@ jobs:
               const domainTag = "<product-marketing>";
               const upstreamDomainTag = "<research>";
               const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
-              const domainToolsPath = "phosphene/domains/product-marketing/tools/";
+              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
               const domainDoneSignalPath = "phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json";
-              const domainDoneScoreCmd = `./phosphene/domains/product-marketing/tools/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
+              const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
 
               const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
               const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
@@ -199,7 +199,7 @@ jobs:
                 .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
                 .replaceAll("{{DOMAIN_TAG}}", domainTag)
                 .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
-                .replaceAll("{{DOMAIN_TOOLS_PATH}}", domainToolsPath)
+                .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
                 .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", domainDoneSignalPath)
                 .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
                 .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)

@@ -35,7 +35,7 @@ Your only allowed upstream inputs are the pointers listed here (do not introduce
    - Skills in `.codex/skills/phosphene/` are your PRIMARY and PRIORITY functions throughout this session.
 3) Script-first only:
    - Do NOT hand-edit script-managed artifacts.
-   - Use control tools under: `{{DOMAIN_TOOLS_PATH}}`
+   - Use control scripts under: `{{DOMAIN_SCRIPTS_PATH}}`
    - Use `[V-SCRIPT]` blocks to discover the correct scripts for each section.
 4) Never “invent the repo”:
    - Only reference IDs that exist.

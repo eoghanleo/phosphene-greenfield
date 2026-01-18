@@ -19,13 +19,13 @@ Operate inside the PHOSPHENE harness using repo-native artifacts as the systemâ€
 ## Repo structure (canonical)
 
 - `phosphene/` is a required drop-in folder at repo root.
-- Domains live under: `phosphene/domains/<domain>/{output,tools,signals}/`
+- Domains live under: `phosphene/domains/<domain>/{output,scripts,signals}/`
 - Some domains may still include `templates/` as transitional scaffolding.
 - Refer to domains using angle brackets: `<research>`, `<feature-management>`, etc.
 
 ## Scripts convention
 
-- Scripts live under: `phosphene/domains/<domain>/tools/`
+- Scripts live under: `phosphene/domains/<domain>/scripts/`
 - Scripts should have **fully spelled-out, self-describing names** (avoid abbreviations).
 
 ## In-doc script hints (`[V-SCRIPT]`)

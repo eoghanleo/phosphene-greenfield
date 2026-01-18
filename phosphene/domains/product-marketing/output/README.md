@@ -17,12 +17,12 @@ Canonical locations:
 Create a new VPD bundle:
 
 ```bash
-./phosphene/domains/product-marketing/tools/create_value_proposition_design_bundle.sh --title "..."
+./phosphene/domains/product-marketing/scripts/create_value_proposition_design_bundle.sh --title "..."
 ```
 
 Validation (recommended):
-- `./phosphene/domains/product-marketing/tools/validate_persona.sh --all`
-- `./phosphene/domains/product-marketing/tools/validate_proposition.sh --all`
+- `./phosphene/domains/product-marketing/scripts/validate_persona.sh --all`
+- `./phosphene/domains/product-marketing/scripts/validate_proposition.sh --all`
 
 Note:
 - Every `PER-*` and `PROP-*` must include a `VPD-###` in its `Dependencies:` header.
@@ -33,7 +33,7 @@ JTBD IDs convention (natural keys):
   - `<PersonaID>` is the persona `PER-####` from the file header
 
 Helper (optional):
-- `./phosphene/domains/product-marketing/tools/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
+- `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
 
 Workflow policy (preferred):
 - For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).
