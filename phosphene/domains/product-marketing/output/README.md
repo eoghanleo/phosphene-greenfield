@@ -10,9 +10,9 @@ Primary artifacts:
 Canonical locations:
 - Creation + updates are script-driven (no runtime templates).
 - Working artifacts (scoped under a VPD bundle):
-  - `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-<slug>/00-coversheet.md`
-  - `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-<slug>/10-personas/PER-*.md`
-  - `phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-###-<slug>/20-propositions/PROP-*.md`
+  - `phosphene/domains/product-marketing/output/value-proposition-designs/VPD-###-<slug>/00-coversheet.md`
+  - `phosphene/domains/product-marketing/output/value-proposition-designs/VPD-###-<slug>/10-personas/PER-*.md`
+  - `phosphene/domains/product-marketing/output/value-proposition-designs/VPD-###-<slug>/20-propositions/PROP-*.md`
 
 Create a new VPD bundle:
 
@@ -33,7 +33,7 @@ JTBD IDs convention (natural keys):
   - `<PersonaID>` is the persona `PER-####` from the file header
 
 Helper (optional):
-- `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
+- `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
 
 Workflow policy (preferred):
 - For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).

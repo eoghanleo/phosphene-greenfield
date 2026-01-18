@@ -4,7 +4,7 @@ Primary artifacts:
 - `idea` — a lightweight, decision-oriented proposal.
 
 Canonical locations:
-- Working artifacts: `phosphene/domains/ideation/docs/ideas/`
+- Working artifacts: `phosphene/domains/ideation/output/ideas/`
 
 Naming convention (recommended):
 - `IDEA-0001-short-title.md`

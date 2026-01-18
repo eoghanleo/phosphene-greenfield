@@ -11,7 +11,7 @@ Primary domain: `<research>`
 
 ## What you produce
 
-- Research Assessments as **bundle folders** under `phosphene/domains/research/docs/research-assessments/RA-###-<slug>/`.
+- Research Assessments as **bundle folders** under `phosphene/domains/research/output/research-assessments/RA-###-<slug>/`.
 
 Bundle files (required):
 - `00-coversheet.md`
@@ -30,7 +30,7 @@ Generated (view only):
 
 ## Global ID uniqueness (hard requirement)
 
-All object IDs must be globally unique across `phosphene/domains/**/docs/**`:
+All object IDs must be globally unique across `phosphene/domains/**/output/**`:
 
 - EvidenceIDs: `E-####`
 - RefSolIDs: `RS-####`

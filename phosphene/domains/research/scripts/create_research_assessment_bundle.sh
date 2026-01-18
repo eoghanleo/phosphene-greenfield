@@ -18,7 +18,7 @@ Usage:
   ./phosphene/domains/research/scripts/create_research_assessment_bundle.sh --title "..." [--id RA-001] [--owner "..."] [--priority Medium]
 
 Creates:
-  phosphene/domains/research/docs/research-assessments/RA-001-<slug>/
+  phosphene/domains/research/output/research-assessments/RA-001-<slug>/
     00-coversheet.md
     10-reference-solutions.md
     20-competitive-landscape.md
@@ -74,7 +74,7 @@ if ! [[ "$ID" =~ ^RA-[0-9]{3}$ ]]; then
   exit 2
 fi
 
-DOCS_DIR="$ROOT/phosphene/domains/research/docs/research-assessments"
+DOCS_DIR="$ROOT/phosphene/domains/research/output/research-assessments"
 
 mkdir -p "$DOCS_DIR"
 

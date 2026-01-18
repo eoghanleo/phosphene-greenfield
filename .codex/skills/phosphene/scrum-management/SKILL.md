@@ -11,13 +11,13 @@ Primary domain: `<scrum-management>`
 
 ## What you produce
 
-- Optional issue mirror docs (scaffold): `phosphene/domains/scrum-management/docs/issues/ISSUE-*.md`
+- Optional issue mirror docs (scaffold): `phosphene/domains/scrum-management/output/issues/ISSUE-*.md`
 
 ## How to work
 
 - Treat Issues (GitHub/Linear) as optional UX; keep the automation contract portable (labels + PR events).
 - If mirroring state into repo headers, do so via PR (audit trail).
-- Create artifacts directly under `phosphene/domains/scrum-management/docs/issues/` (if/when you mirror issues into the repo).
+- Create artifacts directly under `phosphene/domains/scrum-management/output/issues/` (if/when you mirror issues into the repo).
 
 ## In-doc script hints (`[V-SCRIPT]`)
 

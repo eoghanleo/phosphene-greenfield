@@ -11,12 +11,12 @@ Primary domain: `<test-management>`
 
 ## What you produce
 
-- Test plans: `phosphene/domains/test-management/docs/test-plans/TP-*.md`
+- Test plans: `phosphene/domains/test-management/output/test-plans/TP-*.md`
 
 ## How to work
 
 - Start from `<product-management>` acceptance criteria and `<feature-management>` FR constraints.
-- Create artifacts directly under `phosphene/domains/test-management/docs/test-plans/` (templates are intentionally not used).
+- Create artifacts directly under `phosphene/domains/test-management/output/test-plans/` (templates are intentionally not used).
 - Keep test scope explicit (unit/integration/e2e) and the “definition of done” checkable.
 
 ## In-doc script hints (`[V-SCRIPT]`)

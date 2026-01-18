@@ -12,11 +12,11 @@ Primary domain: `<feature-management>`
 ## What you produce
 
 - Feature Requests as bash-parseable Markdown dossiers:
-  - `phosphene/domains/feature-management/docs/frs/FR-###-*.md`
+  - `phosphene/domains/feature-management/output/frs/FR-###-*.md`
 
 Auto-generated (do not edit by hand):
-- `phosphene/domains/feature-management/docs/backlog_tree.md`
-- `phosphene/domains/feature-management/docs/fr_dependencies.md`
+- `phosphene/domains/feature-management/output/backlog_tree.md`
+- `phosphene/domains/feature-management/output/fr_dependencies.md`
 
 ## Script-first workflow (preferred)
 
@@ -43,8 +43,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `validate_feature_request.sh`: Validate FR dossier structure and repo-level FR invariants.
 - `approve_feature_request.sh`: Approve an FR by ID (status transition).
 - `update_feature_request_status.sh`: Update the status field in an FR dossier.
-- `update_backlog_tree.sh`: Regenerate `docs/backlog_tree.md` (auto-generated view).
-- `feature_request_dependency_tracker.sh`: Regenerate `docs/fr_dependencies.md` (auto-generated dependency report).
+- `update_backlog_tree.sh`: Regenerate `output/backlog_tree.md` (auto-generated view).
+- `feature_request_dependency_tracker.sh`: Regenerate `output/fr_dependencies.md` (auto-generated dependency report).
 
 ## DONE signal (required)
 

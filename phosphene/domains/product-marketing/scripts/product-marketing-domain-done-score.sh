@@ -12,7 +12,7 @@ set -euo pipefail
 # Usage:
 #   ./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh
 #   ./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 80
-#   ./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --docs-root phosphene/domains/product-marketing/docs
+#   ./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --docs-root phosphene/domains/product-marketing/output
 #
 # Exit codes:
 #   0 = score >= min-score
@@ -38,8 +38,8 @@ EOF
 fail() { echo "FAIL: $*" >&2; exit 2; }
 
 ROOT="$(phosphene_find_project_root)"
-DOCS_ROOT="$ROOT/phosphene/domains/product-marketing/docs"
-INPUT_RESEARCH_ROOT="$ROOT/phosphene/domains/research/docs"
+DOCS_ROOT="$ROOT/phosphene/domains/product-marketing/output"
+INPUT_RESEARCH_ROOT="$ROOT/phosphene/domains/research/output"
 MIN_SCORE="80"
 QUIET=0
 
@@ -64,9 +64,9 @@ if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
   fail "--min-score must be numeric (0..100)"
 fi
 
-# Collect PER/PROP artifacts anywhere under docs root.
-# Supports both legacy layout (docs/personas + docs/propositions) and VPD bundles
-# (docs/value-proposition-designs/**/10-personas + 20-propositions).
+# Collect PER/PROP artifacts anywhere under output root.
+# Supports both legacy layout (output/personas + output/propositions) and VPD bundles
+# (output/value-proposition-designs/**/10-personas + 20-propositions).
 PERSONA_FILES=()
 PROP_FILES=()
 

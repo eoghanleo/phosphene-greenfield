@@ -11,7 +11,7 @@ Primary domain: `<product-management>`
 
 ## What you produce
 
-- Product specs: `phosphene/domains/product-management/docs/product-specs/SPEC-*.md`
+- Product specs: `phosphene/domains/product-management/output/product-specs/SPEC-*.md`
 
 ## How to work
 
@@ -19,7 +19,7 @@ Primary domain: `<product-management>`
   - `<product-strategy>` defines the bet + sequencing constraints.
   - `<product-marketing>` defines persona + proposition constraints (what must be true for the pitch to land).
   - `<research>` defines evidence + unknowns (what is known vs hypothesized).
-- Create artifacts directly under `phosphene/domains/product-management/docs/product-specs/` (templates are intentionally not used).
+- Create artifacts directly under `phosphene/domains/product-management/output/product-specs/` (templates are intentionally not used).
 - Keep acceptance criteria and validation experiments explicit.
 - Keep the output **bash-parseable and reviewable** (stable header block; consistent IDs).
 

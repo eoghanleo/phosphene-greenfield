@@ -6,8 +6,8 @@ Primary artifacts:
 
 Canonical locations:
 - Working artifacts:
-  - `phosphene/domains/retrospective/docs/postmortems/`
-  - `phosphene/domains/retrospective/docs/playbooks/`
+  - `phosphene/domains/retrospective/output/postmortems/`
+  - `phosphene/domains/retrospective/output/playbooks/`
 
 Handoff (default):
 - **From Test Management / Scrum Management** when outcomes are known.

@@ -7,7 +7,7 @@ source "$SCRIPT_DIR/../lib/test_helpers.sh"
 
 ROOT="$PHOSPHENE_REPO_ROOT"
 PM_SCRIPTS="$ROOT/phosphene/domains/product-marketing/scripts"
-RESEARCH_DOCS="$ROOT/phosphene/domains/research/docs"
+RESEARCH_DOCS="$ROOT/phosphene/domains/research/output"
 
 fail() { echo "FAIL: $*" >&2; exit 1; }
 

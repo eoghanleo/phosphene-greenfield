@@ -15,7 +15,7 @@ Deep research output should be stored as a **bundle folder** (not a single giant
 
 ## Global ID uniqueness (for grep + automation)
 
-All object IDs (EvidenceIDs `E-####`, RefSolIDs `RS-####`, PitchIDs `PITCH-####`, etc.) must be **globally unique** across repo artifacts under `phosphene/domains/**/docs/**`.
+All object IDs (EvidenceIDs `E-####`, RefSolIDs `RS-####`, PitchIDs `PITCH-####`, etc.) must be **globally unique** across repo artifacts under `phosphene/domains/**/output/**`.
 
 Authoritative ownership rule (important):
 - `<research>` produces **Candidate Personas** `CPE-####` (authoritative in research bundles).

@@ -89,7 +89,7 @@ echo "--- persona: add evidence + links + notes ---"
 "$ROOT/phosphene/domains/product-marketing/scripts/add_persona_evidence_link.sh" --persona "$PER_FILE" --id "E-0001" >/dev/null
 "$ROOT/phosphene/domains/product-marketing/scripts/add_persona_evidence_link.sh" --persona "$PER_FILE" --id "CPE-0001" >/dev/null
 "$ROOT/phosphene/domains/product-marketing/scripts/add_persona_evidence_link.sh" --persona "$PER_FILE" --id "RA-001" >/dev/null
-"$ROOT/phosphene/domains/product-marketing/scripts/add_persona_related_link.sh" --persona "$PER_FILE" --link "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/40-hypotheses.md" >/dev/null
+"$ROOT/phosphene/domains/product-marketing/scripts/add_persona_related_link.sh" --persona "$PER_FILE" --link "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game/40-hypotheses.md" >/dev/null
 "$ROOT/phosphene/domains/product-marketing/scripts/add_persona_note.sh" --persona "$PER_FILE" --note "This is a lifecycle test note." >/dev/null
 
 NOTES_FILE="$(mktemp)"
@@ -153,7 +153,7 @@ echo "--- proposition: strict validate ---"
 
 echo "--- product-marketing done score (smoke) ---"
 "$ROOT/phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh" \
-  --docs-root "$ROOT/phosphene/domains/product-marketing/docs" \
+  --docs-root "$ROOT/phosphene/domains/product-marketing/output" \
   --min-score 0
 
 echo "OK: product-marketing lifecycle test passed (strict)."

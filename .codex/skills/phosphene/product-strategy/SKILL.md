@@ -11,13 +11,13 @@ Primary domain: `<product-strategy>`
 
 ## What you produce
 
-- Product roadmaps: `phosphene/domains/product-strategy/docs/product-roadmaps/ROADMAP-*.md`
+- Product roadmaps: `phosphene/domains/product-strategy/output/product-roadmaps/ROADMAP-*.md`
 
 ## How to work
 
 - Start from `<research>` pitch set + competitive constraints + unknowns.
 - Incorporate `<product-marketing>` constraints (ICP, messaging constraints, objections).
-- Create artifacts directly under `phosphene/domains/product-strategy/docs/product-roadmaps/` (templates are intentionally not used).
+- Create artifacts directly under `phosphene/domains/product-strategy/output/product-roadmaps/` (templates are intentionally not used).
 - Keep bets explicit, with assumptions, risks, and “we lose when…” constraints.
 
 ## In-doc script hints (`[V-SCRIPT]`)

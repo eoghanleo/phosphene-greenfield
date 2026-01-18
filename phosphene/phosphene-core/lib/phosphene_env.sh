@@ -33,8 +33,8 @@ phosphene_load_config() {
   export PHOSPHENE_ROOT="$project_root/phosphene"
   export PHOSPHENE_DOMAINS_ROOT="$PHOSPHENE_ROOT/domains"
 
-  # Canonical domain doc roots
-  export feature_management_path="$PHOSPHENE_DOMAINS_ROOT/feature-management/docs"
+  # Canonical domain output roots
+  export feature_management_path="$PHOSPHENE_DOMAINS_ROOT/feature-management/output"
   # Back-compat alias (older scripts may still read this name)
   export fr_management_path="$feature_management_path"
 

@@ -9,7 +9,7 @@ This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
 - `product-spec` artifacts (requirements, flows, acceptance criteria, validation plan, evidence/rationale)
 
 Canonical location:
-- `phosphene/domains/product-management/docs/product-specs/SPEC-*.md`
+- `phosphene/domains/product-management/output/product-specs/SPEC-*.md`
 
 ## Workflow intent (tight)
 
@@ -59,7 +59,7 @@ Include (minimum):
 
 - Use the `<product-management>` tag to indicate scope/boundaries in handoffs.
 - Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
-- Artifacts for this domain live in canonical `docs/`, `scripts/`, and `signals/` areas within the repo.
+- Artifacts for this domain live in canonical `output/`, `scripts/`, and `signals/` areas within the repo.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 

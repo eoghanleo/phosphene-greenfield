@@ -18,7 +18,7 @@ Usage:
   ./phosphene/domains/product-marketing/scripts/create_value_proposition_design_bundle.sh --title "..." [--id VPD-001] [--owner "..."] [--priority Medium]
 
 Creates:
-  phosphene/domains/product-marketing/docs/value-proposition-designs/VPD-001-<slug>/
+  phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-<slug>/
     00-coversheet.md
     10-personas/ (empty; PER-*.md)
     20-propositions/ (empty; PROP-*.md)
@@ -67,7 +67,7 @@ if ! [[ "$ID" =~ ^VPD-[0-9]{3}$ ]]; then
   exit 2
 fi
 
-DOCS_DIR="$ROOT/phosphene/domains/product-marketing/docs/value-proposition-designs"
+DOCS_DIR="$ROOT/phosphene/domains/product-marketing/output/value-proposition-designs"
 
 mkdir -p "$DOCS_DIR"
 

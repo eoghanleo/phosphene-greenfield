@@ -283,7 +283,7 @@ fi
 
 if [[ "${1:-}" == "--all" ]]; then
   if [[ "${2:-}" == "--strict" ]]; then STRICT=1; fi
-  dir="$ROOT/phosphene/domains/product-marketing/docs"
+  dir="$ROOT/phosphene/domains/product-marketing/output"
   [[ -d "$dir" ]] || fail "Missing docs dir: $dir"
   found=0
   while IFS= read -r -d '' f; do

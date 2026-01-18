@@ -80,7 +80,7 @@ If a run emits multiple signals, do not reuse `output_key`. Example patterns:
   "run_marker": "RA-001",
   "output_key": "handoff:research->product-marketing",
   "pointers": [
-    "phosphene/domains/research/docs/research-assessments/RA-001-.../RA-001.md"
+    "phosphene/domains/research/output/research-assessments/RA-001-.../RA-001.md"
   ],
   "created_utc": "2026-01-15T00:00:00Z"
 }

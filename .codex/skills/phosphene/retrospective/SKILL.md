@@ -11,15 +11,15 @@ Primary domain: `<retrospective>`
 
 ## What you produce
 
-- Postmortems: `phosphene/domains/retrospective/docs/postmortems/PM-*.md`
-- Playbooks: `phosphene/domains/retrospective/docs/playbooks/PB-*.md`
+- Postmortems: `phosphene/domains/retrospective/output/postmortems/PM-*.md`
+- Playbooks: `phosphene/domains/retrospective/output/playbooks/PB-*.md`
 
 ## How to work
 
 - Start from merged PRs, incident reports, and outcomes.
 - Create artifacts directly under:
-  - `phosphene/domains/retrospective/docs/postmortems/`
-  - `phosphene/domains/retrospective/docs/playbooks/`
+  - `phosphene/domains/retrospective/output/postmortems/`
+  - `phosphene/domains/retrospective/output/playbooks/`
 - Keep learnings actionable: what changed, what to keep, what to automate/validate next time.
 
 ## In-doc script hints (`[V-SCRIPT]`)

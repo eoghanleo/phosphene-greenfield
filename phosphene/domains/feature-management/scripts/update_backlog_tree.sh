@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Generates phosphene/domains/feature-management/docs/backlog_tree.md (bash-only)
+# Generates phosphene/domains/feature-management/output/backlog_tree.md (bash-only)
 # - Single-dir only: show status-grouped listing derived from FR markdown headers
 #
 set -euo pipefail

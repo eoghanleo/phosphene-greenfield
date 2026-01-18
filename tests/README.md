@@ -49,6 +49,6 @@ bash tests/product-marketing/test_add_persona_note.sh
 
 ## Test hygiene (important)
 
-Tests may create temporary artifacts under canonical `phosphene/domains/**/docs/**`.
+Tests may create temporary artifacts under canonical `phosphene/domains/**/output/**`.
 They must clean up and should leave `phosphene/id_index.tsv` consistent afterward.
 

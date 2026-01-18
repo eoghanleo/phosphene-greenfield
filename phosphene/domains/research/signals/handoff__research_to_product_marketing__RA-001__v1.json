@@ -12,10 +12,10 @@
   "run_marker": "RA-001",
   "output_key": "handoff:research->product-marketing",
   "pointers": [
-    "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/RA-001.md",
-    "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/30-pitches/README.md",
-    "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/40-hypotheses.md",
-    "phosphene/domains/research/docs/research-assessments/RA-001-ant-colony-idle-game/50-evidence-bank.md"
+    "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game/RA-001.md",
+    "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game/30-pitches/README.md",
+    "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game/40-hypotheses.md",
+    "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game/50-evidence-bank.md"
   ],
   "created_utc": "2026-01-15T00:00:00Z"
 }

@@ -94,6 +94,6 @@ Search for `[V-SCRIPT]` when scanning an artifact to quickly discover the releva
 
 - Use the `<product-marketing>` tag to indicate scope/boundaries in handoffs.
 - Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
-- Artifacts for this domain live in canonical `docs/`, `scripts/`, and `signals/` areas within the repo.
+- Artifacts for this domain live in canonical `output/`, `scripts/`, and `signals/` areas within the repo.
 
 

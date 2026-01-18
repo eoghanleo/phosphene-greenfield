@@ -5,7 +5,7 @@ set -euo pipefail
 # Builds and queries a global ID index for PHOSPHENE artifacts (authoritative definitions only).
 #
 # Scope:
-# - Scans phosphene/domains/**/docs/** (excludes templates) for authoritative ID definitions.
+# - Scans phosphene/domains/**/output/** for authoritative ID definitions.
 #
 # Commands:
 #   build                Build/refresh index TSV (default)
@@ -40,14 +40,14 @@ build_index() {
   tmp="$(mktemp)"
   trap 'rm -f "$tmp"' RETURN
 
-  # Scan docs only (authoritative artifacts), across all domains.
+  # Scan outputs only (authoritative artifacts), across all domains.
   #
   # We include BOTH:
   # - tracked files (git index)
   # - untracked, non-ignored working-tree files (to support script-created artifacts before staging)
   while IFS= read -r -d '' rel; do
     case "$rel" in
-      phosphene/domains/*/docs/*.md|phosphene/domains/*/docs/*/*.md|phosphene/domains/*/docs/*/*/*.md|phosphene/domains/*/docs/*/*/*/*.md)
+      phosphene/domains/*/output/*.md|phosphene/domains/*/output/*/*.md|phosphene/domains/*/output/*/*/*.md|phosphene/domains/*/output/*/*/*/*.md)
         ;;
       *)
         continue

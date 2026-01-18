@@ -12,11 +12,11 @@ Primary domain: `<ideation>`
 ## What you produce
 
 - Ideas as repo artifacts:
-  - `phosphene/domains/ideation/docs/ideas/IDEA-*.md`
+  - `phosphene/domains/ideation/output/ideas/IDEA-*.md`
 
 ## How to work
 
-- Create artifacts directly under `phosphene/domains/ideation/docs/ideas/` (templates are intentionally not used).
+- Create artifacts directly under `phosphene/domains/ideation/output/ideas/` (templates are intentionally not used).
 - Keep the artifact short: problem/opportunity framing, target user hypotheses, and what to research next.
 - Avoid over-committing to product definitions; treat as hypotheses for `<research>`.
 
