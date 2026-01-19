@@ -1,0 +1,17 @@
+name: "lib.condenser.authorize"
+
+on:
+  workflow_call: {}
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: reusable authorize building block (approve/label/enable auto-merge)."
+

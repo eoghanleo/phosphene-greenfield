@@ -1,0 +1,17 @@
+name: "apparatus.modulator.strategy"
+
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: summon modulator for strategy/ICP/wedge pattern tuning."
+

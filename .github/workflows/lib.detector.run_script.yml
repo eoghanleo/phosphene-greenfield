@@ -1,0 +1,44 @@
+name: "lib.detector.run_script"
+
+on:
+  workflow_call:
+    inputs:
+      title:
+        required: false
+        type: string
+        default: "Detector run"
+      command:
+        required: true
+        type: string
+      shell:
+        required: false
+        type: string
+        default: "bash"
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: ${{ inputs.title }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Run
+        shell: ${{ inputs.shell }}
+        run: ${{ inputs.command }}
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Detector summary"
+            echo ""
+            echo "- **Command**: \`${{ inputs.command }}\`"
+            echo "- **Result**: ${{ job.status }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+

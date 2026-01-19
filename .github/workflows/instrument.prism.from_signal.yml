@@ -1,11 +1,11 @@
-name: "PHOSPHENE / Handoff / research → product-marketing (on merge)"
+name: "instrument.prism.from_signal"
 
 on:
   pull_request:
     types: [closed]
     branches: [main]
     paths:
-      - "phosphene/domains/research/signals/**"
+      - "phosphene/domains/**/signals/**"
 
 permissions:
   contents: read
@@ -13,11 +13,11 @@ permissions:
   issues: write
 
 concurrency:
-  group: phosphene-handoff-research-to-pm-${{ github.event.pull_request.number }}
+  group: instrument-prism-from-signal-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
-  handoff:
+  handoff_research_to_product_marketing:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +27,7 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
-      - name: Create product-marketing issue from research handoff signal(s)
+      - name: Create product-marketing issue(s) from research handoff signal(s)
         uses: actions/github-script@v7
         env:
           # Optional: if set, we will post the @codex summon comment using this token

@@ -1,0 +1,16 @@
+name: "instrument.detector.file_authorization"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: implement Planning authorized file list signal + diff scan + TRAP ruling."
+

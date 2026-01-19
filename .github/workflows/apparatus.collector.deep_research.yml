@@ -1,0 +1,49 @@
+name: "apparatus.collector.deep_research"
+
+on:
+  workflow_call:
+    inputs:
+      issue_number:
+        required: true
+        type: number
+      intent:
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to comment on"
+        required: true
+        type: number
+      intent:
+        description: "Intent string"
+        required: true
+        type: string
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  summon:
+    uses: ./.github/workflows/lib.prism.dispatch_codex.yml
+    secrets: inherit
+    with:
+      issue_number: ${{ inputs.issue_number }}
+      body: |
+        @codex
+
+        PHOSPHENE apparatus: **collector.deep_research** → <research>
+
+        **Intent:** ${{ inputs.intent }}
+
+        **Constraints (PHOSPHENE):**
+        - Single primary domain: <research>
+        - Read `phosphene/AGENTS.md`
+        - Read `.codex/skills/phosphene/research/SKILL.md`
+        - Prefer domain control scripts; avoid hand-editing script-managed artifacts
+        - Validate as appropriate + `./phosphene/phosphene-core/bin/phosphene id validate`
+        - Write DONE signal: `phosphene/domains/research/signals/<RA-###>-DONE.json` (required; name it after the parent artifact WORK_ID)
+
+        If you need clarifications, ask exactly one question and stop.
+

@@ -1,0 +1,74 @@
+name: "instrument.detector.signals_integrity"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  signals:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Validate signal JSON (parse + required fields)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t files < <(find phosphene/domains -type f -path "*/signals/*.json" -print | sort)
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            echo "No signal JSON files found under phosphene/domains/**/signals/*.json"
+            exit 0
+          fi
+
+          echo "Validating ${#files[@]} signal JSON files..."
+          fail=0
+          for f in "${files[@]}"; do
+            node -e '
+              const fs = require("fs");
+              const f = process.argv[1];
+              const raw = fs.readFileSync(f, "utf8");
+              const j = JSON.parse(raw);
+
+              if (typeof j !== "object" || j === null || Array.isArray(j)) {
+                console.error(`FAIL: signal must be a JSON object: ${f}`);
+                process.exit(1);
+              }
+
+              if (!("signal_version" in j)) {
+                console.error(`FAIL: missing required field signal_version: ${f}`);
+                process.exit(1);
+              }
+              if (j.signal_version !== 1) {
+                console.error(`FAIL: signal_version must be 1 (got ${j.signal_version}): ${f}`);
+                process.exit(1);
+              }
+
+              if (!("signal_type" in j)) {
+                console.error(`FAIL: missing required field signal_type: ${f}`);
+                process.exit(1);
+              }
+              if (typeof j.signal_type !== "string" || j.signal_type.trim() === "") {
+                console.error(`FAIL: signal_type must be a non-empty string: ${f}`);
+                process.exit(1);
+              }
+            ' "$f" || fail=1
+          done
+          [[ "$fail" -eq 0 ]]
+
+      - name: Summary
+        if: always()
+        run: |
+          {
+            echo "### Signals integrity"
+            echo ""
+            echo "- **Result**: ${{ job.status }}"
+            echo "- **Scope**: \`phosphene/domains/**/signals/*.json\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+

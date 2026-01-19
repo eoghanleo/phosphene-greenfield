@@ -1,0 +1,18 @@
+name: "instrument.detector.tests"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    uses: ./.github/workflows/lib.detector.run_script.yml
+    with:
+      title: "Deterministic tests"
+      command: "bash ./tests/run.sh"
+

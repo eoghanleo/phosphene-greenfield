@@ -1,0 +1,17 @@
+name: "apparatus.codeshaper.patch"
+
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: summon code-shaper apparatus (requires Planning authorization signal before start)."
+

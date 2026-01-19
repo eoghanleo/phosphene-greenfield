@@ -1,0 +1,78 @@
+name: "instrument.prism.from_flimsie"
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  issues: write
+  contents: read
+
+concurrency:
+  group: instrument-prism-from-flimsie-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    outputs:
+      lane: ${{ steps.parse.outputs.lane }}
+      intent: ${{ steps.parse.outputs.intent }}
+      issue_number: ${{ steps.parse.outputs.issue_number }}
+      ok: ${{ steps.parse.outputs.ok }}
+    steps:
+      - name: Parse /phosphene command
+        id: parse
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const bodyRaw = (context.payload.comment?.body || "").trim();
+            const issue_number = context.payload.issue.number;
+
+            // Only respond to explicit summons to avoid loops/noise.
+            if (!bodyRaw.startsWith("/phosphene ")) {
+              core.setOutput("ok", "0");
+              return;
+            }
+
+            // Format:
+            //   /phosphene beryl <intent...>
+            //   /phosphene cerulean <intent...>
+            const match = bodyRaw.match(/^\/phosphene\s+(beryl|cerulean)\s*(.*)$/i);
+            if (!match) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number,
+                body: "PHOSPHENE: Unknown summon. Use `/phosphene beryl <intent>` or `/phosphene cerulean <intent>`.",
+              });
+              core.setOutput("ok", "0");
+              return;
+            }
+
+            const lane = match[1].toLowerCase();
+            const intent = (match[2] || "").trim() || "(no intent provided)";
+
+            core.setOutput("ok", "1");
+            core.setOutput("lane", lane);
+            core.setOutput("intent", intent);
+            core.setOutput("issue_number", String(issue_number));
+
+  beryl:
+    if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'beryl'
+    needs: [parse]
+    uses: ./.github/workflows/apparatus.collector.deep_research.yml
+    secrets: inherit
+    with:
+      issue_number: ${{ fromJson(needs.parse.outputs.issue_number) }}
+      intent: ${{ needs.parse.outputs.intent }}
+
+  cerulean:
+    if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'cerulean'
+    needs: [parse]
+    uses: ./.github/workflows/apparatus.modulator.product_marketing.yml
+    secrets: inherit
+    with:
+      issue_number: ${{ fromJson(needs.parse.outputs.issue_number) }}
+      intent: ${{ needs.parse.outputs.intent }}
+

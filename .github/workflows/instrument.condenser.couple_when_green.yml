@@ -1,0 +1,17 @@
+name: "instrument.condenser.couple_when_green"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: authorize coupling (approve/label/enable auto-merge) when detectors are green + required signals present."
+

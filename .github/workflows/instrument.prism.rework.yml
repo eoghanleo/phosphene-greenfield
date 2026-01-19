@@ -1,0 +1,16 @@
+name: "instrument.prism.rework"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: re-dispatch apparatus with defect context (recirculation)."
+

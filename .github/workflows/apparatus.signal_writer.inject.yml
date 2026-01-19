@@ -1,0 +1,17 @@
+name: "apparatus.signal_writer.inject"
+
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: minimal apparatus that takes a flimsie and emits an injection SIGNAL on a branch beam."
+

@@ -1,0 +1,17 @@
+name: "apparatus.trap.eval"
+
+on:
+  workflow_dispatch: {}
+  workflow_call: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: summon trap apparatus to run evaluation/scoring/consistency constraints."
+

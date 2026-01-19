@@ -1,0 +1,16 @@
+name: "instrument.condenser.inject_from_hopper"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: dispatch signal-writer apparatus to emit injection SIGNAL; then rely on coupling authorization."
+

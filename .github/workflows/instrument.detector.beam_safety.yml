@@ -1,0 +1,15 @@
+name: "instrument.detector.beam_safety"
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  stub:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "TODO: define the beam safety corridor (schema lint, policy checks, budget checks)."
+
