@@ -1,4 +1,4 @@
-name: "instrument.condenser.inject_from_hopper"
+name: "instrument.gantry.condenser.global.inject_from_hopper"
 
 on:
   workflow_dispatch: {}

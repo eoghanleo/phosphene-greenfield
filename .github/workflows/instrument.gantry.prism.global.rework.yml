@@ -1,8 +1,7 @@
-name: "apparatus.modulator.strategy"
+name: "instrument.gantry.prism.global.rework"
 
 on:
   workflow_dispatch: {}
-  workflow_call: {}
 
 permissions:
   issues: write
@@ -13,5 +12,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "TODO: summon modulator for strategy/ICP/wedge pattern tuning."
+          echo "TODO: re-dispatch apparatus with defect context (recirculation)."
 

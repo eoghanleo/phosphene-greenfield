@@ -1,4 +1,4 @@
-name: "apparatus.trap.eval"
+name: "instrument.apparatus.modulator.product-strategy.strategy"
 
 on:
   workflow_dispatch: {}
@@ -13,5 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "TODO: summon trap apparatus to run evaluation/scoring/consistency constraints."
+          echo "TODO: summon modulator for strategy/ICP/wedge pattern tuning."
 

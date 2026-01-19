@@ -1,4 +1,4 @@
-name: "instrument.detector.signals_integrity"
+name: "instrument.gantry.detector.global.signals_integrity"
 
 on:
   pull_request:

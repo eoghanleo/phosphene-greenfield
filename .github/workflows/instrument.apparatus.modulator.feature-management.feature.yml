@@ -1,4 +1,4 @@
-name: "apparatus.codeshaper.patch"
+name: "instrument.apparatus.modulator.feature-management.feature"
 
 on:
   workflow_dispatch: {}
@@ -13,5 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "TODO: summon code-shaper apparatus (requires Planning authorization signal before start)."
+          echo "TODO: summon modulator for feature specs / FR patterns."
 

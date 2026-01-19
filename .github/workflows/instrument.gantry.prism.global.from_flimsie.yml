@@ -1,4 +1,4 @@
-name: "instrument.prism.from_flimsie"
+name: "instrument.gantry.prism.global.from_flimsie"
 
 on:
   issue_comment:
@@ -61,7 +61,7 @@ jobs:
   beryl:
     if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'beryl'
     needs: [parse]
-    uses: ./.github/workflows/apparatus.collector.deep_research.yml
+    uses: ./.github/workflows/instrument.apparatus.collector.research.deep_research.yml
     secrets: inherit
     with:
       issue_number: ${{ fromJson(needs.parse.outputs.issue_number) }}
@@ -70,7 +70,7 @@ jobs:
   cerulean:
     if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'cerulean'
     needs: [parse]
-    uses: ./.github/workflows/apparatus.modulator.product_marketing.yml
+    uses: ./.github/workflows/instrument.apparatus.modulator.product-marketing.summon.yml
     secrets: inherit
     with:
       issue_number: ${{ fromJson(needs.parse.outputs.issue_number) }}

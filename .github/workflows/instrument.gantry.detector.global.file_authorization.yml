@@ -1,4 +1,4 @@
-name: "instrument.detector.file_authorization"
+name: "instrument.gantry.detector.global.file_authorization"
 
 on:
   workflow_dispatch: {}

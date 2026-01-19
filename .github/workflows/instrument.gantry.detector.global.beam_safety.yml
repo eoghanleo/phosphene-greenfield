@@ -1,4 +1,4 @@
-name: "instrument.detector.beam_safety"
+name: "instrument.gantry.detector.global.beam_safety"
 
 on:
   workflow_dispatch: {}

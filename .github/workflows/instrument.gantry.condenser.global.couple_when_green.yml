@@ -1,4 +1,4 @@
-name: "instrument.condenser.couple_when_green"
+name: "instrument.gantry.condenser.global.couple_when_green"
 
 on:
   workflow_dispatch: {}

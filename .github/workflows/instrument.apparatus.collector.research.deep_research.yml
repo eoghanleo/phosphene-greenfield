@@ -1,4 +1,4 @@
-name: "apparatus.collector.deep_research"
+name: "instrument.apparatus.collector.research.deep_research"
 
 on:
   workflow_call:

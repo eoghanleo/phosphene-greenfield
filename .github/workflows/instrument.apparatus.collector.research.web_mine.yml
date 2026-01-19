@@ -1,4 +1,4 @@
-name: "apparatus.collector.web_mine"
+name: "instrument.apparatus.collector.research.web_mine"
 
 on:
   workflow_dispatch: {}

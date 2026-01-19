@@ -1,4 +1,4 @@
-name: "apparatus.signal_writer.inject"
+name: "instrument.apparatus.trap.global.eval"
 
 on:
   workflow_dispatch: {}
@@ -13,5 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - run: |
-          echo "TODO: minimal apparatus that takes a flimsie and emits an injection SIGNAL on a branch beam."
+          echo "TODO: summon trap apparatus to run evaluation/scoring/consistency constraints."
 

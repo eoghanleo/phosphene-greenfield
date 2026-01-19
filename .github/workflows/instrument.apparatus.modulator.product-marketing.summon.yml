@@ -1,4 +1,4 @@
-name: "apparatus.modulator.product_marketing"
+name: "instrument.apparatus.modulator.product-marketing.summon"
 
 on:
   workflow_call:

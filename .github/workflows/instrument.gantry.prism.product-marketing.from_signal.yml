@@ -1,4 +1,4 @@
-name: "instrument.prism.from_signal"
+name: "instrument.gantry.prism.product-marketing.from_signal"
 
 on:
   pull_request:
