@@ -26,11 +26,12 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            const bodyRaw = (context.payload.comment?.body || "").trim();
+            const bodyRawFull = (context.payload.comment?.body || "");
+            const firstLine = bodyRawFull.split(/\r?\n/, 1)[0].trim();
             const issue_number = context.payload.issue.number;
 
             // Only respond to explicit summons to avoid loops/noise.
-            if (!bodyRaw.startsWith("/phosphene ")) {
+            if (!firstLine.startsWith("/phosphene ")) {
               core.setOutput("ok", "0");
               return;
             }
@@ -38,7 +39,7 @@ jobs:
             // Format:
             //   /phosphene beryl <intent...>
             //   /phosphene cerulean <intent...>
-            const match = bodyRaw.match(/^\/phosphene\s+(beryl|cerulean)\s*(.*)$/i);
+            const match = firstLine.match(/^\/phosphene\s+(beryl|cerulean)\s*(.*)$/i);
             if (!match) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,

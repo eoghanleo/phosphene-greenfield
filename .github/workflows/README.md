@@ -7,7 +7,13 @@ GitHub Actions requires workflow YAML files to live **directly** in `.github/wor
 ### Gantry instruments (no repo writes)
 
 - **Detectors**: `instrument.gantry.detector.<domain>.<action>.yml`
-  - Deterministic ruling corridors (tests, signal integrity, policy checks).
+  - Deterministic ruling corridors: evaluate a ref/branch (PR branches and/or `main`) against a set of **predicates**.
+  - Predicates may be:
+    - **Static** (baked into the workflow; e.g. run tests, validate schema), or
+    - **Runtime-supplied** (e.g. `workflow_dispatch` inputs providing additional predicates/commands).
+  - A detector emits a ruling (pass/fail) and **may** trigger follow-on instruments/apparatus, e.g.:
+    - Call a **Condenser** to authorize coupling when green.
+    - Trigger **rework** by summoning a **Modulator** with defect context, then re-evaluate.
 - **Prisms**: `instrument.gantry.prism.<domain>.<action>.yml`
   - Dispatch/fanout into apparatus runs (summons agents; does not do work itself).
 - **Condensers**: `instrument.gantry.condenser.<domain>.<action>.yml`

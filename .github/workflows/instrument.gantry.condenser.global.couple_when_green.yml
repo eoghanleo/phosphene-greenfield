@@ -1,7 +1,25 @@
 name: "instrument.gantry.condenser.global.couple_when_green"
 
 on:
-  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      pr_number:
+        required: true
+        type: number
+      message:
+        required: false
+        type: string
+        default: ""
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "PR number to authorize (label/comment only; no merge)"
+        required: true
+        type: number
+      message:
+        description: "Optional note to include in condenser comment"
+        required: false
+        type: string
 
 permissions:
   pull-requests: write
@@ -9,9 +27,10 @@ permissions:
   contents: read
 
 jobs:
-  stub:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          echo "TODO: authorize coupling (approve/label/enable auto-merge) when detectors are green + required signals present."
+  authorize:
+    uses: ./.github/workflows/lib.condenser.authorize.yml
+    with:
+      pr_number: ${{ inputs.pr_number }}
+      label: "phosphene:coupling:authorized"
+      message: ${{ inputs.message }}
 
