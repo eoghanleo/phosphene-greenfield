@@ -1,0 +1,197 @@
+name: "instrument.gantry.autoscribe.global.flimsie"
+
+on:
+  workflow_dispatch:
+    inputs:
+      title:
+        description: "New flimsie (issue) title"
+        required: true
+        type: string
+      body:
+        description: "New flimsie (issue) body (markdown)"
+        required: false
+        type: string
+        default: ""
+      labels:
+        description: "Comma-separated labels (optional)"
+        required: false
+        type: string
+        default: "phosphene,phosphene:flimsie"
+      assignees:
+        description: "Comma-separated assignees (optional; usernames)"
+        required: false
+        type: string
+        default: ""
+      dedupe_marker:
+        description: "If set, skip creation when an existing issue body contains this exact marker"
+        required: false
+        type: string
+        default: ""
+      summon_codex:
+        description: "If true, post '@codex take issue.' as a comment on the new issue"
+        required: false
+        type: boolean
+        default: false
+
+  issue_comment:
+    types: [created]
+
+permissions:
+  # CRITICAL: autoscribe may create issues, but MUST NOT be able to write repo contents.
+  issues: write
+  contents: read
+
+concurrency:
+  group: instrument-autoscribe-flimsie-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  autoscribe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create flimsie (issue)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+
+            const splitCsv = (s) =>
+              (s || "")
+                .split(",")
+                .map((x) => x.trim())
+                .filter(Boolean);
+
+            const dedupeIfNeeded = async (dedupeMarker) => {
+              const marker = (dedupeMarker || "").trim();
+              if (!marker) return false;
+
+              const search = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} "${marker}" in:body type:issue`,
+                per_page: 5,
+              });
+              return search.data.items.length > 0;
+            };
+
+            const postUsage = async (issue_number) => {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: [
+                  "PHOSPHENE: autoscribe usage:",
+                  "",
+                  "- Create a new flimsie: `/flimsie <title>`",
+                  "- Or: `/phosphene flimsie <title>`",
+                  "",
+                  "Tip: Put any additional details on subsequent lines; they will be copied into the new issue body.",
+                ].join("\n"),
+              });
+            };
+
+            let title = "";
+            let body = "";
+            let labels = [];
+            let assignees = [];
+            let dedupe_marker = "";
+            let summon_codex = false;
+            let sourceIssueNumber = null;
+            let sourceUrl = "";
+
+            if (context.eventName === "workflow_dispatch") {
+              title = String(core.getInput("title", { required: true })).trim();
+              body = String(core.getInput("body") || "");
+              labels = splitCsv(core.getInput("labels"));
+              assignees = splitCsv(core.getInput("assignees"));
+              dedupe_marker = String(core.getInput("dedupe_marker") || "").trim();
+              summon_codex = String(core.getInput("summon_codex") || "false").toLowerCase() === "true";
+            } else if (context.eventName === "issue_comment") {
+              const commentBody = String(context.payload.comment?.body || "");
+              const lines = commentBody.split(/\r?\n/);
+              const firstLine = (lines[0] || "").trim();
+
+              // Guard: only respond to explicit summons to avoid loops/noise.
+              const m =
+                firstLine.match(/^\/flimsie\s+(.+)$/i) ||
+                firstLine.match(/^\/phosphene\s+flimsie\s+(.+)$/i);
+              if (!m) return;
+
+              title = (m[1] || "").trim();
+              sourceIssueNumber = context.payload.issue?.number || null;
+              sourceUrl = String(context.payload.issue?.html_url || "");
+
+              if (!title) {
+                if (sourceIssueNumber) await postUsage(sourceIssueNumber);
+                return;
+              }
+
+              body = [
+                `PHOSPHENE: flimsie autoscribed from #${sourceIssueNumber}.`,
+                sourceUrl ? `- **Source**: ${sourceUrl}` : "",
+                "",
+                (lines.slice(1).join("\n") || "").trim(),
+              ]
+                .filter((x) => String(x).trim() !== "")
+                .join("\n");
+
+              labels = ["phosphene", "phosphene:flimsie"];
+              assignees = [];
+              dedupe_marker = `PHOSPHENE-AUTOSCRIBE-DEDUPE:source-issue:${sourceIssueNumber}`;
+              summon_codex = false;
+            } else {
+              core.notice(`PHOSPHENE: unsupported event ${context.eventName}; no-op.`);
+              return;
+            }
+
+            if (await dedupeIfNeeded(dedupe_marker)) {
+              core.notice(`PHOSPHENE: dedupe hit; not creating issue (marker: ${dedupe_marker}).`);
+              if (sourceIssueNumber) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: sourceIssueNumber,
+                  body: `PHOSPHENE: autoscribe dedupe hit; a flimsie already exists for marker \`${dedupe_marker}\`.`,
+                });
+              }
+              return;
+            }
+
+            // Normalize body: ensure marker is included if provided.
+            const markerBlock = dedupe_marker ? `\n\n${dedupe_marker}\n` : "";
+            // Default autoscribe behavior: mark new issues as INFORMAL unless/until
+            // a stricter autoscribe/enforcer upgrades them to a FORMAL config.
+            const phospheneBlock = ["[PHOSPHENE]", "INFORMAL", "[/PHOSPHENE]"].join("\n");
+
+            const issueBody = `${phospheneBlock}\n\n${body || ""}${markerBlock}`.trim() + "\n";
+
+            const issue = await github.rest.issues.create({
+              owner,
+              repo,
+              title,
+              body: issueBody,
+              labels: labels.length ? labels : undefined,
+              assignees: assignees.length ? assignees : undefined,
+            });
+
+            core.notice(`PHOSPHENE: created flimsie #${issue.data.number}: ${issue.data.html_url}`);
+
+            if (sourceIssueNumber) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: sourceIssueNumber,
+                body: `PHOSPHENE: autoscribed flimsie created: #${issue.data.number} (${issue.data.html_url})`,
+              });
+            }
+
+            if (summon_codex) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issue.data.number,
+                body: [
+                  "@codex take issue.",
+                  "",
+                  "PHOSPHENE: autoscribe requested Codex pickup for this flimsie.",
+                ].join("\n"),
+              });
+            }

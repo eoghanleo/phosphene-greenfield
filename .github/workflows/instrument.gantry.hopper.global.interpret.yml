@@ -1,0 +1,298 @@
+name: "instrument.gantry.hopper.global.interpret"
+
+on:
+  # The hopper is the ONLY instrument that triggers directly on Issue updates (core record).
+  issues:
+    types: [opened, edited, reopened, labeled, unlabeled]
+  # Optional manual invocation via comment.
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write # comment-only by policy (no edits/labels/state)
+
+concurrency:
+  group: instrument-hopper-${{ github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  interpret:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Interpret issue and maybe start work
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue = context.payload.issue;
+            if (!issue?.number) return;
+            const issue_number = issue.number;
+
+            const MARKER_STARTED = "PHOSPHENE-HOPPER:WORK-STARTED";
+            const MARKER_REPORT = "PHOSPHENE-HOPPER:REPORT";
+            const MARKER_AUTOSCRIBE_REQUESTED = "PHOSPHENE-HOPPER:AUTOSCRIBE-REQUESTED";
+
+            const isBotUser = (u) => {
+              const login = (u?.login || "").toLowerCase();
+              return Boolean(u?.type === "Bot" || login.endsWith("[bot]") || login === "github-actions");
+            };
+
+            const PH_OPEN = "[PHOSPHENE]";
+            const PH_CLOSE = "[/PHOSPHENE]";
+
+            const extractPhospheneBlock = (text) => {
+              const openIdx = text.indexOf(PH_OPEN);
+              if (openIdx === -1) return null;
+              const closeIdx = text.indexOf(PH_CLOSE, openIdx);
+              if (closeIdx === -1) return null;
+              const raw = text.slice(openIdx, closeIdx + PH_CLOSE.length);
+              return raw;
+            };
+
+            const parseKv = (rawBlock) => {
+              const kv = {};
+              const lines = rawBlock.split(/\r?\n/);
+              for (const line of lines) {
+                if (line.trim() === PH_OPEN || line.trim() === PH_CLOSE) continue;
+                const m = line.match(/^\s*([a-zA-Z_]+)\s*:\s*(.*?)\s*$/);
+                if (!m) continue;
+                kv[m[1].toLowerCase()] = m[2].trim();
+              }
+              return kv;
+            };
+
+            const isInformalBlock = (rawBlock) => {
+              return /(^|\n)\s*informal\s*(\n|$)/i.test(String(rawBlock || ""));
+            };
+
+            // --- 0) Optional command invocation gate (comments)
+            let forceReport = false;
+            let forceStart = false;
+            if (context.eventName === "issue_comment") {
+              const comment = context.payload.comment;
+              const body = String(comment?.body || "");
+              const firstLine = body.split(/\r?\n/, 1)[0].trim();
+
+              // Ignore bot-authored comments to avoid loops.
+              if (isBotUser(comment?.user)) return;
+
+              // Accept either /hopper or @hopper at start of first line.
+              if (!(/^\/hopper\b/i.test(firstLine) || /^@hopper\b/i.test(firstLine))) return;
+
+              forceReport = true;
+              const arg = firstLine.replace(/^(@hopper|\/hopper)\b/i, "").trim().toLowerCase();
+              if (arg === "start" || arg === "force") forceStart = true;
+            }
+
+            // --- 1) Read core record fields
+            const title = String(issue.title || "").trim();
+            const body = String(issue.body || "");
+            const state = String(issue.state || "").toLowerCase();
+            const labels = (issue.labels || [])
+              .map((l) => (typeof l === "string" ? l : l?.name))
+              .filter(Boolean)
+              .map((s) => String(s));
+            const labelSet = new Set(labels.map((s) => s.toLowerCase()));
+
+            // Policy: never start closed issues.
+            if (state !== "open") {
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: `${MARKER_REPORT}\nIssue state is \`${state}\`. No action.`,
+                });
+              }
+              return;
+            }
+
+            // --- 2) Parse canonical [PHOSPHENE] block (strict; no heuristics)
+            const rawBlock = extractPhospheneBlock(body);
+            if (!rawBlock) {
+              // If hopper can't parse the issue, request autoscribe to normalize it.
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number,
+                per_page: 100,
+              });
+              const alreadyRequested = comments.some((c) => String(c.body || "").includes(MARKER_AUTOSCRIBE_REQUESTED));
+              if (!alreadyRequested) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: [
+                    "/autoscribe fix",
+                    "",
+                    `${MARKER_AUTOSCRIBE_REQUESTED}`,
+                    "",
+                    "PHOSPHENE HOPPER: missing canonical `[PHOSPHENE] ... [/PHOSPHENE]` block; requesting autoscribe to normalize.",
+                  ].join("\n"),
+                });
+              }
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: `${MARKER_REPORT}\nMissing required \`${PH_OPEN}\` block. Autoscribe has been requested.`,
+                });
+              }
+              return;
+            }
+
+            // Valid but noop: INFORMAL block means "do not interpret / do not start".
+            if (isInformalBlock(rawBlock)) {
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: [
+                    `${MARKER_REPORT}`,
+                    "",
+                    "- **Eligible**: NO",
+                    "- **Reason**: `[PHOSPHENE]` block is `INFORMAL` (explicit noop).",
+                  ].join("\n"),
+                });
+              }
+              return;
+            }
+
+            const kv = parseKv(rawBlock);
+            const lane = String(kv.lane || "").trim().toLowerCase();
+            const intent = String(kv.intent || title || "(no intent)").trim();
+
+            // Dependencies (optional): parse issue numbers from block `depends_on: ...`
+            const depNums = (() => {
+              const rhs = String(kv.depends_on || "").trim();
+              if (!rhs) return [];
+              const out = new Set();
+              const candidates = rhs.match(/#?\d+/g) || [];
+              for (const c of candidates) {
+                const n = Number(String(c).replace("#", ""));
+                if (Number.isFinite(n) && n > 0) out.add(n);
+              }
+              return Array.from(out).sort((a, b) => a - b);
+            })();
+
+            // Ready gate:
+            //  - automatic start requires label phosphene:ready (unless forceStart)
+            const isReady = labelSet.has("phosphene:ready");
+            const isBlocked = labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold");
+
+            // --- 3) Idempotency: if we've already started, do nothing
+            const hasStarted = async () => {
+              // Scan recent comments for marker.
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number,
+                per_page: 100,
+              });
+              return comments.some((c) => String(c.body || "").includes(MARKER_STARTED));
+            };
+
+            if (!forceStart && (await hasStarted())) {
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: `${MARKER_REPORT}\nAlready started (found \`${MARKER_STARTED}\`). No action.`,
+                });
+              }
+              return;
+            }
+
+            // --- 4) Dependency evaluation (supreme interpreter lives here)
+            const depStatus = [];
+            let depsOk = true;
+            for (const n of depNums) {
+              try {
+                const dep = await github.rest.issues.get({ owner, repo, issue_number: n });
+                const depIssue = dep.data;
+                const depState = String(depIssue.state || "").toLowerCase();
+                const depLabels = (depIssue.labels || [])
+                  .map((l) => (typeof l === "string" ? l : l?.name))
+                  .filter(Boolean)
+                  .map((s) => String(s).toLowerCase());
+                const done = depState === "closed" || depLabels.includes("phosphene:done");
+                depStatus.push({ n, done, state: depState });
+                if (!done) depsOk = false;
+              } catch (e) {
+                depStatus.push({ n, done: false, state: "unknown" });
+                depsOk = false;
+              }
+            }
+
+            // --- 5) Eligibility decision
+            const eligible =
+              !isBlocked &&
+              (forceStart || isReady) &&
+              (forceStart || depsOk) &&
+              (lane === "beryl" || lane === "cerulean") &&
+              intent.length > 0;
+
+            const reportLines = [
+              `${MARKER_REPORT}`,
+              "",
+              `- **Eligible**: ${eligible ? "YES" : "NO"}`,
+              `- **Lane**: ${lane ? "`" + lane + "`" : "(missing in [PHOSPHENE] block; run /autoscribe fix)"}`,
+              `- **Ready label present**: ${isReady ? "YES" : "NO"}`,
+              `- **Blocked/Hold**: ${isBlocked ? "YES" : "NO"}`,
+              `- **Dependencies**: ${depNums.length ? depNums.map((n) => `#${n}`).join(", ") : "(none)"}`,
+            ];
+            if (depStatus.length) {
+              reportLines.push("", "Dependency status:");
+              for (const d of depStatus) {
+                reportLines.push(`- #${d.n}: ${d.done ? "DONE" : "NOT DONE"} (state=${d.state})`);
+              }
+            }
+
+            if (!eligible) {
+              // Only spam a report when manually invoked; otherwise stay quiet.
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: reportLines.join("\n"),
+                });
+              }
+              return;
+            }
+
+            // --- 6) Start work by activating a Prism via the canonical /phosphene comment.
+            // Prism contract: first line is the command; remainder is context.
+            const cmd = `/phosphene ${lane} ${intent}`.trim();
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: [
+                cmd,
+                "",
+                `${MARKER_STARTED}`,
+                "",
+                "PHOSPHENE HOPPER: starting work by issuing a prism summon based on issue state/config.",
+                "",
+                `- **Lane**: \`${lane}\``,
+                `- **Intent**: ${intent}`,
+                depNums.length ? `- **Dependencies**: ${depNums.map((n) => `#${n}`).join(", ")}` : `- **Dependencies**: (none)`,
+              ].join("\n"),
+            });
+
+            // Optional: if manually invoked, also post the report for transparency.
+            if (forceReport) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body: reportLines.join("\n"),
+              });
+            }
+

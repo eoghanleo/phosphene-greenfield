@@ -17,233 +17,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  handoff_research_to_product_marketing:
+  deprecated:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout merge commit
-        uses: actions/checkout@v5
-        with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
-          fetch-depth: 1
-
-      - name: Create product-marketing issue(s) from research handoff signal(s)
+      - name: Deprecated (moved to autoscribe)
         uses: actions/github-script@v7
-        env:
-          # Optional: if set, we will post the @codex summon comment using this token
-          # (so it appears authored by a human user instead of github-actions[bot]).
-          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
         with:
           script: |
-            const fs = require("fs");
-            const { getOctokit } = require("@actions/github");
-
-            const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
+            const pr = context.payload.pull_request;
             const pull_number = pr.number;
-
-            // --- 1) Find signal files changed in this PR
-            const files = await github.paginate(github.rest.pulls.listFiles, {
+            await github.rest.issues.createComment({
               owner,
               repo,
-              pull_number,
-              per_page: 100,
+              issue_number: pull_number,
+              body: [
+                "PHOSPHENE: NOTE",
+                "",
+                "This prism no longer creates or updates Issues.",
+                "Signal→Issue creation has moved to the autoscribe workflow:",
+                "`instrument.gantry.autoscribe.product-marketing.from_signal`",
+              ].join(\"\\n\"),
             });
-
-            const candidateSignalPaths = files
-              .map(f => f.filename)
-              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
-
-            if (candidateSignalPaths.length === 0) {
-              core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
-              return;
-            }
-
-            // --- 2) Load prompt template (parameterized; used as Issue body)
-            const templatePath = ".github/prompts/domain_delegation_prompt.md";
-            if (!fs.existsSync(templatePath)) {
-              throw new Error(`Missing template file: ${templatePath}`);
-            }
-            const template = fs.readFileSync(templatePath, "utf8");
-
-            // --- 3) Helpers: ensure labels exist (labels are required by PHOSPHENE)
-            const labelCatalog = [
-              { name: "phosphene", color: "111111", description: "PHOSPHENE system label" },
-              { name: "phosphene:domain:product-marketing", color: "2563EB", description: "Domain: product-marketing (Cerulean lane)" },
-              { name: "phosphene:handoff", color: "7C3AED", description: "Created by a PHOSPHENE handoff signal" },
-            ];
-
-            async function ensureLabel(l) {
-              try {
-                await github.rest.issues.getLabel({ owner, repo, name: l.name });
-              } catch (e) {
-                if (e.status !== 404) throw e;
-                await github.rest.issues.createLabel({
-                  owner,
-                  repo,
-                  name: l.name,
-                  color: l.color,
-                  description: l.description,
-                });
-              }
-            }
-
-            for (const l of labelCatalog) await ensureLabel(l);
-
-            // --- 4) Parse signals and create issues
-            const created = [];
-            for (const signalPath of candidateSignalPaths) {
-              // Only accept JSON v1 handoff signals of this exact type.
-              if (!signalPath.endsWith(".json")) continue;
-
-              let raw;
-              try {
-                raw = fs.readFileSync(signalPath, "utf8");
-              } catch {
-                // If the file changed but doesn't exist in the merge commit, ignore.
-                continue;
-              }
-
-              let sig;
-              try {
-                sig = JSON.parse(raw);
-              } catch {
-                core.notice(`PHOSPHENE: skipping non-JSON signal: ${signalPath}`);
-                continue;
-              }
-
-              const ok =
-                sig?.signal_version === 1 &&
-                sig?.signal_type === "phosphene.handoff.research_to_product_marketing.v1" &&
-                sig?.from_domain === "research" &&
-                sig?.to_domain === "product-marketing";
-
-              if (!ok) continue;
-
-              const workId = sig.work_id || "UNKNOWN";
-              const upstreamTitle = pr.title || "(no title)";
-              const upstreamUrl = pr.html_url;
-              const intent = (sig.intent || "proposition-development").trim();
-              const doneScoreMin = (sig.done_score_min != null) ? String(sig.done_score_min) : "80";
-              const domainTag = "<product-marketing>";
-              const upstreamDomainTag = "<research>";
-              const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
-              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
-              const domainDoneSignalPath = "phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json";
-              const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
-
-              const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
-              const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
-              const pointersBullets = pointers.length
-                ? pointers.map(p => `- \`${p}\``).join("\n")
-                : "- (no pointers provided)";
-
-              const signalId = sig.signal_id || "";
-              const dedupeMarker = signalId
-                ? `phosphene-signal-id:${signalId}`
-                : `phosphene-handoff:research->product-marketing;pr=${pull_number};signal=${signalPath};merge=${pr.merge_commit_sha}`;
-
-              // Monotonic consumption: if any other signal declares this one as a parent, skip.
-              if (signalId) {
-                const walk = (dir) => {
-                  const out = [];
-                  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-                    const p = `${dir}/${ent.name}`;
-                    if (ent.isDirectory()) out.push(...walk(p));
-                    else if (p.endsWith(".json")) out.push(p);
-                  }
-                  return out;
-                };
-
-                const allSignalJson = walk("phosphene/domains").filter(p => p.includes("/signals/"));
-                let hasChild = false;
-                for (const p of allSignalJson) {
-                  // skip self
-                  if (p === signalPath) continue;
-                  let other;
-                  try {
-                    other = JSON.parse(fs.readFileSync(p, "utf8"));
-                  } catch {
-                    continue;
-                  }
-                  const parents = Array.isArray(other.parents) ? other.parents : [];
-                  if (parents.includes(signalId)) {
-                    hasChild = true;
-                    break;
-                  }
-                }
-                if (hasChild) {
-                  core.notice(`PHOSPHENE: skipping ${signalPath} because it already has child signal(s) (signal_id=${signalId}).`);
-                  continue;
-                }
-              }
-
-              // Dedupe: if an issue already exists with this marker, skip.
-              const search = await github.rest.search.issuesAndPullRequests({
-                q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
-                per_page: 5,
-              });
-              if (search.data.items.length > 0) {
-                core.notice(`PHOSPHENE: issue already exists for ${signalPath} (dedupe hit).`);
-                continue;
-              }
-
-              const titleSuffix = sig.title || upstreamTitle;
-              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for PR #${pull_number} — ${titleSuffix}`;
-
-              const body = template
-                .replaceAll("{{UPSTREAM_PR_NUMBER}}", String(pull_number))
-                .replaceAll("{{UPSTREAM_PR_TITLE}}", upstreamTitle)
-                .replaceAll("{{UPSTREAM_PR_URL}}", upstreamUrl)
-                .replaceAll("{{UPSTREAM_WORK_ID}}", workId)
-                .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
-                .replaceAll("{{DOMAIN_TAG}}", domainTag)
-                .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
-                .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
-                .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", domainDoneSignalPath)
-                .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
-                .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
-                .replaceAll("{{INTENT}}", intent)
-                .replaceAll("{{SIGNAL_PATH}}", signalPath)
-                .replaceAll("{{POINTERS_BULLETS}}", pointersBullets)
-                .replaceAll("{{NOTES_BLOCK}}", notesBlock.trim() ? notesBlock : "")
-                .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker);
-
-              const extraLabels = Array.isArray(sig.labels) ? sig.labels : [];
-              const labels = ["phosphene", "phosphene:domain:product-marketing", "phosphene:handoff", ...extraLabels];
-
-              const issue = await github.rest.issues.create({
-                owner,
-                repo,
-                title: issueTitle,
-                body,
-                labels,
-              });
-
-              // Trigger the consumer Codex GitHub integration:
-              // 1) use the canonical phrase '@codex take issue.'
-              // 2) optionally post using a human token if Codex ignores bot-authored comments
-              const humanToken = (process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
-              const octokit = humanToken ? getOctokit(humanToken) : github;
-
-              await octokit.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: issue.data.number,
-                body: [
-                  "@codex take issue.",
-                  "",
-                  "PHOSPHENE: please take this issue. Full instructions + inputs are in the issue body.",
-                ].join("\n"),
-              });
-
-              created.push({ number: issue.data.number, url: issue.data.html_url, signalPath });
-            }
-
-            if (created.length === 0) {
-              core.notice("PHOSPHENE: no matching handoff signals found (or all were deduped).");
-              return;
-            }
-
-            core.notice(`PHOSPHENE: created ${created.length} product-marketing issue(s): ${created.map(i => `#${i.number}`).join(", ")}`);
 

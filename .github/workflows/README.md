@@ -18,6 +18,17 @@ GitHub Actions requires workflow YAML files to live **directly** in `.github/wor
   - Dispatch/fanout into apparatus runs (summons agents; does not do work itself).
 - **Condensers**: `instrument.gantry.condenser.<domain>.<action>.yml`
   - Coupling authorization / rejection decisions (approve/label/auto-merge enable); still **no commits**.
+- **Autoscribes**: `instrument.gantry.autoscribe.<domain>.<action>.yml`
+  - Create **flimsies** (GitHub Issues) from explicit triggers (e.g. `workflow_dispatch`, `/flimsie ...`).
+  - Must be locked down to **no repo writes** (e.g. `contents: read` only).
+  - **Policy**: autoscribes are the **only** instruments allowed to create/update Issues (title/body/state/labels/assignees). Other instruments may comment on Issues.
+  - **Canonical issue config**: autoscribes enforce a machine-readable block in the Issue body:
+    - `[PHOSPHENE] ... [/PHOSPHENE]`
+    - Special case: `INFORMAL` inside the block is valid and means "do not interpret / do not start"
+- **Hopper**: `instrument.gantry.hopper.global.<action>.yml`
+  - Interpret **Issues** (the core record) to decide whether to activate a Prism and start work.
+  - The hopper is the only instrument that triggers directly on Issue updates; it is comment-only (no Issue mutation beyond comments).
+  - The hopper is strict: if it cannot parse the canonical `[PHOSPHENE]` block, it requests an autoscribe fix via `/autoscribe fix`.
 
 ### Apparatus (agent-run; summoned only)
 
