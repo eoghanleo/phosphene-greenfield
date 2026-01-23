@@ -8,6 +8,58 @@ This file is **FYI only**.
 
 This document exists purely to preserve a few useful design ideas that can inform future script implementations and GitHub automation.
 
+## Current build alignment (high-signal notes)
+
+- Signals are **repo-native, append-only telemetry + orchestration hints**.
+- Signals are **not hand-written**; they are emitted by scripts.
+- **Issue mutation policy**: only **autoscribes** may create/update Issues. Other instruments may comment.
+- Signal consumption for the research → product-marketing handoff is implemented as an **autoscribe** that runs on PR merge:
+  - `instrument.gantry.autoscribe.product-marketing.from_signal`
+
+## Active signals (append-only indexes; no repo scans)
+
+The monotonic DAG rule (“consumed if referenced by a child signal”) can be implemented without scanning every JSON signal file by maintaining two append-only TSV indexes:
+
+- `phosphene/signals_index.tsv`
+  - appended once per newly created signal
+- `phosphene/parent_signals_index.tsv`
+  - appended once per unique parent `signal_id` referenced by any newly created signal (deduplicated)
+
+### Why two indexes
+
+If we define:
+
+- \(S\) = set of all `signal_id`s in `signals_index.tsv`
+- \(P\) = set of all `signal_id`s in `parent_signals_index.tsv`
+
+Then the “active” (unconsumed) signals are:
+
+\[
+S \setminus P
+\]
+
+This is:
+- **append-only**
+- **immutable (monotonic)**: once a signal id appears in \(P\), it is considered consumed forever
+- cheap for gantries: read two files, compute a set difference
+
+### Index formats (v1; script-owned)
+
+These are intentionally simple so they can be maintained with bash-only tooling.
+
+`phosphene/signals_index.tsv` (append-only; never edit existing lines):
+
+- `signal_id<TAB>signal_path<TAB>signal_type<TAB>created_utc`
+
+`phosphene/parent_signals_index.tsv` (append-only, deduplicated by script before append):
+
+- `parent_signal_id`
+
+Notes:
+- Lines beginning with `#` are comments and should be ignored by scripts/gantries.
+- Scripts should ensure parents are **normalized** (e.g., sorted in the JSON) but the index itself only needs the parent ids.
+- Detectors can enforce “append-only” by rejecting diffs that modify existing lines in these TSV files.
+
 ## Handoff signals: research → product-marketing (idea bundle)
 
 ### Where it lives
@@ -31,6 +83,10 @@ This keeps the state machine monotonic: GitHub Actions can decide what to do nex
 Signal identifiers can be made **hash-derived** for stability and collision resistance.
 
 - Use **SHA-256** (not MD5).
+
+Implemented helper (canonical for v1 IDs):
+
+- `phosphene/phosphene-core/bin/signal_hash.sh`
 
 Recommended fields:
 
@@ -65,7 +121,7 @@ If a run emits multiple signals, do not reuse `output_key`. Example patterns:
 - `handoff:research->product-marketing:persona:CPE-0002`
 - `handoff:research->product-marketing:prop:PROP-0007`
 
-### Example signal shape (v1; for scripts to emit)
+### Example signal shape (v1; minimal; for scripts to emit)
 
 ```json
 {
@@ -79,9 +135,6 @@ If a run emits multiple signals, do not reuse `output_key`. Example patterns:
   "parents": [],
   "run_marker": "RA-001",
   "output_key": "handoff:research->product-marketing",
-  "pointers": [
-    "phosphene/domains/research/output/research-assessments/RA-001-.../RA-001.md"
-  ],
   "created_utc": "2026-01-15T00:00:00Z"
 }
 ```

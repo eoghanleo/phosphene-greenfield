@@ -1,0 +1,3 @@
+# PHOSPHENE signals index (append-only)
+# Format (TSV):
+#   signal_id <TAB> signal_path <TAB> signal_type <TAB> created_utc
