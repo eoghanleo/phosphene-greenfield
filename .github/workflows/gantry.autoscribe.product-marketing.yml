@@ -69,7 +69,6 @@ jobs:
         with:
           script: |
             const fs = require("fs");
-            const { getOctokit } = require("@actions/github");
 
             const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;

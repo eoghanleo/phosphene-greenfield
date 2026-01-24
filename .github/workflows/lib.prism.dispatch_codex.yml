@@ -27,15 +27,13 @@ jobs:
           PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
         with:
           script: |
-            const { getOctokit } = require("@actions/github");
             const { owner, repo } = context.repo;
             const issue_number = Number("${{ inputs.issue_number }}");
             const body = ${{ toJson(inputs.body) }};
 
-            const humanToken = (process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
-            const octokit = humanToken ? getOctokit(humanToken) : github;
-
-            await octokit.rest.issues.createComment({
+            // NOTE: github-script v7 provides `github` (Octokit) already; do not require @actions/github here.
+            // If you need a human-authored comment, use GH API via `curl` with PHOSPHENE_HUMAN_TOKEN.
+            await github.rest.issues.createComment({
               owner,
               repo,
               issue_number,
