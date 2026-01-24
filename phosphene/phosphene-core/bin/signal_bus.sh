@@ -71,8 +71,10 @@ ensure_tamper_field_present() {
     return 0
   fi
   local ph="0000000000000000000000000000000000000000000000000000000000000000"
-  # Insert before last }.
-  printf "%s" "${line%}}"
+  # Insert before the final '}'.
+  local prefix
+  prefix="$(printf "%s" "$line" | sed -E 's/}[[:space:]]*$//')"
+  printf "%s" "$prefix"
   printf "%s" ",\"tamper_hash\":\"sha256:${ph}\"}"
 }
 

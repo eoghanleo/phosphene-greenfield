@@ -1,1 +1,2 @@
 
+{"signal_version":1,"signal_id":"sha256:a307c1b0579aee12dede65537e8e05ce263eaebd4560b702bc67bd6a464a765b","signal_type":"phosphene.merge.research.v1","work_id":"RA-001","domain":"research","parents":[],"run_marker":"RA-001","output_key":"merge:research:RA-001","created_utc":"2026-01-24T00:00:00Z","tamper_hash":"sha256:5e61abfd9aeccc7d42c10b7d1d1281c1292895b73ab20701a6921f4e5d9e9f3e"}
