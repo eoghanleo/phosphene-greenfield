@@ -58,7 +58,7 @@ jobs:
             # IMPORTANT: set the committer identity to the PAT owner (not github-actions[bot]).
             # This helps ensure downstream workflows are eligible to trigger from the push.
             user_json="$(curl -sS -H "Authorization: token ${PHOSPHENE_HUMAN_TOKEN}" -H "Accept: application/vnd.github+json" "${GITHUB_API_URL}/user")"
-            login="$(node -e 'const j=JSON.parse(process.argv[1]||\"{}\"); process.stdout.write(String(j.login||\"\"));' "$user_json")"
+            login="$(node -e 'const j=JSON.parse(process.argv[1]||"{}"); process.stdout.write(String(j.login||""));' "$user_json")"
             if [[ -z "${login:-}" ]]; then
               echo "PHOSPHENE: could not resolve PAT login via /user"
               exit 1
