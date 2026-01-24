@@ -1,19 +1,25 @@
-name: "instrument.gantry.prism.product-marketing.from_signal"
+name: "gantry.prism.product-marketing"
 
 on:
   pull_request:
     types: [closed]
     branches: [main]
     paths:
-      - "phosphene/domains/**/signals/**"
+      - "phosphene/signals/*.json"
 
 permissions:
   contents: read
   pull-requests: read
   issues: write
 
+env:
+  # Gantry write boundary (when/if enabled): signal bus only.
+  PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
+    phosphene/signals/**
+    phosphene/signals/indexes/**
+
 concurrency:
-  group: instrument-prism-from-signal-${{ github.event.pull_request.number }}
+  group: instrument-prism-product-marketing-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -37,7 +43,7 @@ jobs:
                 "",
                 "This prism no longer creates or updates Issues.",
                 "Signal→Issue creation has moved to the autoscribe workflow:",
-                "`instrument.gantry.autoscribe.product-marketing.from_signal`",
+                "`gantry.autoscribe.product-marketing`",
               ].join(\"\\n\"),
             });
 

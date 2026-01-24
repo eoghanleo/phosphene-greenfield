@@ -1,4 +1,4 @@
-name: "instrument.gantry.hopper.global.interpret"
+name: "gantry.hopper.global"
 
 on:
   # The hopper is the ONLY instrument that triggers directly on Issue updates (core record).
@@ -11,6 +11,12 @@ on:
 permissions:
   contents: read
   issues: write # comment-only by policy (no edits/labels/state)
+
+env:
+  # Gantry write boundary (when/if enabled): signal bus only.
+  PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
+    phosphene/signals/**
+    phosphene/signals/indexes/**
 
 concurrency:
   group: instrument-hopper-${{ github.event.issue.number }}

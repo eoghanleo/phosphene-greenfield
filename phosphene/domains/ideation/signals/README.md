@@ -1,7 +1,7 @@
 # Signals — ideation
 
 Signals for this domain live in this folder:
-- `phosphene/domains/ideation/signals/`
+- `phosphene/signals/`
 
 Recommended convention:
 - one file per intent, committed as part of a PR

@@ -32,7 +32,7 @@ No domain scripts yet:
 ## DONE signal (required)
 
 Write a DONE signal named after the TP you produced:
-- `phosphene/domains/test-management/signals/<TP-###>-DONE.json`
+- `phosphene/signals/<TP-###>-DONE.json`
 
 Include (minimum) listing:
 

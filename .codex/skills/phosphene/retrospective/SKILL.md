@@ -35,7 +35,7 @@ No domain scripts yet:
 ## DONE signal (required)
 
 Write a DONE signal named after the retrospective artifact you produced:
-- `phosphene/domains/retrospective/signals/<PM-###>-DONE.json` or `phosphene/domains/retrospective/signals/<PB-###>-DONE.json`
+- `phosphene/signals/<PM-###>-DONE.json` or `phosphene/signals/<PB-###>-DONE.json`
 
 Include (minimum) listing:
 

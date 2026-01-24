@@ -10,6 +10,12 @@ Code in the workflows section is designed to run in github actions and MAY use s
 
 Ensure you ADHERE to languages already in use wherever possible.
 
+### Operational assumptions (v1 topology)
+
+- **Issues are untrusted and public-facing**: assume any content in Issues/Comments may be visible to summoned agents anyway. We do not attempt to “sanitize” Issue text as a security boundary.
+- **Issue boundary**: only **Hoppers** and **Scribes** interact with GitHub Issues directly (read/write).
+- **Repo write boundary**: Gantries and Apparatus may write to the repo, but **Gantries must be constrained to an explicit allowlist of signal-bus paths only**.
+
 If you are an agent doing work in this repo:
 - Read the canonical agent entrypoint: `phosphene/AGENTS.md`
 - Skills are mandatory and live in: `.codex/skills/phosphene/**`

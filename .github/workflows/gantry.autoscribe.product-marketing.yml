@@ -1,19 +1,25 @@
-name: "instrument.gantry.autoscribe.product-marketing.from_signal"
+name: "gantry.autoscribe.product-marketing"
 
 on:
   pull_request:
     types: [closed]
     branches: [main]
     paths:
-      - "phosphene/domains/**/signals/**"
+      - "phosphene/signals/*.json"
 
 permissions:
   contents: read
   pull-requests: read
   issues: write
 
+env:
+  # Gantry write boundary (when/if enabled): signal bus only.
+  PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
+    phosphene/signals/**
+    phosphene/signals/indexes/**
+
 concurrency:
-  group: instrument-autoscribe-from-signal-${{ github.event.pull_request.number }}
+  group: instrument-autoscribe-product-marketing-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -32,9 +38,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          mapfile -t files < <(find phosphene/domains -type f -path "*/signals/*.json" -print | sort)
+          mapfile -t files < <(find phosphene/signals -type f -name "*.json" -print | sort)
           if [[ "${#files[@]}" -eq 0 ]]; then
-            echo "No signal JSON files found under phosphene/domains/**/signals/*.json"
+            echo "No signal JSON files found under phosphene/signals/*.json"
             exit 0
           fi
 
@@ -69,7 +75,7 @@ jobs:
 
             const candidateSignalPaths = files
               .map(f => f.filename)
-              .filter(p => p.startsWith("phosphene/domains/research/signals/"));
+              .filter(p => p.startsWith("phosphene/signals/"));
 
             if (candidateSignalPaths.length === 0) {
               core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
@@ -122,7 +128,7 @@ jobs:
               const upstreamDomainTag = "<research>";
               const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
               const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
-              const domainDoneSignalPath = "phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json";
+              const domainDoneSignalPath = "phosphene/signals/<VPD-###>-DONE.json";
               const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
 
               const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
@@ -148,7 +154,7 @@ jobs:
                   return out;
                 };
 
-                const allSignalJson = walk("phosphene/domains").filter(p => p.includes("/signals/"));
+                const allSignalJson = walk("phosphene/signals").filter(p => p.endsWith(".json"));
                 let hasChild = false;
                 for (const p of allSignalJson) {
                   // skip self

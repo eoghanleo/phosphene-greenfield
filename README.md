@@ -154,7 +154,8 @@ Hard requirement:
 - `phosphene/` must exist at the **repo root**
 
 Canonical scaffold:
-- `phosphene/domains/<domain>/{docs,templates,scripts,signals}/`
+- `phosphene/domains/<domain>/{docs,templates,scripts}/`
+- Central signal bus: `phosphene/signals/`
 
 Domain reference convention:
 - Refer to domains using angle brackets: `<ideation>`, `<product-marketing>`, `<feature-management>`, etc.
@@ -174,11 +175,11 @@ Common expectations:
 
 `<WORK_ID>-DONE.json` is a **completion signal**: a compact “I believe I’m done” handshake + audit manifest **and** the registration event for automation.
 
-Put the DONE signal in the **domain signals folder**:
-- `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
+Put the DONE signal in the **central signal bus**:
+- `phosphene/signals/<WORK_ID>-DONE.json`
 
 `<WORK_ID>` must be the **parent/top-level artifact ID** (e.g. `RA-001`, `VPD-001`, `SPEC-012`), so you get files like:
-- `phosphene/domains/research/signals/RA-001-DONE.json`
+- `phosphene/signals/RA-001-DONE.json`
 
 Minimal baseline shape (suggested):
 
@@ -201,7 +202,7 @@ Minimal baseline shape (suggested):
 ## Signals (optional add-ons to the core flow)
 
 Signals are **explicit, small files** placed under:
-- `phosphene/domains/<domain>/signals/`
+- `phosphene/signals/`
 
 Good signals are:
 - **intent-bearing**
@@ -254,7 +255,7 @@ Some Codex configurations may ignore `github-actions[bot]` comments. If you see 
 ### How to test the first handoff
 
 1. Create a PR that adds a v1 handoff signal under:
-   - `phosphene/domains/research/signals/`
+   - `phosphene/signals/`
 2. Merge the PR into `main`.
 3. Confirm the workflow runs and creates a `<product-marketing>` issue:
    - `.github/workflows/phosphene_handoff_research_to_product_marketing.yml`

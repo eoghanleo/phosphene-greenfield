@@ -163,7 +163,7 @@ Usage:
 
 Notes:
   - tamper hashes are required for all signal JSON files under:
-      phosphene/domains/**/signals/*.json
+      phosphene/signals/*.json
   - implementation lives in:
       phosphene/phosphene-core/bin/signal_tamper_hash.sh
 EOF

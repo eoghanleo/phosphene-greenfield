@@ -33,7 +33,7 @@ No domain scripts yet:
 ## DONE signal (required)
 
 Write a DONE signal named after the IDEA you produced:
-- `phosphene/domains/ideation/signals/<IDEA-###>-DONE.json`
+- `phosphene/signals/<IDEA-###>-DONE.json`
 
 Include (minimum) listing:
 

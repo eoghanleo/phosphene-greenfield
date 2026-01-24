@@ -49,7 +49,7 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 ## DONE signal (required)
 
 When completing an FR change, add a DONE signal named after the FR you updated/approved:
-- `phosphene/domains/feature-management/signals/<FR-###>-DONE.json`
+- `phosphene/signals/<FR-###>-DONE.json`
 
 Include (minimum) enumerating:
 

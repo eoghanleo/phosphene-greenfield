@@ -33,7 +33,7 @@ No domain scripts yet:
 ## DONE signal (required)
 
 Write a DONE signal named after the ROADMAP you produced:
-- `phosphene/domains/product-strategy/signals/<ROADMAP-###>-DONE.json`
+- `phosphene/signals/<ROADMAP-###>-DONE.json`
 
 Include (minimum) listing:
 

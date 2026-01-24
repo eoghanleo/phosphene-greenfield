@@ -65,7 +65,7 @@ If an ID doesn’t resolve, you must either:
 ## DONE signal (required for PR-ready work)
 
 Write a DONE signal named after the SPEC you produced:
-- `phosphene/domains/product-management/signals/<SPEC-###>-DONE.json`
+- `phosphene/signals/<SPEC-###>-DONE.json`
 
 Include (minimum) listing:
 

@@ -79,7 +79,7 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 ## DONE signal (required)
 
 When done, write a DONE signal named after the RA you completed:
-- `phosphene/domains/research/signals/<RA-###>-DONE.json`
+- `phosphene/signals/<RA-###>-DONE.json`
 
 Include (minimum) enumerating:
 

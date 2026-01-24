@@ -19,7 +19,7 @@ Operate inside the PHOSPHENE harness using repo-native artifacts as the systemâ€
 ## Repo structure (canonical)
 
 - `phosphene/` is a required drop-in folder at repo root.
-- Domains live under: `phosphene/domains/<domain>/{output,scripts,signals}/`
+- Domains live under: `phosphene/domains/<domain>/{output,scripts}/`
 - Some domains may still include `templates/` as transitional scaffolding.
 - Refer to domains using angle brackets: `<research>`, `<feature-management>`, etc.
 
@@ -66,14 +66,14 @@ Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
 Required:
 
-- Location: `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
+- Location: `phosphene/signals/<WORK_ID>-DONE.json`
 - Naming: `<WORK_ID>` is the parent/top-level artifact ID (e.g. `RA-001`, `VPD-001`, `SPEC-012`).
 
 ## Signals (optional add-ons)
 
 Signals are explicit, parseable events used to route automation; they are **additional** to the PR-gated core flow.
 
-- Location: `phosphene/domains/<domain>/signals/**`
+- Location: `phosphene/signals/**`
 - Use for explicit intent that cannot be reliably inferred from diffs alone.
 
 ## What to read first

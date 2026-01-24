@@ -268,7 +268,7 @@ For repeatability, prefer using these scripts instead of manual edits:
 ## Receipts (recommended)
 
 Write a DONE signal named after the VPD you completed:
-- `phosphene/domains/product-marketing/signals/<VPD-###>-DONE.json`
+- `phosphene/signals/<VPD-###>-DONE.json`
 
 Include (minimum) listing:
 

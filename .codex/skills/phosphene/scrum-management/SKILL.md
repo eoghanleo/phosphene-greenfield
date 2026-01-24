@@ -32,7 +32,7 @@ No domain scripts yet:
 ## DONE signal (required)
 
 Write a DONE signal named after the ISSUE mirror you produced/updated:
-- `phosphene/domains/scrum-management/signals/<ISSUE-###>-DONE.json`
+- `phosphene/signals/<ISSUE-###>-DONE.json`
 
 Include (minimum) listing:
 
