@@ -1,8 +1,7 @@
 name: "gantry.autoscribe.product-marketing"
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [main]
     paths:
       - "phosphene/signals/bus.jsonl"
@@ -40,25 +39,53 @@ env:
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-autoscribe-product-marketing-${{ github.event.pull_request.number || github.run_id }}
+  group: instrument-autoscribe-product-marketing-${{ github.sha || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   autoscribe_product_marketing_from_research_handoff:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout merge commit
+      - name: Checkout main
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
-          fetch-depth: 1
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Validate signal bus tamper hash (JSONL)
+      - name: Extract newly added bus lines
+        id: diff
+        if: github.event_name == 'push'
         shell: bash
         run: |
           set -euo pipefail
-          bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
+          bus="phosphene/signals/bus.jsonl"
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+          git diff --unified=0 "$before" "$after" -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/new_lines.txt || true
+          echo "count=$(wc -l < /tmp/new_lines.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Validate signal bus tamper hash (JSONL)
+        if: github.event_name != 'push' || steps.diff.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "push" ]]; then
+            fail=0
+            while IFS= read -r line; do
+              [[ -n "${line:-}" ]] || continue
+              bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate-line "$line" >/dev/null 2>&1 || fail=1
+            done < /tmp/new_lines.txt
+            [[ "$fail" -eq 0 ]]
+          else
+            bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
+          fi
 
       - name: Create product-marketing issue(s) from research handoff signal(s)
         id: autoscribe
@@ -70,10 +97,9 @@ jobs:
         with:
           script: |
             const fs = require("fs");
+            const { execFileSync } = require("child_process");
 
-            const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
-            const pull_number = pr?.number || 0;
             const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
 
             const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
@@ -108,79 +134,36 @@ jobs:
               return resp.data;
             };
 
-            const createComment = async ({ issue_number, body }) => {
-              if (humanToken) {
-                await apiJson(`/repos/${owner}/${repo}/issues/${issue_number}/comments`, {
-                  method: "POST",
-                  token: humanToken,
-                  body: { body },
-                });
-                return;
+            const busPath = "phosphene/signals/bus.jsonl";
+            const templatePath = ".github/prompts/domain_delegation_prompt.md";
+            if (!fs.existsSync(templatePath)) throw new Error(`Missing template file: ${templatePath}`);
+            const template = fs.readFileSync(templatePath, "utf8");
+
+            const busHasIssueCreatedForParent = (parent_signal_id) => {
+              if (!parent_signal_id || !fs.existsSync(busPath)) return false;
+              const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+              for (let i = lines.length - 1; i >= 0; i--) {
+                try {
+                  const j = JSON.parse(lines[i]);
+                  if (j?.signal_type !== "phosphene.autoscribe.product-marketing.issue_created.v1") continue;
+                  const parents = Array.isArray(j.parents) ? j.parents : [];
+                  if (parents.includes(parent_signal_id)) return true;
+                } catch {}
               }
-              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+              return false;
             };
 
-            const isDispatch = context.eventName === "workflow_dispatch";
-            if (isDispatch) {
-              const templatePath = ".github/prompts/domain_delegation_prompt.md";
-              if (!fs.existsSync(templatePath)) {
-                throw new Error(`Missing template file: ${templatePath}`);
-              }
-              const template = fs.readFileSync(templatePath, "utf8");
+            const createPmIssueAndEmit = async ({ work_id, lane, intent, parent_signal_id }) => {
+              const resolvedWorkId = String(work_id || "").trim();
+              const resolvedParentSignalId = String(parent_signal_id || "").trim();
+              const resolvedLane = String(lane || "cerulean").trim().toLowerCase();
+              const resolvedIntent = String(intent || "proposition-development").trim();
 
-              const workIdInput = String(core.getInput("work_id") || "").trim();
-              const laneInput = String(core.getInput("lane") || "").trim().toLowerCase();
-              const intentInput = String(core.getInput("intent") || "").trim();
-              const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
+              if (!resolvedWorkId) return null;
 
-              // If parent signal is provided, resolve missing fields from bus.jsonl.
-              let parentSignal = null;
-              const busPath = "phosphene/signals/bus.jsonl";
-              if (parentSignalId && fs.existsSync(busPath)) {
-                const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                for (const line of lines) {
-                  try {
-                    const j = JSON.parse(line);
-                    if (String(j.signal_id || "") === parentSignalId) {
-                      parentSignal = j;
-                      break;
-                    }
-                  } catch (e) {
-                    core.warning(`PHOSPHENE: failed to parse bus.jsonl line (parent lookup): ${e.message}`);
-                  }
-                }
-                if (!parentSignal) {
-                  core.warning(`PHOSPHENE: parent_signal_id not found in bus.jsonl: ${parentSignalId}`);
-                }
-              }
-
-              const workId = workIdInput || String(parentSignal?.work_id || "").trim();
-              const lane = laneInput || String(parentSignal?.lane || "cerulean").trim().toLowerCase();
-              const intent = intentInput || String(parentSignal?.intent || "proposition-development").trim();
-
-              let resolvedWorkId = workId;
-              let resolvedParentSignalId = parentSignalId || String(parentSignal?.signal_id || "").trim();
-
-              if (!resolvedWorkId && fs.existsSync(busPath)) {
-                // POC fallback: use the most recent merge.research signal in the bus.
-                const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
-                for (let i = lines.length - 1; i >= 0; i--) {
-                  try {
-                    const j = JSON.parse(lines[i]);
-                    if (j.signal_type === "phosphene.merge.research.v1" && j.work_id) {
-                      resolvedWorkId = String(j.work_id || "").trim();
-                      resolvedParentSignalId = resolvedParentSignalId || String(j.signal_id || "").trim();
-                      break;
-                    }
-                  } catch (e) {
-                    core.warning(`PHOSPHENE: failed to parse bus.jsonl line (fallback): ${e.message}`);
-                  }
-                }
-              }
-
-              if (!resolvedWorkId) {
-                core.setFailed("Missing work_id input (and could not infer from parent_signal_id or bus.jsonl).");
-                return;
+              if (resolvedParentSignalId && busHasIssueCreatedForParent(resolvedParentSignalId)) {
+                core.notice(`PHOSPHENE: autoscribe already emitted issue_created for parent_signal_id=${resolvedParentSignalId} (skip).`);
+                return null;
               }
 
               const dedupeMarker = resolvedParentSignalId
@@ -192,8 +175,8 @@ jobs:
                 per_page: 5,
               });
               if (search.data.items.length > 0) {
-                core.notice("PHOSPHENE: issue already exists (dedupe hit).");
-                return;
+                core.notice(`PHOSPHENE: issue already exists for ${resolvedWorkId} (dedupe hit).`);
+                return null;
               }
 
               const domainTag = "<product-marketing>";
@@ -204,10 +187,10 @@ jobs:
 
               const phospheneBlock = [
                 "[PHOSPHENE]",
-                `lane: ${lane}`,
+                `lane: ${resolvedLane}`,
                 "work_type: product-marketing",
                 `work_id: ${resolvedWorkId}`,
-                `intent: ${intent}`,
+                `intent: ${resolvedIntent}`,
                 "depends_on:",
                 "sequence:",
                 `upstream_signal_id: ${resolvedParentSignalId || ""}`.trimEnd(),
@@ -231,7 +214,7 @@ jobs:
                   .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", "phosphene/signals/bus.jsonl (DONE receipt line)")
                   .replaceAll("{{DONE_SCORE_MIN}}", "0")
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
-                  .replaceAll("{{INTENT}}", intent)
+                  .replaceAll("{{INTENT}}", resolvedIntent)
                   .replaceAll("{{POINTERS_BULLETS}}", `- (see upstream research work in repo for ${resolvedWorkId})`)
                   .replaceAll("{{NOTES_BLOCK}}", "")
                   .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
@@ -241,18 +224,14 @@ jobs:
                 "phosphene",
                 "phosphene:domain:product-marketing",
                 "phosphene:ready",
-                `phosphene:lane:${lane}`,
+                `phosphene:lane:${resolvedLane}`,
               ];
 
               const issue = await createIssue({ title: issueTitle, body, labels });
-
               core.notice(`PHOSPHENE: created product-marketing issue #${issue.number}: ${issue.html_url}`);
 
-              // Emit a bus signal for hopper to consume (bus is the trigger surface).
-              const { execFileSync } = require("child_process");
               const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
               const output_key = `autoscribe:issue-created:product-marketing:issue:${issue.number}`;
-
               const hashArgs = [
                 "phosphene/phosphene-core/bin/signal_hash.sh",
                 "signal-id",
@@ -271,8 +250,8 @@ jobs:
                 work_id: resolvedWorkId,
                 domain: "product-marketing",
                 issue_number: issue.number,
-                lane,
-                intent,
+                lane: resolvedLane,
+                intent: resolvedIntent,
                 phos_id: "",
                 parents: resolvedParentSignalId ? [resolvedParentSignalId] : [],
                 run_marker: resolvedWorkId,
@@ -284,178 +263,57 @@ jobs:
                 "phosphene/phosphene-core/bin/signal_bus.sh",
                 "append",
                 "--bus",
-                "phosphene/signals/bus.jsonl",
+                busPath,
                 "--line",
                 JSON.stringify(sig),
               ], { stdio: "inherit" });
 
-              core.setOutput("did_append", "1");
-              core.setOutput("issue_number", String(issue.number));
-              core.notice(`PHOSPHENE: appended issue_created signal to bus (signal_id=${signal_id})`);
-              return;
-            }
+              return { issue_number: issue.number, work_id: resolvedWorkId, signal_id };
+            };
 
-            // --- 1) Find signal files changed in this PR
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner,
-              repo,
-              pull_number,
-              per_page: 100,
-            });
-
-            const candidateSignalPaths = files
-              .map(f => f.filename)
-              .filter(p => p.startsWith("phosphene/signals/"));
-
-            if (candidateSignalPaths.length === 0) {
-              core.notice("PHOSPHENE: no signal paths in PR (nothing to do).");
-              return;
-            }
-
-            // --- 2) Load prompt template (parameterized; used as Issue body)
-            const templatePath = ".github/prompts/domain_delegation_prompt.md";
-            if (!fs.existsSync(templatePath)) {
-              throw new Error(`Missing template file: ${templatePath}`);
-            }
-            const template = fs.readFileSync(templatePath, "utf8");
-
-            // --- 3) Parse signals and create issues
+            const isDispatch = context.eventName === "workflow_dispatch";
             const created = [];
-            for (const signalPath of candidateSignalPaths) {
-              // Only accept JSON v1 handoff signals of this exact type.
-              if (!signalPath.endsWith(".json")) continue;
 
-              let raw;
-              try {
-                raw = fs.readFileSync(signalPath, "utf8");
-              } catch {
-                // If the file changed but doesn't exist in the merge commit, ignore.
-                continue;
-              }
-
-              let sig;
-              try {
-                sig = JSON.parse(raw);
-              } catch {
-                core.notice(`PHOSPHENE: skipping non-JSON signal: ${signalPath}`);
-                continue;
-              }
-
-              const ok =
-                sig?.signal_version === 1 &&
-                sig?.signal_type === "phosphene.handoff.research_to_product_marketing.v1" &&
-                sig?.from_domain === "research" &&
-                sig?.to_domain === "product-marketing";
-
-              if (!ok) continue;
-
-              const workId = sig.work_id || "UNKNOWN";
-              const upstreamTitle = pr.title || "(no title)";
-              const upstreamUrl = pr.html_url;
-              const intent = (sig.intent || "proposition-development").trim();
-              const doneScoreMin = (sig.done_score_min != null) ? String(sig.done_score_min) : "80";
-              const domainTag = "<product-marketing>";
-              const upstreamDomainTag = "<research>";
-              const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
-              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
-              const domainDoneSignalPath = "phosphene/signals/bus.jsonl";
-              const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
-
-              const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
-              const pointers = Array.isArray(sig.pointers) ? sig.pointers : [];
-              const pointersBullets = pointers.length
-                ? pointers.map(p => `- \`${p}\``).join("\n")
-                : "- (no pointers provided)";
-
-              const signalId = sig.signal_id || "";
-              const dedupeMarker = signalId
-                ? `phosphene-signal-id:${signalId}`
-                : `phosphene-handoff:research->product-marketing;pr=${pull_number};signal=${signalPath};merge=${pr.merge_commit_sha}`;
-
-              // Monotonic consumption: if any other signal declares this one as a parent, skip.
-              if (signalId) {
-                const walk = (dir) => {
-                  const out = [];
-                  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
-                    const p = `${dir}/${ent.name}`;
-                    if (ent.isDirectory()) out.push(...walk(p));
-                    else if (p.endsWith(".json")) out.push(p);
-                  }
-                  return out;
-                };
-
-                const allSignalJson = walk("phosphene/signals").filter(p => p.endsWith(".json"));
-                let hasChild = false;
-                for (const p of allSignalJson) {
-                  // skip self
-                  if (p === signalPath) continue;
-                  let other;
-                  try {
-                    other = JSON.parse(fs.readFileSync(p, "utf8"));
-                  } catch {
-                    continue;
-                  }
-                  const parents = Array.isArray(other.parents) ? other.parents : [];
-                  if (parents.includes(signalId)) {
-                    hasChild = true;
-                    break;
-                  }
-                }
-                if (hasChild) {
-                  core.notice(`PHOSPHENE: skipping ${signalPath} because it already has child signal(s) (signal_id=${signalId}).`);
-                  continue;
-                }
-              }
-
-              // Dedupe: if an issue already exists with this marker, skip.
-              const search = await github.rest.search.issuesAndPullRequests({
-                q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
-                per_page: 5,
+            if (isDispatch) {
+              const workIdInput = String(core.getInput("work_id") || "").trim();
+              const laneInput = String(core.getInput("lane") || "").trim().toLowerCase();
+              const intentInput = String(core.getInput("intent") || "").trim();
+              const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
+              const out = await createPmIssueAndEmit({
+                work_id: workIdInput,
+                lane: laneInput || "cerulean",
+                intent: intentInput || "proposition-development",
+                parent_signal_id: parentSignalId,
               });
-              if (search.data.items.length > 0) {
-                core.notice(`PHOSPHENE: issue already exists for ${signalPath} (dedupe hit).`);
-                continue;
+              if (out) created.push(out);
+            } else if (context.eventName === "push") {
+              const raw = fs.existsSync("/tmp/new_lines.txt") ? fs.readFileSync("/tmp/new_lines.txt", "utf8") : "";
+              const lines = raw.split(/\n/).filter(Boolean);
+              for (const line of lines) {
+                let j;
+                try { j = JSON.parse(line); } catch { continue; }
+                if (String(j.signal_type || "") !== "phosphene.merge.research.v1") continue;
+                const work_id = String(j.work_id || "").trim();
+                if (!work_id) continue;
+                const parent_signal_id = String(j.signal_id || "").trim();
+                const out = await createPmIssueAndEmit({
+                  work_id,
+                  lane: "cerulean",
+                  intent: "proposition-development",
+                  parent_signal_id,
+                });
+                if (out) created.push(out);
               }
-
-              const titleSuffix = sig.title || upstreamTitle;
-              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for PR #${pull_number} — ${titleSuffix}`;
-
-              const body = template
-                .replaceAll("{{UPSTREAM_PR_NUMBER}}", String(pull_number))
-                .replaceAll("{{UPSTREAM_PR_TITLE}}", upstreamTitle)
-                .replaceAll("{{UPSTREAM_PR_URL}}", upstreamUrl)
-                .replaceAll("{{UPSTREAM_WORK_ID}}", workId)
-                .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
-                .replaceAll("{{DOMAIN_TAG}}", domainTag)
-                .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
-                .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
-                .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", domainDoneSignalPath)
-                .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
-                .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
-                .replaceAll("{{INTENT}}", intent)
-                .replaceAll("{{SIGNAL_PATH}}", signalPath)
-                .replaceAll("{{POINTERS_BULLETS}}", pointersBullets)
-                .replaceAll("{{NOTES_BLOCK}}", notesBlock.trim() ? notesBlock : "")
-                .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker);
-
-              const extraLabels = Array.isArray(sig.labels) ? sig.labels : [];
-              const labels = ["phosphene", "phosphene:domain:product-marketing", "phosphene:handoff", ...extraLabels];
-
-              // Autoscribe policy: this workflow is the only place that may create/update issues.
-              const issue = await createIssue({ title: issueTitle, body, labels });
-
-              // NOTE (POC topology): autoscribe creates the issue only.
-              // Prism is responsible for summoning Codex and emitting the branch-invoked signal.
-
-              created.push({ number: issue.number, url: issue.html_url, signalPath });
             }
 
             if (created.length === 0) {
-              core.notice("PHOSPHENE: no matching handoff signals found (or all were deduped).");
+              core.notice("PHOSPHENE: no autoscribe work performed (no matching signals or all deduped).");
               return;
             }
 
-            core.notice(`PHOSPHENE: created ${created.length} product-marketing issue(s): ${created.map(i => `#${i.number}`).join(", ")}`);
+            core.setOutput("did_append", "1");
+            core.setOutput("issues", created.map((c) => String(c.issue_number)).join(","));
+            core.notice(`PHOSPHENE: autoscribed issues: ${created.map((c) => `#${c.issue_number}`).join(", ")}`);
 
       - name: Commit + push bus append
         if: steps.autoscribe.outputs.did_append == '1'
@@ -484,5 +342,5 @@ jobs:
           fi
 
           git add "phosphene/signals/bus.jsonl"
-          git commit -m "PHOSPHENE: autoscribe PM issue_created for issue #${{ steps.autoscribe.outputs.issue_number }}"
+          git commit -m "PHOSPHENE: autoscribe PM issue_created for issue(s) ${{ steps.autoscribe.outputs.issues }}"
           git push origin HEAD:main

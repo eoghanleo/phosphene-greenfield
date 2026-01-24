@@ -16,7 +16,6 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
-  actions: write
 
 env:
   # Gantry write boundary (when/if enabled): signal bus only.
@@ -26,7 +25,7 @@ env:
   PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 jobs:
-  route_push:
+  validate_push:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -63,79 +62,6 @@ jobs:
             bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate-line "$line" >/dev/null 2>&1 || fail=1
           done < /tmp/new_lines.txt
           [[ "$fail" -eq 0 ]]
-
-      - name: Route by signal_type
-        if: steps.diff.outputs.count != '0'
-        uses: actions/github-script@v7
-        env:
-          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
-        with:
-          script: |
-            const fs = require("fs");
-            const { owner, repo } = context.repo;
-            const lines = fs.readFileSync("/tmp/new_lines.txt", "utf8").split(/\n/).filter(Boolean);
-
-            const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
-            const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
-            const apiHeaders = (token) => ({
-              accept: "application/vnd.github+json",
-              "content-type": "application/json",
-              authorization: `token ${token}`,
-              "x-github-api-version": "2022-11-28",
-            });
-            const apiJson = async (path, { method, token, body }) => {
-              const resp = await fetch(`${apiBase}${path}`, {
-                method,
-                headers: apiHeaders(token),
-                body: body ? JSON.stringify(body) : undefined,
-              });
-              const text = await resp.text();
-              if (!resp.ok) {
-                throw new Error(`GitHub API ${method} ${path} failed: ${resp.status} ${resp.statusText} :: ${text}`);
-              }
-              return text ? JSON.parse(text) : null;
-            };
-
-            const dispatch = async (workflow_id, inputs) => {
-              // CRITICAL: use PAT if available so the dispatched workflow run actually triggers.
-              // (GITHUB_TOKEN-triggered workflow_dispatch may be suppressed.)
-              if (humanToken) {
-                await apiJson(`/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`, {
-                  method: "POST",
-                  token: humanToken,
-                  body: { ref: "main", inputs },
-                });
-                return;
-              }
-              await github.rest.actions.createWorkflowDispatch({ owner, repo, workflow_id, ref: "main", inputs });
-            };
-
-            for (const line of lines) {
-              let j;
-              try { j = JSON.parse(line); } catch { continue; }
-              const t = String(j.signal_type || "");
-
-              // 1) MERGE signal for RA-001 triggers autoscribe.product-marketing directly.
-              if (t === "phosphene.merge.research.v1" && String(j.work_id || "") === "RA-001") {
-                await dispatch("gantry.autoscribe.product-marketing.yml", {
-                  work_id: "RA-001",
-                  lane: "cerulean",
-                  intent: "proposition-development",
-                  parent_signal_id: String(j.signal_id || ""),
-                });
-              }
-
-              // 4) Hopper start signal triggers prism.product-marketing.
-              if (t === "phosphene.hopper.product-marketing.start.v1") {
-                await dispatch("gantry.prism.product-marketing.yml", {
-                  issue_number: String(j.issue_number || ""),
-                  work_id: String(j.work_id || ""),
-                  lane: String(j.lane || "cerulean"),
-                  intent: String(j.intent || ""),
-                  parent_signal_id: String(j.signal_id || ""),
-                });
-              }
-            }
 
   validate_pr_and_request_condenser:
     if: github.event_name == 'pull_request'
@@ -208,19 +134,27 @@ jobs:
       - name: Invoke condenser.product-marketing (authorize+merge)
         if: steps.done.outputs.has_done == '1'
         uses: actions/github-script@v7
+        env:
+          PHOSPHENE_DONE_WORK_ID: ${{ steps.done.outputs.work_id }}
+          PHOSPHENE_DONE_SIGNAL_ID: ${{ steps.done.outputs.done_signal_id }}
         with:
           script: |
             const { owner, repo } = context.repo;
             const pr_number = context.payload.pull_request.number;
-            await github.rest.actions.createWorkflowDispatch({
+            const work_id = String(process.env.PHOSPHENE_DONE_WORK_ID || "");
+            const done_signal_id = String(process.env.PHOSPHENE_DONE_SIGNAL_ID || "");
+            await github.rest.issues.createComment({
               owner,
               repo,
-              workflow_id: "gantry.condenser.product-marketing.yml",
-              ref: "main",
-              inputs: {
-                pr_number: String(pr_number),
-                work_id: "${{ steps.done.outputs.work_id }}",
-                parent_signal_id: "${{ steps.done.outputs.done_signal_id }}",
-              },
+              issue_number: pr_number,
+              body: [
+                "PHOSPHENE: DONE receipt detected in PR bus diff.",
+                "",
+                "- This detector no longer dispatches other workflows directly (bus-only routing).",
+                "- Next: condenser should be bus-driven; for now, merge must be handled manually or by a bus-listening condenser.",
+                "",
+                `- work_id: \`${work_id}\``,
+                `- done_signal_id: \`${done_signal_id}\``,
+              ].join("\\n"),
             });
 

@@ -1,6 +1,10 @@
 name: "gantry.prism.product-marketing"
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "phosphene/signals/bus.jsonl"
   workflow_dispatch:
     inputs:
       issue_number:
@@ -38,7 +42,7 @@ env:
   PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 concurrency:
-  group: instrument-prism-product-marketing-${{ inputs.issue_number }}
+  group: instrument-prism-product-marketing-${{ inputs.issue_number || github.sha || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -49,10 +53,29 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: main
-          fetch-depth: 1
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Extract newly added bus lines
+        id: diff
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bus="phosphene/signals/bus.jsonl"
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+          git diff --unified=0 "$before" "$after" -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/new_lines.txt || true
+          echo "count=$(wc -l < /tmp/new_lines.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
 
       - name: Emit branch-invoked signal + summon Codex
         id: emit
+        if: github.event_name != 'push' || steps.diff.outputs.count != '0'
         uses: actions/github-script@v7
         with:
           script: |
@@ -60,28 +83,6 @@ jobs:
             const crypto = require("crypto");
             const fs = require("fs");
             const { owner, repo } = context.repo;
-
-            const issue_number = Number(core.getInput("issue_number", { required: true }));
-            const work_id = String(core.getInput("work_id", { required: true })).trim();
-            const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
-            const intent = String(core.getInput("intent", { required: true })).trim();
-            const parent_signal_id = String(core.getInput("parent_signal_id") || "").trim();
-
-            // Idempotency: if this prism already emitted a child for the given parent, exit.
-            if (parent_signal_id && fs.existsSync("phosphene/signals/bus.jsonl")) {
-              const lines = fs.readFileSync("phosphene/signals/bus.jsonl", "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
-              for (let i = lines.length - 1; i >= 0; i--) {
-                try {
-                  const j = JSON.parse(lines[i]);
-                  if (j?.signal_type !== "phosphene.prism.product-marketing.branch_invoked.v1") continue;
-                  const parents = Array.isArray(j.parents) ? j.parents : [];
-                  if (parents.includes(parent_signal_id)) {
-                    core.notice(`PHOSPHENE: prism already invoked for parent_signal_id=${parent_signal_id} (signal_id=${j.signal_id}).`);
-                    return;
-                  }
-                } catch {}
-              }
-            }
 
             const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
             const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
@@ -115,73 +116,138 @@ jobs:
               await github.rest.issues.createComment({ owner, repo, issue_number, body });
             };
 
-            const seed = `${issue_number}:${parent_signal_id || work_id}:${intent}`;
-            const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
+            const busPath = "phosphene/signals/bus.jsonl";
+            const busText = fs.existsSync(busPath) ? fs.readFileSync(busPath, "utf8") : "";
+            const busLines = busText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
 
-            const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-            const output_key = `prism:branch-invoked:product-marketing:issue:${issue_number}:phos:${phos_id}`;
-
-            const hashArgs = [
-              "phosphene/phosphene-core/bin/signal_hash.sh",
-              "signal-id",
-              "--run-marker",
-              work_id,
-              "--output-key",
-              output_key,
-            ];
-            if (parent_signal_id) hashArgs.push("--parent", parent_signal_id);
-            const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
-
-            const signal = {
-              signal_version: 1,
-              signal_id,
-              signal_type: "phosphene.prism.product-marketing.branch_invoked.v1",
-              work_id,
-              domain: "product-marketing",
-              issue_number,
-              lane,
-              intent,
-              phos_id,
-              parents: parent_signal_id ? [parent_signal_id] : [],
-              run_marker: work_id,
-              output_key,
-              created_utc,
+            const alreadyInvokedForParent = (parent_signal_id) => {
+              if (!parent_signal_id) return false;
+              for (let i = busLines.length - 1; i >= 0; i--) {
+                try {
+                  const j = JSON.parse(busLines[i]);
+                  if (j?.signal_type !== "phosphene.prism.product-marketing.branch_invoked.v1") continue;
+                  const parents = Array.isArray(j.parents) ? j.parents : [];
+                  if (parents.includes(parent_signal_id)) return true;
+                } catch {}
+              }
+              return false;
             };
 
-            // Append to bus (bash-only tool computes tamper_hash).
-            execFileSync("bash", [
-              "phosphene/phosphene-core/bin/signal_bus.sh",
-              "append",
-              "--bus",
-              "phosphene/signals/bus.jsonl",
-              "--line",
-              JSON.stringify(signal),
-            ], { stdio: "inherit" });
+            const emitForStart = async ({ issue_number, work_id, lane, intent, parent_signal_id }) => {
+              const issueNum = Number(issue_number || 0);
+              const workId = String(work_id || "").trim();
+              const ln = String(lane || "cerulean").trim().toLowerCase();
+              const it = String(intent || "proposition-development").trim();
+              const parent = String(parent_signal_id || "").trim();
+              if (!issueNum || !workId || !parent) return null;
 
-            // Summon Codex. Critical: open PR as soon as DoD met.
-            await postComment({
-              issue_number,
-              body: [
-                "@codex take issue.",
-                "",
-                "PHOSPHENE PRISM: branch beam invoked; begin work now.",
-                "",
-                `- **work_id**: \`${work_id}\``,
-                `- **phos_id**: \`${phos_id}\``,
-                `- **intent**: ${intent}`,
-                "",
-                "**CRITICAL**",
-                "- Submit a PR immediately when you meet Definition of Done (do NOT wait for permission).",
-                "- When complete, emit a DONE receipt signal (JSONL line) by running:",
-                `  - \`./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
-                "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
-              ].join("\n"),
-            });
+              if (alreadyInvokedForParent(parent)) {
+                core.notice(`PHOSPHENE: prism already invoked for parent_signal_id=${parent} (skip).`);
+                return null;
+              }
 
-            core.setOutput("issue_number", String(issue_number));
-            core.setOutput("phos_id", phos_id);
+              const seed = `${issueNum}:${parent}:${it}`;
+              const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
+              const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+              const output_key = `prism:branch-invoked:product-marketing:issue:${issueNum}:phos:${phos_id}`;
+
+              const hashArgs = [
+                "phosphene/phosphene-core/bin/signal_hash.sh",
+                "signal-id",
+                "--run-marker",
+                workId,
+                "--output-key",
+                output_key,
+                "--parent",
+                parent,
+              ];
+              const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
+
+              const signal = {
+                signal_version: 1,
+                signal_id,
+                signal_type: "phosphene.prism.product-marketing.branch_invoked.v1",
+                work_id: workId,
+                domain: "product-marketing",
+                issue_number: issueNum,
+                lane: ln,
+                intent: it,
+                phos_id,
+                parents: [parent],
+                run_marker: workId,
+                output_key,
+                created_utc,
+              };
+
+              execFileSync("bash", [
+                "phosphene/phosphene-core/bin/signal_bus.sh",
+                "append",
+                "--bus",
+                busPath,
+                "--line",
+                JSON.stringify(signal),
+              ], { stdio: "inherit" });
+
+              await postComment({
+                issue_number: issueNum,
+                body: [
+                  "@codex take issue.",
+                  "",
+                  "PHOSPHENE PRISM: branch beam invoked; begin work now.",
+                  "",
+                  `- **work_id**: \`${workId}\``,
+                  `- **phos_id**: \`${phos_id}\``,
+                  `- **intent**: ${it}`,
+                  "",
+                  "**CRITICAL**",
+                  "- Submit a PR immediately when you meet Definition of Done (do NOT wait for permission).",
+                  "- When complete, emit a DONE receipt signal (JSONL line) by running:",
+                  `  - \`./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,
+                  "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
+                ].join("\n"),
+              });
+
+              return { issue_number: issueNum, phos_id };
+            };
+
+            const emitted = [];
+            if (context.eventName === "workflow_dispatch") {
+              const issue_number = Number(core.getInput("issue_number", { required: true }));
+              const work_id = String(core.getInput("work_id", { required: true })).trim();
+              const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
+              const intent = String(core.getInput("intent", { required: true })).trim();
+              const parent_signal_id = String(core.getInput("parent_signal_id") || "").trim();
+              const out = await emitForStart({ issue_number, work_id, lane, intent, parent_signal_id });
+              if (out) emitted.push(out);
+            } else if (context.eventName === "push") {
+              const raw = fs.existsSync("/tmp/new_lines.txt") ? fs.readFileSync("/tmp/new_lines.txt", "utf8") : "";
+              const lines = raw.split(/\n/).filter(Boolean);
+              for (const line of lines) {
+                let j;
+                try { j = JSON.parse(line); } catch { continue; }
+                if (String(j.signal_type || "") !== "phosphene.hopper.product-marketing.start.v1") continue;
+                const out = await emitForStart({
+                  issue_number: j.issue_number,
+                  work_id: j.work_id,
+                  lane: j.lane,
+                  intent: j.intent,
+                  parent_signal_id: j.signal_id,
+                });
+                if (out) emitted.push(out);
+              }
+            }
+
+            if (emitted.length === 0) {
+              core.notice("PHOSPHENE: no prism work performed (no matching start signals or all deduped).");
+              return;
+            }
+
+            core.setOutput("did_append", "1");
+            core.setOutput("issues", emitted.map((e) => String(e.issue_number)).join(","));
+            core.notice(`PHOSPHENE: prism invoked for issue(s): ${emitted.map((e) => `#${e.issue_number}`).join(", ")}`);
 
       - name: Commit + push bus append
+        if: steps.emit.outputs.did_append == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -197,6 +263,12 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          if git diff --quiet -- "phosphene/signals/bus.jsonl"; then
+            echo "PHOSPHENE: bus.jsonl unchanged; nothing to commit."
+            exit 0
+          fi
+
           git add "phosphene/signals/bus.jsonl"
-          git commit -m "PHOSPHENE: prism product-marketing branch invoked for issue #${{ steps.emit.outputs.issue_number }}"
+          git commit -m "PHOSPHENE: prism product-marketing branch invoked for issue(s) ${{ steps.emit.outputs.issues }}"
           git push origin HEAD:main
