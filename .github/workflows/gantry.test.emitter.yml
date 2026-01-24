@@ -30,6 +30,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Write probe file
         shell: bash
