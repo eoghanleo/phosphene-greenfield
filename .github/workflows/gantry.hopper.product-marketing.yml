@@ -5,6 +5,12 @@ on:
     types: [opened, edited, reopened, labeled, unlabeled]
   issue_comment:
     types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to evaluate"
+        required: true
+        type: number
 
 permissions:
   contents: write
@@ -17,7 +23,7 @@ env:
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-hopper-product-marketing-${{ github.event.issue.number }}
+  group: instrument-hopper-product-marketing-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -37,10 +43,14 @@ jobs:
           script: |
             const { execFileSync } = require("child_process");
             const { owner, repo } = context.repo;
-            const issue = context.payload.issue;
+            let issue = context.payload.issue || null;
+            let issue_number = issue?.number || null;
+            if (context.eventName === "workflow_dispatch") {
+              issue_number = Number(core.getInput("issue_number", { required: true }));
+              const resp = await github.rest.issues.get({ owner, repo, issue_number });
+              issue = resp.data;
+            }
             if (!issue?.number) return;
-
-            const issue_number = issue.number;
             const title = String(issue.title || "").trim();
             const body = String(issue.body || "");
             const state = String(issue.state || "").toLowerCase();
