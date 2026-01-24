@@ -1,0 +1,64 @@
+name: "gantry.test.emitter"
+
+on:
+  workflow_dispatch:
+    inputs:
+      auth:
+        description: "How to push the commit"
+        required: true
+        type: choice
+        options:
+          - github_token
+          - human_token
+        default: github_token
+
+permissions:
+  contents: write
+
+env:
+  # Gantry write boundary: allow only the probe path.
+  PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
+    phosphene/signals/indexes/workflow_trigger_probe.txt
+  PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
+
+jobs:
+  emit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Write probe file
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p phosphene/signals/indexes
+          date -u +%Y-%m-%dT%H:%M:%SZ > phosphene/signals/indexes/workflow_trigger_probe.txt
+
+      - name: Commit + push (selected auth)
+        shell: bash
+        env:
+          AUTH: ${{ inputs.auth }}
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/indexes/workflow_trigger_probe.txt'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if [[ "${AUTH}" == "human_token" ]]; then
+            if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+              echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN"
+              exit 1
+            fi
+            git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+
+          git add phosphene/signals/indexes/workflow_trigger_probe.txt
+          git commit -m "chore(test): workflow trigger probe (${AUTH})"
+          git push origin HEAD:main
