@@ -35,6 +35,7 @@ env:
   PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
     phosphene/signals/**
     phosphene/signals/indexes/**
+  PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 concurrency:
   group: instrument-prism-product-marketing-${{ inputs.issue_number }}
@@ -143,6 +144,9 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
           git add "phosphene/signals/bus.jsonl"
           git commit -m "PHOSPHENE: prism product-marketing branch invoked for issue #${{ steps.emit.outputs.issue_number }}"
           git push origin HEAD:main

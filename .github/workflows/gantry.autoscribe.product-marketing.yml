@@ -32,7 +32,6 @@ permissions:
   contents: read
   pull-requests: read
   issues: write
-  actions: write
 
 env:
   # Gantry write boundary (when/if enabled): signal bus only.
@@ -221,17 +220,7 @@ jobs:
               const issue = await createIssue({ title: issueTitle, body, labels });
 
               core.notice(`PHOSPHENE: created product-marketing issue #${issue.number}: ${issue.html_url}`);
-              try {
-                await github.rest.actions.createWorkflowDispatch({
-                  owner,
-                  repo,
-                  workflow_id: "gantry.hopper.product-marketing.yml",
-                  ref: "main",
-                  inputs: { issue_number: String(issue.number) },
-                });
-              } catch (e) {
-                core.warning(`PHOSPHENE: failed to dispatch hopper.product-marketing: ${e.message}`);
-              }
+              // Hopper should be triggered by the issue event (PAT-authored issue).
               return;
             }
 
@@ -383,18 +372,6 @@ jobs:
 
               // Autoscribe policy: this workflow is the only place that may create/update issues.
               const issue = await createIssue({ title: issueTitle, body, labels });
-
-              try {
-                await github.rest.actions.createWorkflowDispatch({
-                  owner,
-                  repo,
-                  workflow_id: "gantry.hopper.product-marketing.yml",
-                  ref: "main",
-                  inputs: { issue_number: String(issue.number) },
-                });
-              } catch (e) {
-                core.warning(`PHOSPHENE: failed to dispatch hopper.product-marketing: ${e.message}`);
-              }
 
               // NOTE (POC topology): autoscribe creates the issue only.
               // Prism is responsible for summoning Codex and emitting the branch-invoked signal.
