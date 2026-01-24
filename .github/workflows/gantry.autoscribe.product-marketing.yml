@@ -73,6 +73,25 @@ jobs:
             const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
             const pull_number = pr?.number || 0;
+            const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
+
+            const createIssue = async ({ title, body, labels }) => {
+              if (humanToken) {
+                const resp = await github.request("POST /repos/{owner}/{repo}/issues", {
+                  owner,
+                  repo,
+                  title,
+                  body,
+                  labels,
+                  headers: {
+                    authorization: `token ${humanToken}`,
+                  },
+                });
+                return resp.data;
+              }
+              const resp = await github.rest.issues.create({ owner, repo, title, body, labels });
+              return resp.data;
+            };
 
             const isDispatch = context.eventName === "workflow_dispatch";
             if (isDispatch) {
@@ -186,7 +205,7 @@ jobs:
                   .replaceAll("{{DONE_SCORE_MIN}}", "0")
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
                   .replaceAll("{{INTENT}}", intent)
-                  .replaceAll("{{POINTERS_BULLETS}}", `- (see upstream research work in repo for ${workId})`)
+                  .replaceAll("{{POINTERS_BULLETS}}", `- (see upstream research work in repo for ${resolvedWorkId})`)
                   .replaceAll("{{NOTES_BLOCK}}", "")
                   .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
               ].join("\n");
@@ -198,13 +217,7 @@ jobs:
                 `phosphene:lane:${lane}`,
               ];
 
-              const issue = await github.rest.issues.create({
-                owner,
-                repo,
-                title: issueTitle,
-                body,
-                labels,
-              });
+              const issue = await createIssue({ title: issueTitle, body, labels });
 
               core.notice(`PHOSPHENE: created product-marketing issue #${issue.data.number}: ${issue.data.html_url}`);
               return;
@@ -357,13 +370,7 @@ jobs:
               const labels = ["phosphene", "phosphene:domain:product-marketing", "phosphene:handoff", ...extraLabels];
 
               // Autoscribe policy: this workflow is the only place that may create/update issues.
-              const issue = await github.rest.issues.create({
-                owner,
-                repo,
-                title: issueTitle,
-                body,
-                labels,
-              });
+              const issue = await createIssue({ title: issueTitle, body, labels });
 
               // NOTE (POC topology): autoscribe creates the issue only.
               // Prism is responsible for summoning Codex and emitting the branch-invoked signal.
