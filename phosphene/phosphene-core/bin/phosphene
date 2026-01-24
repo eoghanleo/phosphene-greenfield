@@ -106,6 +106,7 @@ Commands:
   banner   Print the PHOSPHENE neon banner
   doctor   Print banner + dependency diagnostics
   id       Global ID registry (build/validate/where/next)
+  signal   Signal tooling (tamper hash)
   help     Show this help
 
 ID registry:
@@ -153,10 +154,56 @@ id_cmd() {
   bash "$impl" "$sub" "${@:2}"
 }
 
+signal_help() {
+  cat <<'EOF'
+PHOSPHENE SIGNAL TOOLING
+
+Usage:
+  ./phosphene/phosphene-core/bin/phosphene signal tamper [compute|update|validate] <signal.json>
+
+Notes:
+  - tamper hashes are required for all signal JSON files under:
+      phosphene/domains/**/signals/*.json
+  - implementation lives in:
+      phosphene/phosphene-core/bin/signal_tamper_hash.sh
+EOF
+}
+
+signal_cmd() {
+  local root
+  root="$(phosphene_find_project_root)" || {
+    echo "PHOSPHENE: not in a PHOSPHENE project (cannot find repo root with ./phosphene)." 1>&2
+    return 1
+  }
+
+  local tamper_impl="$root/phosphene/phosphene-core/bin/signal_tamper_hash.sh"
+  if [[ ! -f "$tamper_impl" ]]; then
+    echo "PHOSPHENE: missing signal tamper-hash implementation: $tamper_impl" 1>&2
+    return 1
+  fi
+
+  local sub="${1:-help}"
+  shift || true
+  case "$sub" in
+    -h|--help|help) signal_help; return 0 ;;
+    tamper)
+      local op="${1:-help}"
+      shift || true
+      bash "$tamper_impl" "$op" "$@"
+      ;;
+    *)
+      echo "Unknown signal subcommand: $sub" 1>&2
+      signal_help
+      return 2
+      ;;
+  esac
+}
+
 case "$CMD" in
   banner) banner ;;
   doctor) doctor ;;
   id) id_cmd "$@" ;;
+  signal) signal_cmd "$@" ;;
   help|-h|--help) help ;;
   *)
     echo "Unknown command: $CMD" 1>&2

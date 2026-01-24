@@ -50,6 +50,10 @@ PHOSPHENE uses a **DONE signal** as the completion handshake *and* the “regist
 - **Location (required)**: `phosphene/domains/<domain>/signals/<WORK_ID>-DONE.json`
 - **Naming (required)**: `<WORK_ID>` is the **parent/top-level artifact ID** you completed (examples: `RA-001`, `VPD-001`, `SPEC-012`, `FR-012`).
 - **Scope**: keep it small and machine-checkable (JSON with stable fields).
+- **Tamper hash (required)**: all `phosphene/domains/**/signals/*.json` files must include a valid `tamper_hash`.
+  - Update it as the *last step* after editing/creating a signal:
+    - `./phosphene/phosphene-core/bin/signal_tamper_hash.sh update <signal.json>`
+    - or `./phosphene/phosphene-core/bin/phosphene signal tamper update <signal.json>`
 
 Other signals (optional routing add-ons) also live under:
 - `phosphene/domains/<domain>/signals/**`

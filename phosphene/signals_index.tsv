@@ -1,3 +1,1 @@
-# PHOSPHENE signals index (append-only)
-# Format (TSV):
-#   signal_id <TAB> signal_path <TAB> signal_type <TAB> created_utc
+sha256:1111111111111111111111111111111111111111111111111111111111111111	phosphene/domains/placeholder/signals/SIGNAL-PLACEHOLDER.json	phosphene.placeholder.v1	1970-01-01T00:00:00Z

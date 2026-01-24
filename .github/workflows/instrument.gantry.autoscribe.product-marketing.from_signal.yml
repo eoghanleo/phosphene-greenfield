@@ -27,6 +27,23 @@ jobs:
           ref: ${{ github.event.pull_request.merge_commit_sha }}
           fetch-depth: 1
 
+      - name: Validate signal tamper hash (self-hash)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t files < <(find phosphene/domains -type f -path "*/signals/*.json" -print | sort)
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            echo "No signal JSON files found under phosphene/domains/**/signals/*.json"
+            exit 0
+          fi
+
+          fail=0
+          for f in "${files[@]}"; do
+            bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate "$f" || fail=1
+          done
+          [[ "$fail" -eq 0 ]]
+
       - name: Create product-marketing issue(s) from research handoff signal(s)
         uses: actions/github-script@v7
         env:

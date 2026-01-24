@@ -58,7 +58,33 @@ jobs:
                 console.error(`FAIL: signal_type must be a non-empty string: ${f}`);
                 process.exit(1);
               }
+
+              if (!("tamper_hash" in j)) {
+                console.error(`FAIL: missing required field tamper_hash: ${f}`);
+                process.exit(1);
+              }
+              if (typeof j.tamper_hash !== "string" || !/^sha256:[0-9a-f]{64}$/i.test(j.tamper_hash)) {
+                console.error(`FAIL: tamper_hash must be "sha256:<64-hex>": ${f}`);
+                process.exit(1);
+              }
             ' "$f" || fail=1
+          done
+          [[ "$fail" -eq 0 ]]
+
+      - name: Validate signal tamper hash (self-hash)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mapfile -t files < <(find phosphene/domains -type f -path "*/signals/*.json" -print | sort)
+          if [[ "${#files[@]}" -eq 0 ]]; then
+            echo "No signal JSON files found under phosphene/domains/**/signals/*.json"
+            exit 0
+          fi
+
+          fail=0
+          for f in "${files[@]}"; do
+            bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate "$f" || fail=1
           done
           [[ "$fail" -eq 0 ]]
 
