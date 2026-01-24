@@ -23,6 +23,7 @@ env:
   PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
     phosphene/signals/**
     phosphene/signals/indexes/**
+  PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 jobs:
   route_push:
@@ -66,20 +67,47 @@ jobs:
       - name: Route by signal_type
         if: steps.diff.outputs.count != '0'
         uses: actions/github-script@v7
+        env:
+          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
         with:
           script: |
             const fs = require("fs");
             const { owner, repo } = context.repo;
             const lines = fs.readFileSync("/tmp/new_lines.txt", "utf8").split(/\n/).filter(Boolean);
 
-            const dispatch = async (workflow_id, inputs) => {
-              await github.rest.actions.createWorkflowDispatch({
-                owner,
-                repo,
-                workflow_id,
-                ref: "main",
-                inputs,
+            const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
+            const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
+            const apiHeaders = (token) => ({
+              accept: "application/vnd.github+json",
+              "content-type": "application/json",
+              authorization: `token ${token}`,
+              "x-github-api-version": "2022-11-28",
+            });
+            const apiJson = async (path, { method, token, body }) => {
+              const resp = await fetch(`${apiBase}${path}`, {
+                method,
+                headers: apiHeaders(token),
+                body: body ? JSON.stringify(body) : undefined,
               });
+              const text = await resp.text();
+              if (!resp.ok) {
+                throw new Error(`GitHub API ${method} ${path} failed: ${resp.status} ${resp.statusText} :: ${text}`);
+              }
+              return text ? JSON.parse(text) : null;
+            };
+
+            const dispatch = async (workflow_id, inputs) => {
+              // CRITICAL: use PAT if available so the dispatched workflow run actually triggers.
+              // (GITHUB_TOKEN-triggered workflow_dispatch may be suppressed.)
+              if (humanToken) {
+                await apiJson(`/repos/${owner}/${repo}/actions/workflows/${workflow_id}/dispatches`, {
+                  method: "POST",
+                  token: humanToken,
+                  body: { ref: "main", inputs },
+                });
+                return;
+              }
+              await github.rest.actions.createWorkflowDispatch({ owner, repo, workflow_id, ref: "main", inputs });
             };
 
             for (const line of lines) {
