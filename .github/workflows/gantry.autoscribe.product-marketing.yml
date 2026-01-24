@@ -82,10 +82,35 @@ jobs:
               }
               const template = fs.readFileSync(templatePath, "utf8");
 
-              const workId = String(core.getInput("work_id", { required: true })).trim();
-              const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
-              const intent = String(core.getInput("intent", { required: true })).trim();
+              const workIdInput = String(core.getInput("work_id") || "").trim();
+              const laneInput = String(core.getInput("lane") || "").trim().toLowerCase();
+              const intentInput = String(core.getInput("intent") || "").trim();
               const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
+
+              // If parent signal is provided, resolve missing fields from bus.jsonl.
+              let parentSignal = null;
+              const busPath = "phosphene/signals/bus.jsonl";
+              if (parentSignalId && fs.existsSync(busPath)) {
+                const lines = fs.readFileSync(busPath, "utf8").split(/\n/).filter(Boolean);
+                for (const line of lines) {
+                  try {
+                    const j = JSON.parse(line);
+                    if (String(j.signal_id || "") === parentSignalId) {
+                      parentSignal = j;
+                      break;
+                    }
+                  } catch {}
+                }
+              }
+
+              const workId = workIdInput || String(parentSignal?.work_id || "").trim();
+              const lane = laneInput || String(parentSignal?.lane || "cerulean").trim().toLowerCase();
+              const intent = intentInput || String(parentSignal?.intent || "proposition-development").trim();
+
+              if (!workId) {
+                core.setFailed("Missing work_id input (and could not infer from parent_signal_id).");
+                return;
+              }
 
               const dedupeMarker = parentSignalId
                 ? `phosphene-signal-id:${parentSignalId}`
