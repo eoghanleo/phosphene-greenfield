@@ -10,17 +10,17 @@ on:
     inputs:
       work_id:
         description: "Work ID (e.g., RA-001)"
-        required: true
+        required: false
         type: string
       lane:
         description: "Lane"
-        required: true
+        required: false
         type: choice
         options: ["beryl", "cerulean"]
         default: "cerulean"
       intent:
         description: "Intent string for the work"
-        required: true
+        required: false
         type: string
         default: "proposition-development"
       parent_signal_id:
@@ -91,7 +91,7 @@ jobs:
               let parentSignal = null;
               const busPath = "phosphene/signals/bus.jsonl";
               if (parentSignalId && fs.existsSync(busPath)) {
-                const lines = fs.readFileSync(busPath, "utf8").split(/\n/).filter(Boolean);
+                const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
                 for (const line of lines) {
                   try {
                     const j = JSON.parse(line);
@@ -99,7 +99,12 @@ jobs:
                       parentSignal = j;
                       break;
                     }
-                  } catch {}
+                  } catch (e) {
+                    core.warning(`PHOSPHENE: failed to parse bus.jsonl line (parent lookup): ${e.message}`);
+                  }
+                }
+                if (!parentSignal) {
+                  core.warning(`PHOSPHENE: parent_signal_id not found in bus.jsonl: ${parentSignalId}`);
                 }
               }
 
@@ -107,14 +112,34 @@ jobs:
               const lane = laneInput || String(parentSignal?.lane || "cerulean").trim().toLowerCase();
               const intent = intentInput || String(parentSignal?.intent || "proposition-development").trim();
 
-              if (!workId) {
-                core.setFailed("Missing work_id input (and could not infer from parent_signal_id).");
+              let resolvedWorkId = workId;
+              let resolvedParentSignalId = parentSignalId || String(parentSignal?.signal_id || "").trim();
+
+              if (!resolvedWorkId && fs.existsSync(busPath)) {
+                // POC fallback: use the most recent merge.research signal in the bus.
+                const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                for (let i = lines.length - 1; i >= 0; i--) {
+                  try {
+                    const j = JSON.parse(lines[i]);
+                    if (j.signal_type === "phosphene.merge.research.v1" && j.work_id) {
+                      resolvedWorkId = String(j.work_id || "").trim();
+                      resolvedParentSignalId = resolvedParentSignalId || String(j.signal_id || "").trim();
+                      break;
+                    }
+                  } catch (e) {
+                    core.warning(`PHOSPHENE: failed to parse bus.jsonl line (fallback): ${e.message}`);
+                  }
+                }
+              }
+
+              if (!resolvedWorkId) {
+                core.setFailed("Missing work_id input (and could not infer from parent_signal_id or bus.jsonl).");
                 return;
               }
 
-              const dedupeMarker = parentSignalId
-                ? `phosphene-signal-id:${parentSignalId}`
-                : `phosphene-autoscribe:product-marketing:work_id:${workId}`;
+              const dedupeMarker = resolvedParentSignalId
+                ? `phosphene-signal-id:${resolvedParentSignalId}`
+                : `phosphene-autoscribe:product-marketing:work_id:${resolvedWorkId}`;
 
               const search = await github.rest.search.issuesAndPullRequests({
                 q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
@@ -135,15 +160,15 @@ jobs:
                 "[PHOSPHENE]",
                 `lane: ${lane}`,
                 "work_type: product-marketing",
-                `work_id: ${workId}`,
+                `work_id: ${resolvedWorkId}`,
                 `intent: ${intent}`,
                 "depends_on:",
                 "sequence:",
-                `upstream_signal_id: ${parentSignalId || ""}`.trimEnd(),
+                `upstream_signal_id: ${resolvedParentSignalId || ""}`.trimEnd(),
                 "[/PHOSPHENE]",
               ].join("\n");
 
-              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for ${workId}`;
+              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for ${resolvedWorkId}`;
               const body = [
                 phospheneBlock,
                 "",
@@ -151,8 +176,8 @@ jobs:
                   .replaceAll("{{UPSTREAM_PR_NUMBER}}", "N/A")
                   .replaceAll("{{UPSTREAM_PR_TITLE}}", "(merge-signal triggered; no PR context)")
                   .replaceAll("{{UPSTREAM_PR_URL}}", "(n/a)")
-                  .replaceAll("{{UPSTREAM_WORK_ID}}", workId)
-                  .replaceAll("{{SIGNAL_PATH}}", parentSignalId ? `phosphene/signals/bus.jsonl#${parentSignalId}` : "phosphene/signals/bus.jsonl")
+                  .replaceAll("{{UPSTREAM_WORK_ID}}", resolvedWorkId)
+                  .replaceAll("{{SIGNAL_PATH}}", resolvedParentSignalId ? `phosphene/signals/bus.jsonl#${resolvedParentSignalId}` : "phosphene/signals/bus.jsonl")
                   .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
                   .replaceAll("{{DOMAIN_TAG}}", domainTag)
                   .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
