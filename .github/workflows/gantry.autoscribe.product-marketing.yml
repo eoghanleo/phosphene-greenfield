@@ -5,7 +5,28 @@ on:
     types: [closed]
     branches: [main]
     paths:
-      - "phosphene/signals/*.json"
+      - "phosphene/signals/bus.jsonl"
+  workflow_dispatch:
+    inputs:
+      work_id:
+        description: "Work ID (e.g., RA-001)"
+        required: true
+        type: string
+      lane:
+        description: "Lane"
+        required: true
+        type: choice
+        options: ["beryl", "cerulean"]
+        default: "cerulean"
+      intent:
+        description: "Intent string for the work"
+        required: true
+        type: string
+        default: "proposition-development"
+      parent_signal_id:
+        description: "Parent signal_id from bus.jsonl (optional)"
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -19,36 +40,25 @@ env:
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-autoscribe-product-marketing-${{ github.event.pull_request.number }}
+  group: instrument-autoscribe-product-marketing-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
   autoscribe_product_marketing_from_research_handoff:
-    if: github.event.pull_request.merged == true
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout merge commit
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.merge_commit_sha }}
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
           fetch-depth: 1
 
-      - name: Validate signal tamper hash (self-hash)
+      - name: Validate signal bus tamper hash (JSONL)
         shell: bash
         run: |
           set -euo pipefail
-
-          mapfile -t files < <(find phosphene/signals -type f -name "*.json" -print | sort)
-          if [[ "${#files[@]}" -eq 0 ]]; then
-            echo "No signal JSON files found under phosphene/signals/*.json"
-            exit 0
-          fi
-
-          fail=0
-          for f in "${files[@]}"; do
-            bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate "$f" || fail=1
-          done
-          [[ "$fail" -eq 0 ]]
+          bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
 
       - name: Create product-marketing issue(s) from research handoff signal(s)
         uses: actions/github-script@v7
@@ -63,7 +73,93 @@ jobs:
 
             const pr = context.payload.pull_request;
             const { owner, repo } = context.repo;
-            const pull_number = pr.number;
+            const pull_number = pr?.number || 0;
+
+            const isDispatch = context.eventName === "workflow_dispatch";
+            if (isDispatch) {
+              const templatePath = ".github/prompts/domain_delegation_prompt.md";
+              if (!fs.existsSync(templatePath)) {
+                throw new Error(`Missing template file: ${templatePath}`);
+              }
+              const template = fs.readFileSync(templatePath, "utf8");
+
+              const workId = String(core.getInput("work_id", { required: true })).trim();
+              const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
+              const intent = String(core.getInput("intent", { required: true })).trim();
+              const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
+
+              const dedupeMarker = parentSignalId
+                ? `phosphene-signal-id:${parentSignalId}`
+                : `phosphene-autoscribe:product-marketing:work_id:${workId}`;
+
+              const search = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
+                per_page: 5,
+              });
+              if (search.data.items.length > 0) {
+                core.notice("PHOSPHENE: issue already exists (dedupe hit).");
+                return;
+              }
+
+              const domainTag = "<product-marketing>";
+              const upstreamDomainTag = "<research>";
+              const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
+              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
+              const domainDoneScoreCmd = "./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 0";
+
+              const phospheneBlock = [
+                "[PHOSPHENE]",
+                `lane: ${lane}`,
+                "work_type: product-marketing",
+                `work_id: ${workId}`,
+                `intent: ${intent}`,
+                "depends_on:",
+                "sequence:",
+                `upstream_signal_id: ${parentSignalId || ""}`.trimEnd(),
+                "[/PHOSPHENE]",
+              ].join("\n");
+
+              const issueTitle = `PHOSPHENE: <product-marketing> Proposition development for ${workId}`;
+              const body = [
+                phospheneBlock,
+                "",
+                template
+                  .replaceAll("{{UPSTREAM_PR_NUMBER}}", "N/A")
+                  .replaceAll("{{UPSTREAM_PR_TITLE}}", "(merge-signal triggered; no PR context)")
+                  .replaceAll("{{UPSTREAM_PR_URL}}", "(n/a)")
+                  .replaceAll("{{UPSTREAM_WORK_ID}}", workId)
+                  .replaceAll("{{SIGNAL_PATH}}", parentSignalId ? `phosphene/signals/bus.jsonl#${parentSignalId}` : "phosphene/signals/bus.jsonl")
+                  .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
+                  .replaceAll("{{DOMAIN_TAG}}", domainTag)
+                  .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
+                  .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
+                  .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", "phosphene/signals/bus.jsonl (DONE receipt line)")
+                  .replaceAll("{{DONE_SCORE_MIN}}", "0")
+                  .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
+                  .replaceAll("{{INTENT}}", intent)
+                  .replaceAll("{{POINTERS_BULLETS}}", `- (see upstream research work in repo for ${workId})`)
+                  .replaceAll("{{NOTES_BLOCK}}", "")
+                  .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
+              ].join("\n");
+
+              const labels = [
+                "phosphene",
+                "phosphene:domain:product-marketing",
+                "phosphene:ready",
+                `phosphene:lane:${lane}`,
+              ];
+
+              const issue = await github.rest.issues.create({
+                owner,
+                repo,
+                title: issueTitle,
+                body,
+                labels,
+              });
+
+              core.notice(`PHOSPHENE: created product-marketing issue #${issue.data.number}: ${issue.data.html_url}`);
+              return;
+            }
 
             // --- 1) Find signal files changed in this PR
             const files = await github.paginate(github.rest.pulls.listFiles, {
@@ -78,7 +174,7 @@ jobs:
               .filter(p => p.startsWith("phosphene/signals/"));
 
             if (candidateSignalPaths.length === 0) {
-              core.notice("PHOSPHENE: no research signal files in PR (nothing to do).");
+              core.notice("PHOSPHENE: no signal paths in PR (nothing to do).");
               return;
             }
 
@@ -128,7 +224,7 @@ jobs:
               const upstreamDomainTag = "<research>";
               const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
               const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
-              const domainDoneSignalPath = "phosphene/signals/<VPD-###>-DONE.json";
+              const domainDoneSignalPath = "phosphene/signals/bus.jsonl";
               const domainDoneScoreCmd = `./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
 
               const notesBlock = sig.notes ? `\n## Notes from research\n\n${sig.notes}\n` : "";
@@ -220,22 +316,8 @@ jobs:
                 labels,
               });
 
-              // Trigger the consumer Codex GitHub integration:
-              // 1) use the canonical phrase '@codex take issue.'
-              // 2) optionally post using a human token if Codex ignores bot-authored comments
-              const humanToken = (process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
-              const octokit = humanToken ? getOctokit(humanToken) : github;
-
-              await octokit.rest.issues.createComment({
-                owner,
-                repo,
-                issue_number: issue.data.number,
-                body: [
-                  "@codex take issue.",
-                  "",
-                  "PHOSPHENE: please take this issue. Full instructions + inputs are in the issue body.",
-                ].join("\n"),
-              });
+              // NOTE (POC topology): autoscribe creates the issue only.
+              // Prism is responsible for summoning Codex and emitting the branch-invoked signal.
 
               created.push({ number: issue.data.number, url: issue.data.html_url, signalPath });
             }

@@ -58,5 +58,19 @@ echo "--- repair (update again) ---"
 bash "$tool" update "$sig" >/dev/null
 bash "$tool" validate "$sig"
 
+echo "--- compute-line / validate-line (JSONL record) ---"
+ph="0000000000000000000000000000000000000000000000000000000000000000"
+line='{"signal_version":1,"signal_id":"sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb","signal_type":"phosphene.test.signal_line.v1","run_marker":"TEST-000","output_key":"test:tamper-hash-line","created_utc":"1970-01-01T00:00:00Z","tamper_hash":"sha256:'"$ph"'"}'
+
+expected_line="$(bash "$tool" compute-line "$line")"
+line_ok="${line/sha256:$ph/$expected_line}"
+
+bash "$tool" validate-line "$line_ok"
+
+line_bad="$(printf "%s" "$line_ok" | sed -E 's/\"output_key\":\"test:tamper-hash-line\"/\"output_key\":\"tampered\"/')"
+if bash "$tool" validate-line "$line_bad" >/dev/null 2>&1; then
+  fail "expected validate-line to fail after tamper edit"
+fi
+
 echo "OK: signal tamper-hash test passed."
 

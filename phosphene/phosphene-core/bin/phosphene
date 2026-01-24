@@ -160,10 +160,13 @@ PHOSPHENE SIGNAL TOOLING
 
 Usage:
   ./phosphene/phosphene-core/bin/phosphene signal tamper [compute|update|validate] <signal.json>
+  ./phosphene/phosphene-core/bin/phosphene signal tamper [compute-line|validate-line] <json_line>
+  ./phosphene/phosphene-core/bin/phosphene signal bus   [append|validate] [--bus <path>] ...
 
 Notes:
-  - tamper hashes are required for all signal JSON files under:
-      phosphene/signals/*.json
+  - signals are recorded as JSONL lines in:
+      phosphene/signals/bus.jsonl
+  - each JSONL line must include a valid tamper_hash (per-line hashing)
   - implementation lives in:
       phosphene/phosphene-core/bin/signal_tamper_hash.sh
 EOF
@@ -181,6 +184,7 @@ signal_cmd() {
     echo "PHOSPHENE: missing signal tamper-hash implementation: $tamper_impl" 1>&2
     return 1
   fi
+  local bus_impl="$root/phosphene/phosphene-core/bin/signal_bus.sh"
 
   local sub="${1:-help}"
   shift || true
@@ -190,6 +194,15 @@ signal_cmd() {
       local op="${1:-help}"
       shift || true
       bash "$tamper_impl" "$op" "$@"
+      ;;
+    bus)
+      if [[ ! -f "$bus_impl" ]]; then
+        echo "PHOSPHENE: missing signal bus implementation: $bus_impl" 1>&2
+        return 1
+      fi
+      local op="${1:-help}"
+      shift || true
+      bash "$bus_impl" "$op" "$@"
       ;;
     *)
       echo "Unknown signal subcommand: $sub" 1>&2

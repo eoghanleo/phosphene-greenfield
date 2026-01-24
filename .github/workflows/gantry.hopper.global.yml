@@ -101,6 +101,20 @@ jobs:
               .map((s) => String(s));
             const labelSet = new Set(labels.map((s) => s.toLowerCase()));
 
+            // Domain hoppers own domain-labelled issues. Global hopper ignores them to avoid duplicate starts.
+            const domainLabels = labels.map((s) => String(s).toLowerCase()).filter((s) => s.startsWith("phosphene:domain:"));
+            if (domainLabels.length > 0 && !domainLabels.includes("phosphene:domain:global")) {
+              if (forceReport) {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number,
+                  body: `${MARKER_REPORT}\nDomain-labelled issue (${domainLabels.join(", ")}). Global hopper is noop.`,
+                });
+              }
+              return;
+            }
+
             // Policy: never start closed issues.
             if (state !== "open") {
               if (forceReport) {

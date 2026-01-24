@@ -1,49 +1,148 @@
 name: "gantry.prism.product-marketing"
 
 on:
-  pull_request:
-    types: [closed]
-    branches: [main]
-    paths:
-      - "phosphene/signals/*.json"
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Issue number to summon"
+        required: true
+        type: number
+      work_id:
+        description: "Work ID (e.g., RA-001)"
+        required: true
+        type: string
+      lane:
+        description: "Lane"
+        required: true
+        type: choice
+        options: ["beryl", "cerulean"]
+        default: "cerulean"
+      intent:
+        description: "Intent string"
+        required: true
+        type: string
+      parent_signal_id:
+        description: "Parent signal_id (hopper start signal)"
+        required: false
+        type: string
 
 permissions:
-  contents: read
-  pull-requests: read
   issues: write
+  contents: write
 
 env:
-  # Gantry write boundary (when/if enabled): signal bus only.
+  # Gantry write boundary: signal bus only.
   PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
     phosphene/signals/**
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-prism-product-marketing-${{ github.event.pull_request.number }}
-  cancel-in-progress: false
+  group: instrument-prism-product-marketing-${{ inputs.issue_number }}
+  cancel-in-progress: true
 
 jobs:
-  deprecated:
-    if: github.event.pull_request.merged == true
+  summon:
     runs-on: ubuntu-latest
     steps:
-      - name: Deprecated (moved to autoscribe)
+      - name: Checkout main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Emit branch-invoked signal + summon Codex
+        id: emit
         uses: actions/github-script@v7
         with:
           script: |
+            const { execFileSync } = require("child_process");
+            const crypto = require("crypto");
             const { owner, repo } = context.repo;
-            const pr = context.payload.pull_request;
-            const pull_number = pr.number;
+
+            const issue_number = Number(core.getInput("issue_number", { required: true }));
+            const work_id = String(core.getInput("work_id", { required: true })).trim();
+            const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
+            const intent = String(core.getInput("intent", { required: true })).trim();
+            const parent_signal_id = String(core.getInput("parent_signal_id") || "").trim();
+
+            const seed = `${issue_number}:${parent_signal_id || work_id}:${intent}`;
+            const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
+
+            const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+            const output_key = `prism:branch-invoked:product-marketing:issue:${issue_number}:phos:${phos_id}`;
+
+            const hashArgs = [
+              "phosphene/phosphene-core/bin/signal_hash.sh",
+              "signal-id",
+              "--run-marker",
+              work_id,
+              "--output-key",
+              output_key,
+            ];
+            if (parent_signal_id) hashArgs.push("--parent", parent_signal_id);
+            const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
+
+            const signal = {
+              signal_version: 1,
+              signal_id,
+              signal_type: "phosphene.prism.product-marketing.branch_invoked.v1",
+              work_id,
+              domain: "product-marketing",
+              issue_number,
+              lane,
+              intent,
+              phos_id,
+              parents: parent_signal_id ? [parent_signal_id] : [],
+              run_marker: work_id,
+              output_key,
+              created_utc,
+            };
+
+            // Append to bus (bash-only tool computes tamper_hash).
+            execFileSync("bash", [
+              "phosphene/phosphene-core/bin/signal_bus.sh",
+              "append",
+              "--bus",
+              "phosphene/signals/bus.jsonl",
+              "--line",
+              JSON.stringify(signal),
+            ], { stdio: "inherit" });
+
+            // Summon Codex. Critical: open PR as soon as DoD met.
             await github.rest.issues.createComment({
               owner,
               repo,
-              issue_number: pull_number,
+              issue_number,
               body: [
-                "PHOSPHENE: NOTE",
+                "@codex take issue.",
                 "",
-                "This prism no longer creates or updates Issues.",
-                "Signal→Issue creation has moved to the autoscribe workflow:",
-                "`gantry.autoscribe.product-marketing`",
-              ].join(\"\\n\"),
+                "PHOSPHENE PRISM: branch beam invoked; begin work now.",
+                "",
+                `- **work_id**: \`${work_id}\``,
+                `- **phos_id**: \`${phos_id}\``,
+                `- **intent**: ${intent}`,
+                "",
+                "**CRITICAL**",
+                "- Submit a PR immediately when you meet Definition of Done (do NOT wait for permission).",
+                "- When complete, emit a DONE receipt signal (JSONL line) by running:",
+                `  - \`./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
+                "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
+              ].join("\\n"),
             });
 
+            core.setOutput("issue_number", String(issue_number));
+            core.setOutput("phos_id", phos_id);
+
+      - name: Commit + push bus append
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "phosphene/signals/bus.jsonl"
+          git commit -m "PHOSPHENE: prism product-marketing branch invoked for issue #${{ steps.emit.outputs.issue_number }}"
+          git push origin HEAD:main

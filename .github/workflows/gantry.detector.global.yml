@@ -66,78 +66,80 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
-      - name: Validate signal JSON (parse + required fields)
+      - name: Enforce append-only bus changes (PR)
         shell: bash
         run: |
           set -euo pipefail
 
-          mapfile -t files < <(find phosphene/signals -type f -name "*.json" -print | sort)
-          if [[ "${#files[@]}" -eq 0 ]]; then
-            echo "No signal JSON files found under phosphene/signals/*.json"
+          bus="phosphene/signals/bus.jsonl"
+
+          # Only enforce when bus.jsonl is touched in this PR.
+          if ! git diff --name-only "origin/${{ github.base_ref }}"..."${{ github.sha }}" -- | grep -qx "$bus"; then
             exit 0
           fi
 
-          echo "Validating ${#files[@]} signal JSON files..."
+          # Ensure base ref exists locally for diffing.
+          git fetch origin "${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}" --force
+
+          # Reject any deletions/modifications (only allow '+' additions).
+          if git diff "origin/${{ github.base_ref }}"..."${{ github.sha }}" -- "$bus" | grep -qE '^-[^-]'; then
+            echo "FAIL: $bus must be append-only (no deletions/modifications)." >&2
+            exit 1
+          fi
+
+      - name: Validate signal bus JSONL (parse + required fields + tamper_hash)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          bus="phosphene/signals/bus.jsonl"
+          if [[ ! -f "$bus" ]]; then
+            echo "Missing signal bus: $bus" >&2
+            exit 1
+          fi
+
           fail=0
-          for f in "${files[@]}"; do
-            node -e '
-              const fs = require("fs");
-              const f = process.argv[1];
-              const raw = fs.readFileSync(f, "utf8");
-              const j = JSON.parse(raw);
+          line_num=0
+          while IFS= read -r line || [[ -n "${line:-}" ]]; do
+            line_num=$((line_num + 1))
+            [[ -n "${line:-}" ]] || continue
+
+            if ! node -e '
+              const line = process.argv[1];
+              const lineNo = process.argv[2];
+              let j;
+              try { j = JSON.parse(line); }
+              catch { console.error(`FAIL: invalid JSON (line ${lineNo})`); process.exit(1); }
 
               if (typeof j !== "object" || j === null || Array.isArray(j)) {
-                console.error(`FAIL: signal must be a JSON object: ${f}`);
+                console.error(`FAIL: signal must be a JSON object (line ${lineNo})`);
                 process.exit(1);
               }
+              if (!("signal_version" in j) || j.signal_version !== 1) {
+                console.error(`FAIL: signal_version must be 1 (line ${lineNo})`);
+                process.exit(1);
+              }
+              if (!("signal_type" in j) || typeof j.signal_type !== "string" || j.signal_type.trim() === "") {
+                console.error(`FAIL: signal_type must be a non-empty string (line ${lineNo})`);
+                process.exit(1);
+              }
+              if (!("tamper_hash" in j) || typeof j.tamper_hash !== "string" || !/^sha256:[0-9a-f]{64}$/i.test(j.tamper_hash)) {
+                console.error(`FAIL: tamper_hash must be \"sha256:<64-hex>\" (line ${lineNo})`);
+                process.exit(1);
+              }
+            ' "$line" "$line_num"; then
+              fail=1
+              continue
+            fi
 
-              if (!("signal_version" in j)) {
-                console.error(`FAIL: missing required field signal_version: ${f}`);
-                process.exit(1);
-              }
-              if (j.signal_version !== 1) {
-                console.error(`FAIL: signal_version must be 1 (got ${j.signal_version}): ${f}`);
-                process.exit(1);
-              }
+            if ! bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate-line "$line" >/dev/null 2>&1; then
+              echo "FAIL: tamper_hash mismatch (line $line_num): $bus" >&2
+              fail=1
+            fi
+          done < "$bus"
 
-              if (!("signal_type" in j)) {
-                console.error(`FAIL: missing required field signal_type: ${f}`);
-                process.exit(1);
-              }
-              if (typeof j.signal_type !== "string" || j.signal_type.trim() === "") {
-                console.error(`FAIL: signal_type must be a non-empty string: ${f}`);
-                process.exit(1);
-              }
-
-              if (!("tamper_hash" in j)) {
-                console.error(`FAIL: missing required field tamper_hash: ${f}`);
-                process.exit(1);
-              }
-              if (typeof j.tamper_hash !== "string" || !/^sha256:[0-9a-f]{64}$/i.test(j.tamper_hash)) {
-                console.error(`FAIL: tamper_hash must be "sha256:<64-hex>": ${f}`);
-                process.exit(1);
-              }
-            ' "$f" || fail=1
-          done
-          [[ "$fail" -eq 0 ]]
-
-      - name: Validate signal tamper hash (self-hash)
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          mapfile -t files < <(find phosphene/signals -type f -name "*.json" -print | sort)
-          if [[ "${#files[@]}" -eq 0 ]]; then
-            echo "No signal JSON files found under phosphene/signals/*.json"
-            exit 0
-          fi
-
-          fail=0
-          for f in "${files[@]}"; do
-            bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate "$f" || fail=1
-          done
           [[ "$fail" -eq 0 ]]
 
       - name: Summary
@@ -147,7 +149,7 @@ jobs:
             echo "### Signals integrity"
             echo ""
             echo "- **Result**: ${{ job.status }}"
-            echo "- **Scope**: \`phosphene/signals/*.json\`"
+            echo "- **Scope**: \`phosphene/signals/bus.jsonl\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
   tests:

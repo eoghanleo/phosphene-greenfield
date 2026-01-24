@@ -171,15 +171,14 @@ Common expectations:
 - Run validators when available
 - Keep IDs stable and consistent
 
-## Completion signals: `<WORK_ID>-DONE.json` (required)
+## Completion signals: JSONL bus record (required)
 
-`<WORK_ID>-DONE.json` is a **completion signal**: a compact “I believe I’m done” handshake + audit manifest **and** the registration event for automation.
+A DONE signal is a **completion record**: a compact “I believe I’m done” handshake + audit manifest **and** the registration event for automation.
 
-Put the DONE signal in the **central signal bus**:
-- `phosphene/signals/<WORK_ID>-DONE.json`
+Put the DONE record in the **central signal bus**:
+- `phosphene/signals/bus.jsonl` (append-only; one JSON object per line)
 
-`<WORK_ID>` must be the **parent/top-level artifact ID** (e.g. `RA-001`, `VPD-001`, `SPEC-012`), so you get files like:
-- `phosphene/signals/RA-001-DONE.json`
+`work_id` must be the **parent/top-level artifact ID** (e.g. `RA-001`, `VPD-001`, `SPEC-012`).
 
 Minimal baseline shape (suggested):
 
@@ -195,14 +194,15 @@ Minimal baseline shape (suggested):
   "outputs": ["..."],
   "checks": ["..."],
   "inputs_hash": "sha256:...",
-  "timestamp_utc": "2026-01-09T00:00:00Z"
+  "timestamp_utc": "2026-01-09T00:00:00Z",
+  "tamper_hash": "sha256:..."
 }
 ```
 
 ## Signals (optional add-ons to the core flow)
 
-Signals are **explicit, small files** placed under:
-- `phosphene/signals/`
+Signals are **explicit JSONL records** placed into:
+- `phosphene/signals/bus.jsonl`
 
 Good signals are:
 - **intent-bearing**

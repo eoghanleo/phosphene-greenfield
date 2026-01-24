@@ -46,11 +46,14 @@ Usage:
   ./phosphene/phosphene-core/bin/signal_tamper_hash.sh compute <signal.json>
   ./phosphene/phosphene-core/bin/signal_tamper_hash.sh update  <signal.json>
   ./phosphene/phosphene-core/bin/signal_tamper_hash.sh validate <signal.json>
+  ./phosphene/phosphene-core/bin/signal_tamper_hash.sh compute-line  <json_line>
+  ./phosphene/phosphene-core/bin/signal_tamper_hash.sh validate-line <json_line>
 
 Notes:
   - The tamper hash is computed over the file bytes with the tamper_hash value
     normalized to a fixed placeholder (all-zero hex).
   - update ensures the file contains tamper_hash and sets it to the correct value.
+  - compute-line/validate-line operate on a single JSONL record (one JSON object per line).
 EOF
 }
 
@@ -132,6 +135,63 @@ extract_current() {
     | sed -E 's/^"tamper_hash"[[:space:]]*:[[:space:]]*"//; s/"$//'
 }
 
+has_tamper_field_in_line() {
+  local line="$1"
+  grep -qE '"tamper_hash"[[:space:]]*:' <<<"$line"
+}
+
+canonical_line_for_hash() {
+  # Normalize the tamper_hash value to the placeholder. The rest of the line bytes
+  # remain unchanged (no JSON canonicalization beyond this substitution).
+  local line="$1"
+  printf "%s" "$line" \
+    | sed -E 's/("tamper_hash"[[:space:]]*:[[:space:]]*"sha256:)[0-9A-Fa-f]{64}(")/\1'"$TAMPER_PLACEHOLDER_HEX"'\2/'
+}
+
+extract_current_from_line() {
+  local line="$1"
+  grep -oE '"tamper_hash"[[:space:]]*:[[:space:]]*"sha256:[0-9A-Fa-f]{64}"' <<<"$line" \
+    | head -n 1 \
+    | sed -E 's/^"tamper_hash"[[:space:]]*:[[:space:]]*"//; s/"$//'
+}
+
+compute_expected_line() {
+  local line="$1"
+  local hex
+  hex="$(canonical_line_for_hash "$line" | hash_sha256_hex)"
+  printf "sha256:%s\n" "$hex"
+}
+
+cmd_compute_line() {
+  local line="${1:-}"
+  [[ -n "${line:-}" ]] || fail "missing json line"
+  # Require the field to exist to avoid ambiguous canonical insertion semantics.
+  has_tamper_field_in_line "$line" || fail "missing tamper_hash in line"
+  compute_expected_line "$line"
+}
+
+cmd_validate_line() {
+  local line="${1:-}"
+  [[ -n "${line:-}" ]] || fail "missing json line"
+
+  local cur
+  cur="$(extract_current_from_line "$line" || true)"
+  if [[ -z "${cur:-}" ]]; then
+    echo "FAIL: missing or malformed tamper_hash (line)" >&2
+    return 1
+  fi
+
+  local expected
+  expected="$(compute_expected_line "$line")"
+  if [[ "$cur" != "$expected" ]]; then
+    echo "FAIL: tamper_hash mismatch (line)" >&2
+    echo "  expected: $expected" >&2
+    echo "  found:    $cur" >&2
+    return 1
+  fi
+  return 0
+}
+
 update_file_in_place() {
   local f="$1"
   local expected="$2"
@@ -195,6 +255,8 @@ case "$CMD" in
   compute) cmd_compute "$@" ;;
   update) cmd_update "$@" ;;
   validate) cmd_validate "$@" ;;
+  compute-line) cmd_compute_line "$@" ;;
+  validate-line) cmd_validate_line "$@" ;;
   help|-h|--help) usage; exit 0 ;;
   *) fail "unknown command: $CMD" ;;
 esac

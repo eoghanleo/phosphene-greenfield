@@ -564,8 +564,8 @@ if [[ "$QUIET" -ne 1 ]]; then
   if [[ "$result" == "PASS" ]]; then
     echo ""
     echo "Next (registration): write your DONE signal when you’re truly complete:"
-    echo "  - phosphene/signals/<VPD-###>-DONE.json"
-    echo "    (name it after the VPD you’re delivering; include inputs/outputs/checks)"
+    echo "  - phosphene/signals/bus.jsonl"
+    echo "    (append a DONE receipt line; include inputs/outputs/checks)"
   fi
   echo ""
   echo "Inputs:"

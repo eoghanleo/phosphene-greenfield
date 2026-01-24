@@ -55,9 +55,9 @@ This repo treats skills as a **required execution contract**, not optional conte
 
 Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
-## DONE signals (completion + registration) — `<WORK_ID>-DONE.json` (required)
+## DONE signals (completion + registration) — JSONL bus record (required)
 
-`<WORK_ID>-DONE.json` is a completion signal written by the assigned agent at the end of work as:
+A DONE signal is a completion record written by the assigned agent at the end of work as:
 
 - a final checklist / hallucination check
 - a machine-checkable “I believe I’m done” handshake
@@ -66,14 +66,14 @@ Reference: [Codex skills standard](https://developers.openai.com/codex/skills/).
 
 Required:
 
-- Location: `phosphene/signals/<WORK_ID>-DONE.json`
+- Location: `phosphene/signals/bus.jsonl` (append-only; one JSON object per line)
 - Naming: `<WORK_ID>` is the parent/top-level artifact ID (e.g. `RA-001`, `VPD-001`, `SPEC-012`).
 
 ## Signals (optional add-ons)
 
 Signals are explicit, parseable events used to route automation; they are **additional** to the PR-gated core flow.
 
-- Location: `phosphene/signals/**`
+- Location: `phosphene/signals/bus.jsonl`
 - Use for explicit intent that cannot be reliably inferred from diffs alone.
 
 ## What to read first

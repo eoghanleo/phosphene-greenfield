@@ -40,8 +40,9 @@ Do not do a single pass.
   - expand the persona pool where justified (splits/merges/missing implied personas),
   - generate many overlapping propositions,
   - strengthen mapping density between propositions and JTBD IDs.
-- Only write your DONE signal after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist):
-  - `phosphene/signals/<VPD-###>-DONE.json`
+- Only write your DONE receipt signal after you can credibly claim you’ve mined the value space (see the domain skill’s coverage gates/checklist):
+  - Append a JSONL record to `phosphene/signals/bus.jsonl` using:
+    - `./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number <N> --work-id <VPD-###>`
 - Use the score tool to force iteration:
   - Treat it as a **validator gate** (not an FYI).
   - The harness prompt provides your minimum threshold as `done_score_min` — use that value.

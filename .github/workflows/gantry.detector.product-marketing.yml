@@ -1,0 +1,198 @@
+name: "gantry.detector.product-marketing"
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "phosphene/signals/bus.jsonl"
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "phosphene/signals/bus.jsonl"
+      - "phosphene/domains/product-marketing/**"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  actions: write
+
+env:
+  # Gantry write boundary (when/if enabled): signal bus only.
+  PHOSPHENE_GANTRY_WRITE_ALLOWLIST: |
+    phosphene/signals/**
+    phosphene/signals/indexes/**
+
+jobs:
+  route_push:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Extract newly added bus lines
+        id: diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          bus="phosphene/signals/bus.jsonl"
+          before="${{ github.event.before }}"
+          after="${{ github.sha }}"
+          # Collect only added lines (strip leading '+', ignore diff headers).
+          git diff --unified=0 "$before" "$after" -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/new_lines.txt || true
+          echo "count=$(wc -l < /tmp/new_lines.txt | tr -d ' ')" >> "$GITHUB_OUTPUT"
+
+      - name: Validate tamper hash on new lines
+        if: steps.diff.outputs.count != '0'
+        shell: bash
+        run: |
+          set -euo pipefail
+          fail=0
+          while IFS= read -r line; do
+            [[ -n "${line:-}" ]] || continue
+            bash phosphene/phosphene-core/bin/signal_tamper_hash.sh validate-line "$line" >/dev/null 2>&1 || fail=1
+          done < /tmp/new_lines.txt
+          [[ "$fail" -eq 0 ]]
+
+      - name: Route by signal_type
+        if: steps.diff.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const { owner, repo } = context.repo;
+            const lines = fs.readFileSync("/tmp/new_lines.txt", "utf8").split(/\n/).filter(Boolean);
+
+            const dispatch = async (workflow_id, inputs) => {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id,
+                ref: "main",
+                inputs,
+              });
+            };
+
+            for (const line of lines) {
+              let j;
+              try { j = JSON.parse(line); } catch { continue; }
+              const t = String(j.signal_type || "");
+
+              // 1) MERGE signal for RA-001 triggers autoscribe.product-marketing directly.
+              if (t === "phosphene.merge.research.v1" && String(j.work_id || "") === "RA-001") {
+                await dispatch("gantry.autoscribe.product-marketing.yml", {
+                  work_id: "RA-001",
+                  lane: "cerulean",
+                  intent: "proposition-development",
+                  parent_signal_id: String(j.signal_id || ""),
+                });
+              }
+
+              // 4) Hopper start signal triggers prism.product-marketing.
+              if (t === "phosphene.hopper.product-marketing.start.v1") {
+                await dispatch("gantry.prism.product-marketing.yml", {
+                  issue_number: String(j.issue_number || ""),
+                  work_id: String(j.work_id || ""),
+                  lane: String(j.lane || "cerulean"),
+                  intent: String(j.intent || ""),
+                  parent_signal_id: String(j.signal_id || ""),
+                });
+              }
+            }
+
+  validate_pr_and_request_condenser:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR HEAD
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Validate bus tamper hash (entire file)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
+
+      - name: Detect DONE receipt in PR diff
+        id: done
+        shell: bash
+        run: |
+          set -euo pipefail
+          bus="phosphene/signals/bus.jsonl"
+          base="${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$base:refs/remotes/origin/$base" --force
+
+          git diff --unified=0 "origin/$base"...HEAD -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/pr_new_lines.txt || true
+
+          # Extract the first done receipt line if present.
+          done_line="$(node -e '
+            const fs = require("fs");
+            const lines = fs.readFileSync("/tmp/pr_new_lines.txt","utf8").split(/\\n/).filter(Boolean);
+            for (const line of lines) {
+              try {
+                const j = JSON.parse(line);
+                if (j.signal_type === "phosphene.done.product-marketing.receipt.v1") {
+                  process.stdout.write(line);
+                  process.exit(0);
+                }
+              } catch {}
+            }
+            process.exit(1);
+          ' && true || true)"
+
+          if [[ -z "${done_line:-}" ]]; then
+            echo "has_done=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||\"\"));' "$done_line")"
+          sig_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||\"\"));' "$done_line")"
+
+          echo "has_done=1" >> "$GITHUB_OUTPUT"
+          echo "work_id=$work_id" >> "$GITHUB_OUTPUT"
+          echo "done_signal_id=$sig_id" >> "$GITHUB_OUTPUT"
+
+      - name: Validate product-marketing work units (POC)
+        if: steps.done.outputs.has_done == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./phosphene/phosphene-core/bin/phosphene id validate
+          bash phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 0
+
+      - name: Invoke condenser.product-marketing (authorize+merge)
+        if: steps.done.outputs.has_done == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr_number = context.payload.pull_request.number;
+            await github.rest.actions.createWorkflowDispatch({
+              owner,
+              repo,
+              workflow_id: "gantry.condenser.product-marketing.yml",
+              ref: "main",
+              inputs: {
+                pr_number: String(pr_number),
+                work_id: "${{ steps.done.outputs.work_id }}",
+                parent_signal_id: "${{ steps.done.outputs.done_signal_id }}",
+              },
+            });
+
