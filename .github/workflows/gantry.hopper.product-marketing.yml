@@ -1,10 +1,10 @@
 name: "gantry.hopper.product-marketing"
 
 on:
-  issues:
-    types: [opened, edited, reopened, labeled, unlabeled]
-  issue_comment:
-    types: [created]
+  push:
+    branches: [main]
+    paths:
+      - "phosphene/signals/bus.jsonl"
   workflow_dispatch:
     inputs:
       issue_number:
@@ -24,7 +24,7 @@ env:
   PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 concurrency:
-  group: instrument-hopper-product-marketing-${{ github.event.issue.number || inputs.issue_number || github.run_id }}
+  group: instrument-hopper-product-marketing-${{ inputs.issue_number || github.sha || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -35,7 +35,7 @@ jobs:
         uses: actions/checkout@v5
         with:
           ref: main
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Decide + append start signal (if eligible)
         id: decide
@@ -43,65 +43,51 @@ jobs:
         with:
           script: |
             const { execFileSync } = require("child_process");
+            const fs = require("fs");
             const { owner, repo } = context.repo;
-            let issue = context.payload.issue || null;
-            let issue_number = issue?.number || null;
-            if (context.eventName === "workflow_dispatch") {
-              const raw = String(core.getInput("issue_number") || "").trim();
-              if (raw) {
-                issue_number = Number(raw);
-                const resp = await github.rest.issues.get({ owner, repo, issue_number });
-                issue = resp.data;
-              } else {
-                // Fallback: pick the most recently updated open product-marketing issue.
-                const resp = await github.rest.issues.listForRepo({
-                  owner,
-                  repo,
-                  state: "open",
-                  labels: "phosphene:domain:product-marketing",
-                  sort: "updated",
-                  direction: "desc",
-                  per_page: 10,
-                });
-                const candidates = (resp.data || []).filter((i) => !i.pull_request);
-                if (candidates.length === 0) {
-                  core.notice("PHOSPHENE: no open product-marketing issues found for hopper dispatch.");
-                  return;
-                }
-                issue = candidates[0];
-                issue_number = issue.number;
+            const busPath = "phosphene/signals/bus.jsonl";
+            const addedLines = [];
+
+            if (context.eventName === "push") {
+              const before = String(context.payload.before || "").trim();
+              const after = String(context.sha || "").trim();
+              if (!before || !after) return;
+              const cmd = [
+                "bash",
+                "-lc",
+                [
+                  `bus="${busPath}"`,
+                  `git diff --unified=0 "${before}" "${after}" -- "${busPath}" \\`,
+                  `  | grep -E '^\\+' \\`,
+                  `  | grep -vE '^\\+\\+\\+' \\`,
+                  `  | sed -E 's/^\\+//' \\`,
+                  `  | grep -E '^\\{' || true`,
+                ].join("\n"),
+              ];
+              const out = String(execFileSync(cmd[0], cmd.slice(1), { encoding: "utf8" }) || "");
+              for (const line of out.split(/\r?\n/)) {
+                const t = line.trim();
+                if (t) addedLines.push(t);
               }
+            } else if (context.eventName === "workflow_dispatch") {
+              // Manual: evaluate a specific issue (no bus trigger required).
+              const raw = String(core.getInput("issue_number") || "").trim();
+              if (!raw) {
+                core.notice("PHOSPHENE: workflow_dispatch requires issue_number for hopper manual evaluation.");
+                return;
+              }
+              const issue_number = Number(raw);
+              addedLines.push(JSON.stringify({
+                signal_type: "phosphene.autoscribe.product-marketing.issue_created.v1",
+                issue_number,
+                signal_id: "",
+              }));
+            } else {
+              return;
             }
-            if (!issue?.number) return;
-            const title = String(issue.title || "").trim();
-            const body = String(issue.body || "");
-            const state = String(issue.state || "").toLowerCase();
-            const labels = (issue.labels || [])
-              .map((l) => (typeof l === "string" ? l : l?.name))
-              .filter(Boolean)
-              .map((s) => String(s));
-            const labelSet = new Set(labels.map((s) => s.toLowerCase()));
 
             const MARKER_STARTED = "PHOSPHENE-HOPPER-PM:START-SIGNAL-EMITTED";
             const MARKER_REPORT = "PHOSPHENE-HOPPER-PM:REPORT";
-
-            const isBotUser = (u) => {
-              const login = (u?.login || "").toLowerCase();
-              return Boolean(u?.type === "Bot" || login.endsWith("[bot]") || login === "github-actions");
-            };
-
-            let forceReport = false;
-            let forceStart = false;
-            if (context.eventName === "issue_comment") {
-              const comment = context.payload.comment;
-              if (isBotUser(comment?.user)) return;
-              const cbody = String(comment?.body || "");
-              const firstLine = cbody.split(/\r?\n/, 1)[0].trim();
-              if (!(/^\/hopper\b/i.test(firstLine) || /^@hopper\b/i.test(firstLine))) return;
-              forceReport = true;
-              const arg = firstLine.replace(/^(@hopper|\/hopper)\b/i, "").trim().toLowerCase();
-              if (arg === "start" || arg === "force") forceStart = true;
-            }
 
             const PH_OPEN = "[PHOSPHENE]";
             const PH_CLOSE = "[/PHOSPHENE]";
@@ -125,168 +111,171 @@ jobs:
             };
             const isInformalBlock = (rawBlock) => /(^|\n)\s*informal\s*(\n|$)/i.test(String(rawBlock || ""));
 
-            const reportLines = [
-              `${MARKER_REPORT}`,
-              "",
-              `- **Issue**: #${issue_number}`,
-              `- **Domain label present**: ${labelSet.has("phosphene:domain:product-marketing") ? "YES" : "NO"}`,
-              `- **Ready label present**: ${labelSet.has("phosphene:ready") ? "YES" : "NO"}`,
-              `- **Blocked/Hold**: ${(labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold")) ? "YES" : "NO"}`,
-            ];
-
-            if (state !== "open") {
-              reportLines.push(`- **Eligible**: NO (state=${state})`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+            const busHasStartForIssue = (issue_number) => {
+              if (!fs.existsSync(busPath)) return false;
+              const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+              for (let i = lines.length - 1; i >= 0; i--) {
+                try {
+                  const j = JSON.parse(lines[i]);
+                  if (j?.signal_type === "phosphene.hopper.product-marketing.start.v1" && Number(j.issue_number || 0) === Number(issue_number)) {
+                    return true;
+                  }
+                } catch {}
               }
-              return;
-            }
-
-            // Domain gate: only product-marketing labelled issues.
-            if (!labelSet.has("phosphene:domain:product-marketing")) {
-              reportLines.push(`- **Eligible**: NO (missing domain label)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            const rawBlock = extractBlock(body);
-            if (!rawBlock) {
-              reportLines.push(`- **Eligible**: NO (missing [PHOSPHENE] block)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-            if (isInformalBlock(rawBlock)) {
-              reportLines.push(`- **Eligible**: NO ([PHOSPHENE] is INFORMAL)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            const kv = parseKv(rawBlock);
-            const lane = String(kv.lane || "").trim().toLowerCase();
-            const work_type = String(kv.work_type || "").trim().toLowerCase();
-            const work_id = String(kv.work_id || "").trim();
-            const intent = String(kv.intent || title || "").trim();
-            const depends_on = String(kv.depends_on || "").trim();
-            const upstream_signal_id = String(kv.upstream_signal_id || "").trim();
-
-            reportLines.push(`- **Lane**: ${lane ? "`" + lane + "`" : "(missing)"}`);
-            reportLines.push(`- **Work type**: ${work_type ? "`" + work_type + "`" : "(missing)"}`);
-            reportLines.push(`- **Work ID**: ${work_id ? "`" + work_id + "`" : "(missing)"}`);
-
-            // POC gate: strict lane/type
-            if (work_type !== "product-marketing" || lane !== "cerulean") {
-              reportLines.push(`- **Eligible**: NO (work_type/lane mismatch for product-marketing)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            // POC gate: must be ready unless forced.
-            const isReady = labelSet.has("phosphene:ready");
-            const isBlocked = labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold");
-            if (!forceStart && (!isReady || isBlocked)) {
-              reportLines.push(`- **Eligible**: NO (not ready or blocked)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            // POC gate: no dependencies.
-            if (!forceStart && depends_on) {
-              reportLines.push(`- **Eligible**: NO (depends_on set)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            // Idempotency: if marker already present, do nothing.
-            const comments = await github.paginate(github.rest.issues.listComments, {
-              owner,
-              repo,
-              issue_number,
-              per_page: 100,
-            });
-            if (!forceStart && comments.some((c) => String(c.body || "").includes(MARKER_STARTED))) {
-              reportLines.push(`- **Eligible**: NO (already started)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            if (!work_id) {
-              reportLines.push(`- **Eligible**: NO (missing work_id)`);
-              if (forceReport) {
-                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
-              }
-              return;
-            }
-
-            const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-            const output_key = `hopper:start:product-marketing:issue:${issue_number}`;
-
-            // Compute signal_id using existing v1 helper (parents optional).
-            const hashArgs = [
-              "phosphene/phosphene-core/bin/signal_hash.sh",
-              "signal-id",
-              "--run-marker",
-              work_id,
-              "--output-key",
-              output_key,
-            ];
-            if (upstream_signal_id) {
-              hashArgs.push("--parent", upstream_signal_id);
-            }
-            const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
-
-            const parents = upstream_signal_id ? [upstream_signal_id] : [];
-
-            const signal = {
-              signal_version: 1,
-              signal_id,
-              signal_type: "phosphene.hopper.product-marketing.start.v1",
-              work_id,
-              domain: "product-marketing",
-              issue_number,
-              lane,
-              intent,
-              phos_id: "",
-              parents,
-              run_marker: work_id,
-              output_key,
-              created_utc,
+              return false;
             };
 
-            const line = JSON.stringify(signal);
-            // Append to bus via bash-only tool (it will add tamper_hash).
-            execFileSync("bash", [
-              "phosphene/phosphene-core/bin/signal_bus.sh",
-              "append",
-              "--bus",
-              "phosphene/signals/bus.jsonl",
-              "--line",
-              line,
-            ], { stdio: "inherit" });
+            let didAppend = false;
+            const appendedIssues = [];
 
-            core.setOutput("did_append", "1");
-            core.setOutput("issue_number", String(issue_number));
-            reportLines.push(`- **Eligible**: YES`);
-            reportLines.push(`- **Emitted**: \`phosphene.hopper.product-marketing.start.v1\``);
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number,
-              body: [MARKER_STARTED, "", ...reportLines].join("\n"),
-            });
+            for (const raw of addedLines) {
+              let trigger;
+              try { trigger = JSON.parse(raw); } catch { continue; }
+              if (String(trigger.signal_type || "") !== "phosphene.autoscribe.product-marketing.issue_created.v1") continue;
+
+              const issue_number = Number(trigger.issue_number || 0);
+              const parent_signal_id = String(trigger.signal_id || "").trim();
+              if (!issue_number) continue;
+
+              if (busHasStartForIssue(issue_number)) {
+                core.notice(`PHOSPHENE: already started for issue #${issue_number} (bus has start signal).`);
+                continue;
+              }
+
+              const resp = await github.rest.issues.get({ owner, repo, issue_number });
+              const issue = resp.data;
+              if (!issue?.number) continue;
+
+              const title = String(issue.title || "").trim();
+              const body = String(issue.body || "");
+              const state = String(issue.state || "").toLowerCase();
+              const labels = (issue.labels || [])
+                .map((l) => (typeof l === "string" ? l : l?.name))
+                .filter(Boolean)
+                .map((s) => String(s));
+              const labelSet = new Set(labels.map((s) => s.toLowerCase()));
+
+              const reportLines = [
+                `${MARKER_REPORT}`,
+                "",
+                `- **Issue**: #${issue_number}`,
+                `- **Trigger**: \`phosphene.autoscribe.product-marketing.issue_created.v1\``,
+                `- **Domain label present**: ${labelSet.has("phosphene:domain:product-marketing") ? "YES" : "NO"}`,
+                `- **Ready label present**: ${labelSet.has("phosphene:ready") ? "YES" : "NO"}`,
+                `- **Blocked/Hold**: ${(labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold")) ? "YES" : "NO"}`,
+              ];
+
+              if (state !== "open") {
+                reportLines.push(`- **Eligible**: NO (state=${state})`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              if (!labelSet.has("phosphene:domain:product-marketing")) {
+                reportLines.push(`- **Eligible**: NO (missing domain label)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const rawBlock = extractBlock(body);
+              if (!rawBlock) {
+                reportLines.push(`- **Eligible**: NO (missing [PHOSPHENE] block)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+              if (isInformalBlock(rawBlock)) {
+                reportLines.push(`- **Eligible**: NO ([PHOSPHENE] is INFORMAL)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const kv = parseKv(rawBlock);
+              const lane = String(kv.lane || "").trim().toLowerCase();
+              const work_type = String(kv.work_type || "").trim().toLowerCase();
+              const work_id = String(kv.work_id || "").trim();
+              const intent = String(kv.intent || title || "").trim();
+              const depends_on = String(kv.depends_on || "").trim();
+
+              reportLines.push(`- **Lane**: ${lane ? "`" + lane + "`" : "(missing)"}`);
+              reportLines.push(`- **Work type**: ${work_type ? "`" + work_type + "`" : "(missing)"}`);
+              reportLines.push(`- **Work ID**: ${work_id ? "`" + work_id + "`" : "(missing)"}`);
+
+              if (work_type !== "product-marketing" || lane !== "cerulean") {
+                reportLines.push(`- **Eligible**: NO (work_type/lane mismatch for product-marketing)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const isReady = labelSet.has("phosphene:ready");
+              const isBlocked = labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold");
+              if (!isReady || isBlocked) {
+                reportLines.push(`- **Eligible**: NO (not ready or blocked)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              if (depends_on) {
+                reportLines.push(`- **Eligible**: NO (depends_on set)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              if (!work_id) {
+                reportLines.push(`- **Eligible**: NO (missing work_id)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+              const output_key = `hopper:start:product-marketing:issue:${issue_number}`;
+
+              const hashArgs = [
+                "phosphene/phosphene-core/bin/signal_hash.sh",
+                "signal-id",
+                "--run-marker",
+                work_id,
+                "--output-key",
+                output_key,
+              ];
+              if (parent_signal_id) hashArgs.push("--parent", parent_signal_id);
+              const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
+
+              const signal = {
+                signal_version: 1,
+                signal_id,
+                signal_type: "phosphene.hopper.product-marketing.start.v1",
+                work_id,
+                domain: "product-marketing",
+                issue_number,
+                lane,
+                intent,
+                phos_id: "",
+                parents: parent_signal_id ? [parent_signal_id] : [],
+                run_marker: work_id,
+                output_key,
+                created_utc,
+              };
+
+              execFileSync("bash", [
+                "phosphene/phosphene-core/bin/signal_bus.sh",
+                "append",
+                "--bus",
+                busPath,
+                "--line",
+                JSON.stringify(signal),
+              ], { stdio: "inherit" });
+
+              didAppend = true;
+              appendedIssues.push(String(issue_number));
+              reportLines.push(`- **Eligible**: YES`);
+              reportLines.push(`- **Emitted**: \`phosphene.hopper.product-marketing.start.v1\``);
+              await github.rest.issues.createComment({ owner, repo, issue_number, body: [MARKER_STARTED, "", ...reportLines].join("\n") });
+            }
+
+            if (didAppend) {
+              core.setOutput("did_append", "1");
+              core.setOutput("issues", appendedIssues.join(","));
+            }
 
       - name: Commit + push bus append
         if: steps.decide.outputs.did_append == '1'
@@ -297,12 +286,15 @@ jobs:
           export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
           bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
 
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes (would suppress downstream workflows)."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ -n "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
-            git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          fi
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add "phosphene/signals/bus.jsonl"
-          git commit -m "PHOSPHENE: hopper product-marketing start for issue #${{ steps.decide.outputs.issue_number }}"
+          git commit -m "PHOSPHENE: hopper product-marketing start for issue(s) ${{ steps.decide.outputs.issues }}"
           git push origin HEAD:main
 

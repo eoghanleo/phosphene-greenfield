@@ -29,7 +29,7 @@ on:
         type: string
 
 permissions:
-  contents: read
+  contents: write
   pull-requests: read
   issues: write
 
@@ -61,6 +61,7 @@ jobs:
           bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
 
       - name: Create product-marketing issue(s) from research handoff signal(s)
+        id: autoscribe
         uses: actions/github-script@v7
         env:
           # Optional: if set, we will post the @codex summon comment using this token
@@ -75,22 +76,48 @@ jobs:
             const pull_number = pr?.number || 0;
             const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
 
+            const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
+            const apiHeaders = (token) => ({
+              accept: "application/vnd.github+json",
+              "content-type": "application/json",
+              authorization: `token ${token}`,
+              "x-github-api-version": "2022-11-28",
+            });
+            const apiJson = async (path, { method, token, body }) => {
+              const resp = await fetch(`${apiBase}${path}`, {
+                method,
+                headers: apiHeaders(token),
+                body: body ? JSON.stringify(body) : undefined,
+              });
+              const text = await resp.text();
+              if (!resp.ok) {
+                throw new Error(`GitHub API ${method} ${path} failed: ${resp.status} ${resp.statusText} :: ${text}`);
+              }
+              return text ? JSON.parse(text) : null;
+            };
+
             const createIssue = async ({ title, body, labels }) => {
               if (humanToken) {
-                const resp = await github.request("POST /repos/{owner}/{repo}/issues", {
-                  owner,
-                  repo,
-                  title,
-                  body,
-                  labels,
-                  headers: {
-                    authorization: `token ${humanToken}`,
-                  },
+                return await apiJson(`/repos/${owner}/${repo}/issues`, {
+                  method: "POST",
+                  token: humanToken,
+                  body: { title, body, labels },
                 });
-                return resp.data;
               }
               const resp = await github.rest.issues.create({ owner, repo, title, body, labels });
               return resp.data;
+            };
+
+            const createComment = async ({ issue_number, body }) => {
+              if (humanToken) {
+                await apiJson(`/repos/${owner}/${repo}/issues/${issue_number}/comments`, {
+                  method: "POST",
+                  token: humanToken,
+                  body: { body },
+                });
+                return;
+              }
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
             };
 
             const isDispatch = context.eventName === "workflow_dispatch";
@@ -220,7 +247,51 @@ jobs:
               const issue = await createIssue({ title: issueTitle, body, labels });
 
               core.notice(`PHOSPHENE: created product-marketing issue #${issue.number}: ${issue.html_url}`);
-              // Hopper should be triggered by the issue event (PAT-authored issue).
+
+              // Emit a bus signal for hopper to consume (bus is the trigger surface).
+              const { execFileSync } = require("child_process");
+              const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+              const output_key = `autoscribe:issue-created:product-marketing:issue:${issue.number}`;
+
+              const hashArgs = [
+                "phosphene/phosphene-core/bin/signal_hash.sh",
+                "signal-id",
+                "--run-marker",
+                resolvedWorkId,
+                "--output-key",
+                output_key,
+              ];
+              if (resolvedParentSignalId) hashArgs.push("--parent", resolvedParentSignalId);
+              const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
+
+              const sig = {
+                signal_version: 1,
+                signal_id,
+                signal_type: "phosphene.autoscribe.product-marketing.issue_created.v1",
+                work_id: resolvedWorkId,
+                domain: "product-marketing",
+                issue_number: issue.number,
+                lane,
+                intent,
+                phos_id: "",
+                parents: resolvedParentSignalId ? [resolvedParentSignalId] : [],
+                run_marker: resolvedWorkId,
+                output_key,
+                created_utc,
+              };
+
+              execFileSync("bash", [
+                "phosphene/phosphene-core/bin/signal_bus.sh",
+                "append",
+                "--bus",
+                "phosphene/signals/bus.jsonl",
+                "--line",
+                JSON.stringify(sig),
+              ], { stdio: "inherit" });
+
+              core.setOutput("did_append", "1");
+              core.setOutput("issue_number", String(issue.number));
+              core.notice(`PHOSPHENE: appended issue_created signal to bus (signal_id=${signal_id})`);
               return;
             }
 
@@ -386,3 +457,32 @@ jobs:
 
             core.notice(`PHOSPHENE: created ${created.length} product-marketing issue(s): ${created.map(i => `#${i.number}`).join(", ")}`);
 
+      - name: Commit + push bus append
+        if: steps.autoscribe.outputs.did_append == '1'
+        shell: bash
+        env:
+          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes (would suppress downstream workflows)."
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+
+          # If bus wasn't modified (shouldn't happen), exit gracefully.
+          if git diff --quiet -- "phosphene/signals/bus.jsonl"; then
+            echo "PHOSPHENE: bus.jsonl unchanged; nothing to commit."
+            exit 0
+          fi
+
+          git add "phosphene/signals/bus.jsonl"
+          git commit -m "PHOSPHENE: autoscribe PM issue_created for issue #${{ steps.autoscribe.outputs.issue_number }}"
+          git push origin HEAD:main

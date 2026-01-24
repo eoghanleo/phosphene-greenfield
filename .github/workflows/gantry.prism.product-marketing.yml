@@ -58,6 +58,7 @@ jobs:
           script: |
             const { execFileSync } = require("child_process");
             const crypto = require("crypto");
+            const fs = require("fs");
             const { owner, repo } = context.repo;
 
             const issue_number = Number(core.getInput("issue_number", { required: true }));
@@ -65,6 +66,54 @@ jobs:
             const lane = String(core.getInput("lane", { required: true })).trim().toLowerCase();
             const intent = String(core.getInput("intent", { required: true })).trim();
             const parent_signal_id = String(core.getInput("parent_signal_id") || "").trim();
+
+            // Idempotency: if this prism already emitted a child for the given parent, exit.
+            if (parent_signal_id && fs.existsSync("phosphene/signals/bus.jsonl")) {
+              const lines = fs.readFileSync("phosphene/signals/bus.jsonl", "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+              for (let i = lines.length - 1; i >= 0; i--) {
+                try {
+                  const j = JSON.parse(lines[i]);
+                  if (j?.signal_type !== "phosphene.prism.product-marketing.branch_invoked.v1") continue;
+                  const parents = Array.isArray(j.parents) ? j.parents : [];
+                  if (parents.includes(parent_signal_id)) {
+                    core.notice(`PHOSPHENE: prism already invoked for parent_signal_id=${parent_signal_id} (signal_id=${j.signal_id}).`);
+                    return;
+                  }
+                } catch {}
+              }
+            }
+
+            const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
+            const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
+            const apiHeaders = (token) => ({
+              accept: "application/vnd.github+json",
+              "content-type": "application/json",
+              authorization: `token ${token}`,
+              "x-github-api-version": "2022-11-28",
+            });
+            const apiJson = async (path, { method, token, body }) => {
+              const resp = await fetch(`${apiBase}${path}`, {
+                method,
+                headers: apiHeaders(token),
+                body: body ? JSON.stringify(body) : undefined,
+              });
+              const text = await resp.text();
+              if (!resp.ok) {
+                throw new Error(`GitHub API ${method} ${path} failed: ${resp.status} ${resp.statusText} :: ${text}`);
+              }
+              return text ? JSON.parse(text) : null;
+            };
+            const postComment = async ({ issue_number, body }) => {
+              if (humanToken) {
+                await apiJson(`/repos/${owner}/${repo}/issues/${issue_number}/comments`, {
+                  method: "POST",
+                  token: humanToken,
+                  body: { body },
+                });
+                return;
+              }
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            };
 
             const seed = `${issue_number}:${parent_signal_id || work_id}:${intent}`;
             const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
@@ -110,9 +159,7 @@ jobs:
             ], { stdio: "inherit" });
 
             // Summon Codex. Critical: open PR as soon as DoD met.
-            await github.rest.issues.createComment({
-              owner,
-              repo,
+            await postComment({
               issue_number,
               body: [
                 "@codex take issue.",
@@ -128,7 +175,7 @@ jobs:
                 "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                 `  - \`./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
                 "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
-              ].join("\\n"),
+              ].join("\n"),
             });
 
             core.setOutput("issue_number", String(issue_number));
@@ -142,11 +189,14 @@ jobs:
           export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
           bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
 
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes (would suppress downstream workflows)."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ -n "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
-            git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          fi
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add "phosphene/signals/bus.jsonl"
           git commit -m "PHOSPHENE: prism product-marketing branch invoked for issue #${{ steps.emit.outputs.issue_number }}"
           git push origin HEAD:main
