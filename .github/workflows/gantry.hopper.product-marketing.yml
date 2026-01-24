@@ -9,7 +9,7 @@ on:
     inputs:
       issue_number:
         description: "Issue number to evaluate"
-        required: true
+        required: false
         type: number
 
 permissions:
@@ -46,7 +46,12 @@ jobs:
             let issue = context.payload.issue || null;
             let issue_number = issue?.number || null;
             if (context.eventName === "workflow_dispatch") {
-              issue_number = Number(core.getInput("issue_number", { required: true }));
+              const raw = String(core.getInput("issue_number") || "").trim();
+              if (!raw) {
+                core.setFailed("Missing issue_number input for workflow_dispatch.");
+                return;
+              }
+              issue_number = Number(raw);
               const resp = await github.rest.issues.get({ owner, repo, issue_number });
               issue = resp.data;
             }
