@@ -219,7 +219,7 @@ jobs:
 
               const issue = await createIssue({ title: issueTitle, body, labels });
 
-              core.notice(`PHOSPHENE: created product-marketing issue #${issue.data.number}: ${issue.data.html_url}`);
+              core.notice(`PHOSPHENE: created product-marketing issue #${issue.number}: ${issue.html_url}`);
               return;
             }
 
@@ -375,7 +375,7 @@ jobs:
               // NOTE (POC topology): autoscribe creates the issue only.
               // Prism is responsible for summoning Codex and emitting the branch-invoked signal.
 
-              created.push({ number: issue.data.number, url: issue.data.html_url, signalPath });
+              created.push({ number: issue.number, url: issue.html_url, signalPath });
             }
 
             if (created.length === 0) {
