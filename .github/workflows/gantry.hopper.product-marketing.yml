@@ -47,13 +47,29 @@ jobs:
             let issue_number = issue?.number || null;
             if (context.eventName === "workflow_dispatch") {
               const raw = String(core.getInput("issue_number") || "").trim();
-              if (!raw) {
-                core.setFailed("Missing issue_number input for workflow_dispatch.");
-                return;
+              if (raw) {
+                issue_number = Number(raw);
+                const resp = await github.rest.issues.get({ owner, repo, issue_number });
+                issue = resp.data;
+              } else {
+                // Fallback: pick the most recently updated open product-marketing issue.
+                const resp = await github.rest.issues.listForRepo({
+                  owner,
+                  repo,
+                  state: "open",
+                  labels: "phosphene:domain:product-marketing",
+                  sort: "updated",
+                  direction: "desc",
+                  per_page: 10,
+                });
+                const candidates = (resp.data || []).filter((i) => !i.pull_request);
+                if (candidates.length === 0) {
+                  core.notice("PHOSPHENE: no open product-marketing issues found for hopper dispatch.");
+                  return;
+                }
+                issue = candidates[0];
+                issue_number = issue.number;
               }
-              issue_number = Number(raw);
-              const resp = await github.rest.issues.get({ owner, repo, issue_number });
-              issue = resp.data;
             }
             if (!issue?.number) return;
             const title = String(issue.title || "").trim();
