@@ -11,28 +11,36 @@ Scope: **only** the `<product-marketing>` orchestration subflow (Autoscribe → 
 ### Subflow diagram (Mermaid)
 
 ```mermaid
-flowchart LR
-  BUS[(phosphene/signals/bus.jsonl)]
+sequenceDiagram
+  autonumber
+  participant BUS as bus.jsonl (main)
+  participant AS as gantry.autoscribe.product-marketing
+  participant H as gantry.hopper.product-marketing
+  participant P as gantry.prism.product-marketing
+  participant I as GitHub Issue
+  participant CX as Codex (apparatus)
 
-  M["merge.research signal<br/>phosphene.merge.research.v1<br/>work_id: RA-001"] --> BUS
+  Note over BUS: Each append is commit+push to main (PAT-authored)
 
-  BUS -->|push: new merge signal| AS[gantry.autoscribe.product-marketing]
-  AS -->|creates GitHub issue| ISSUE["Issue: PHOSPHENE PM work<br/>labels + [PHOSPHENE] block"]
-  AS -->|appends| S1["phosphene.autoscribe.product-marketing.issue_created.v1<br/>lane: beryl<br/>parents: [merge]"]
-  S1 --> BUS
+  rect rgb(245,245,245)
+    Note over BUS: Upstream signal arrives
+    BUS->>BUS: append phosphene.merge.research.v1 (work_id=RA-001)
+  end
 
-  BUS -->|push: new issue_created| H[gantry.hopper.product-marketing]
-  H -->|validates issue eligibility| ISSUE
-  H -->|appends| S2["phosphene.hopper.product-marketing.start.v1<br/>lane: beryl<br/>parents: [issue_created]"]
-  S2 --> BUS
+  BUS-->>AS: push trigger (new merge.research line)
+  AS->>I: create issue (labels + [PHOSPHENE] block)\nlane=beryl
+  AS->>BUS: append phosphene.autoscribe.product-marketing.issue_created.v1\nparents=[merge]
 
-  BUS -->|push: new start| P[gantry.prism.product-marketing]
-  P -->|appends| S3["phosphene.prism.product-marketing.branch_invoked.v1<br/>lane: beryl<br/>phos_id issued<br/>parents: [start]"]
-  S3 --> BUS
+  BUS-->>H: push trigger (new issue_created line)
+  H->>I: validate eligibility\n(domain label, lane=beryl, ready, not blocked)
+  H->>BUS: append phosphene.hopper.product-marketing.start.v1\nparents=[issue_created]
 
-  P -->|comments| SUMMON["@codex summon<br/>(instructions + DONE receipt cmd)"]
-  SUMMON --> C[Codex work on branch]
-  C -->|appends in PR branch| DONE["phosphene.done.product-marketing.receipt.v1<br/>parents: [branch_invoked]"]
+  BUS-->>P: push trigger (new start line)
+  P->>BUS: append phosphene.prism.product-marketing.branch_invoked.v1\nphos_id issued; parents=[start]
+  P->>I: comment @codex summon + instructions\n(includes DONE receipt command)
+
+  Note over CX: Work happens on a PR branch
+  CX->>BUS: append phosphene.done.product-marketing.receipt.v1\n(in PR branch; parents=[branch_invoked])
 ```
 
 ---
