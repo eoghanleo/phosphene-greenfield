@@ -37,7 +37,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Validate bus tamper hash (entire file)
         shell: bash

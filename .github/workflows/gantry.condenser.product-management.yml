@@ -39,7 +39,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Checkout main (dispatch)
         if: github.event_name == 'workflow_dispatch'
@@ -47,7 +47,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Extract approve signal (product-management) from PR diff
         id: approve
@@ -160,7 +160,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Append merge-complete signal to bus (main)
         if: github.event_name == 'pull_request' && steps.approve.outputs.has_approve == '1' && steps.merge.outputs.merged == '1'
