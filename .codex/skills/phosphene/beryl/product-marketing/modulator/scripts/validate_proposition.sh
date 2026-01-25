@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Domain-local wrapper for the global PHOSPHENE ID registry.
-# Use this for discoverability, but note the registry itself is repo-wide.
+# Domain-local wrapper for the product-marketing proposition validator.
+# The canonical implementation lives under .github/scripts/.
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 find_repo_root() {
   local d="$SCRIPT_DIR"
   while true; do
@@ -19,5 +20,5 @@ find_repo_root() {
 
 ROOT="$(find_repo_root)" || { echo "Error: could not locate PHOSPHENE repo root from: $SCRIPT_DIR" >&2; exit 2; }
 
-exec "$ROOT/phosphene/phosphene-core/bin/phosphene" id "$@"
+exec "$ROOT/.github/scripts/validate_proposition.sh" "$@"
 

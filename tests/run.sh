@@ -8,6 +8,7 @@ set -euo pipefail
 #   bash tests/run.sh
 #   bash tests/run.sh --e2e
 #   bash tests/run.sh --product-marketing
+#   bash tests/run.sh --product-management
 #   bash tests/run.sh --coverage
 #
 # Notes:
@@ -22,7 +23,7 @@ source "$SCRIPT_DIR/lib/test_helpers.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  bash tests/run.sh [--all|--e2e|--product-marketing] [--coverage]
+  bash tests/run.sh [--all|--e2e|--product-marketing|--product-management] [--coverage]
 EOF
 }
 
@@ -33,6 +34,7 @@ while [[ $# -gt 0 ]]; do
     --all) MODE="all"; shift ;;
     --e2e) MODE="e2e"; shift ;;
     --product-marketing) MODE="product-marketing"; shift ;;
+    --product-management) MODE="product-management"; shift ;;
     --coverage) ENABLE_COVERAGE=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
@@ -59,13 +61,16 @@ fi
 roots=()
 case "$MODE" in
   all)
-    roots+=("$SCRIPT_DIR/e2e" "$SCRIPT_DIR/product-marketing")
+    roots+=("$SCRIPT_DIR/e2e" "$SCRIPT_DIR/product-marketing" "$SCRIPT_DIR/product-management")
     ;;
   e2e)
     roots+=("$SCRIPT_DIR/e2e")
     ;;
   product-marketing)
     roots+=("$SCRIPT_DIR/product-marketing")
+    ;;
+  product-management)
+    roots+=("$SCRIPT_DIR/product-management")
     ;;
   *)
     echo "Unknown MODE: $MODE" >&2

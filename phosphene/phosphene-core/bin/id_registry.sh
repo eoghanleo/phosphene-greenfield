@@ -30,7 +30,7 @@ Usage:
   ./phosphene/phosphene-core/bin/id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
-  ra | vpd | pitch | evidence | refsol | segment | cpe | persona | proposition
+  ra | vpd | prd | roadmap | spec | fr | pitch | evidence | refsol | segment | cpe | persona | proposition
 EOF
 }
 
@@ -65,6 +65,10 @@ build_index() {
         vpd_id="$((grep -E '^ID:[[:space:]]*VPD-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
         if [[ -n "${vpd_id:-}" ]]; then
           printf "vpd\t%s\t%s\n" "$vpd_id" "$rel" >> "$tmp"
+        fi
+        prd_id="$((grep -E '^ID:[[:space:]]*PRD-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -n "${prd_id:-}" ]]; then
+          printf "prd\t%s\t%s\n" "$prd_id" "$rel" >> "$tmp"
         fi
         ;;
       10-reference-solutions.md)
@@ -141,6 +145,39 @@ build_index() {
           printf "pitch\t%s\t%s\n" "$pid" "$rel" >> "$tmp"
         fi
         ;;
+      FR-*.md)
+        # Feature requests: prefer ID line; fall back to filename prefix.
+        fr_id="$((grep -E '^ID:[[:space:]]*FR-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${fr_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(FR-[0-9]{3}) ]]; then fr_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${fr_id:-}" ]]; then
+          printf "fr\t%s\t%s\n" "$fr_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      SPEC-*.md)
+        # Product specs: prefer ID line; fall back to filename prefix.
+        spec_id="$((grep -E '^ID:[[:space:]]*SPEC-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${spec_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(SPEC-[0-9]{3}) ]]; then spec_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${spec_id:-}" ]]; then
+          printf "spec\t%s\t%s\n" "$spec_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      ROADMAP-*.md)
+        # Product roadmaps: prefer ID line; fall back to filename prefix.
+        roadmap_id="$((grep -E '^ID:[[:space:]]*ROADMAP-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${roadmap_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(ROADMAP-[0-9]{3}) ]]; then roadmap_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${roadmap_id:-}" ]]; then
+          printf "roadmap\t%s\t%s\n" "$roadmap_id" "$rel" >> "$tmp"
+        fi
+        ;;
       *)
         ;;
     esac
@@ -196,6 +233,26 @@ next_id() {
       max="$(awk -F'\t' '$1=="vpd"{ sub(/^VPD-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
       next=$((max + 1))
       printf "VPD-%03d\n" "$next"
+      ;;
+    prd)
+      max="$(awk -F'\t' '$1=="prd"{ sub(/^PRD-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "PRD-%03d\n" "$next"
+      ;;
+    roadmap)
+      max="$(awk -F'\t' '$1=="roadmap"{ sub(/^ROADMAP-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "ROADMAP-%03d\n" "$next"
+      ;;
+    spec)
+      max="$(awk -F'\t' '$1=="spec"{ sub(/^SPEC-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "SPEC-%03d\n" "$next"
+      ;;
+    fr)
+      max="$(awk -F'\t' '$1=="fr"{ sub(/^FR-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "FR-%03d\n" "$next"
       ;;
     pitch)
       max="$(awk -F'\t' '$1=="pitch"{ sub(/^PITCH-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"

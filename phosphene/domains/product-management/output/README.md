@@ -1,12 +1,12 @@
 # Product Management (Domain)
 
 Primary artifacts:
-- `product-spec` — what to build, why, and how we’ll verify it.
+- `product-requirements` — what to build, why, and how we’ll verify it (PRD bundles).
 
 Canonical locations:
-- Working artifacts: `phosphene/domains/product-management/output/product-specs/`
+- Working artifacts: `phosphene/domains/product-management/output/prds/`
 
 Handoff (default):
-- **To Feature Management** with a spec that can be decomposed into one or more FRs.
+- **To Feature Management** with a PRD that can be decomposed into one or more FRs.
 
 

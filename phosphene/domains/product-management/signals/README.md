@@ -1,8 +1,8 @@
 # Signals — product-management
 
 Signals for this domain live in this folder:
-- `phosphene/signals/`
+- Primary bus: `phosphene/signals/bus.jsonl`
 
 Recommended convention:
-- one file per intent, committed as part of a PR
-- keep names stable and machine-parseable
+- **bus-first**: emit domain events as JSONL lines in `phosphene/signals/bus.jsonl`
+- keep signal types stable and machine-parseable

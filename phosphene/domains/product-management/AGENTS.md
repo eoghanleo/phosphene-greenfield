@@ -6,10 +6,12 @@ This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
 
 ## What you produce
 
-- `product-spec` artifacts (requirements, flows, acceptance criteria, validation plan, evidence/rationale)
+- `product-requirements` artifacts (PRDs: requirements, flows, acceptance criteria, validation plan, evidence/rationale)
 
 Canonical location:
-- `phosphene/domains/product-management/output/product-specs/SPEC-*.md`
+- PRD bundles:
+  - `phosphene/domains/product-management/output/prds/PRD-###-<slug>/`
+  - `phosphene/domains/product-management/output/prds/PRD-###-<slug>/PRD-###.md` (auto-assembled view; do not hand-edit)
 
 ## Workflow intent (tight)
 
@@ -20,7 +22,7 @@ Canonical location:
   - `<product-marketing>`: persona + proposition constraints (PER-*, PROP-*)
   - `<research>`: evidence + unknowns (RA bundles, EvidenceIDs)
 - Output:
-  - A SPEC that can be decomposed into FRs with clear acceptance tests.
+  - A PRD bundle (`PRD-###`) that can be decomposed into FRs with clear acceptance tests.
 
 ## Hard rules (to prevent drift)
 
@@ -31,29 +33,32 @@ Canonical location:
   - Any `RA-*`, `PER-*`, `PROP-*`, `PITCH-*`, `RS-*`, `E-*`, `CPE-*` you reference must exist in the global registry.
   - `Dependencies:` header must include the upstream artifacts you relied on (at minimum: `RA-*` plus any `PER-*`/`PROP-*`/`ROADMAP-*` referenced).
 - **Prefer constraints over creativity**:
-  - If the proposition says “we must not claim X”, the SPEC must not encode X.
+  - If the proposition says “we must not claim X”, the PRD must not encode X.
   - If research confidence is C1/C2, the SPEC must treat it as hypothesis and propose validation.
 
 ## ID hygiene (required)
 
-Before finalizing a SPEC for PR, run:
+Before finalizing a PRD for PR, run:
 
 ```bash
 ./phosphene/phosphene-core/bin/phosphene id validate
 ./phosphene/phosphene-core/bin/phosphene id where RA-001
 ```
 
-And run `where <ID>` for any ID you cite in the SPEC.
+And run `where <ID>` for any ID you cite in the PRD.
 
 ## DONE signal (required for PR-ready work)
 
-Write a DONE signal named after the SPEC you produced:
-- `phosphene/signals/<SPEC-###>-DONE.json`
+Emit a DONE receipt to the signal bus:
+
+- Append a JSONL line to: `phosphene/signals/bus.jsonl`
+- Use the domain emitter (computes correct parents + tamper hash):
+  - `./.codex/skills/phosphene/cerulean/product-management/modulator/scripts/product-management_emit_done_receipt.sh --issue-number <N> --work-id <PRD-###>`
 
 Include (minimum):
 - inputs (RA/ROADMAP/PER/PROP pointers; EvidenceIDs used)
-- outputs (SPEC path)
-- checks run (ID registry validate; any domain validators)
+- outputs (PRD bundle path(s))
+- checks run (ID registry validate; domain validators)
 
 ## Operating boundary
 
