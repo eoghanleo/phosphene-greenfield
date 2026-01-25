@@ -5,7 +5,7 @@ Scope: **only** the `<product-management>` orchestration subflow, driven entirel
 - Autoscribe → Hopper → Prism → `@codex` summon
 - Codex emits a **DONE receipt signal** (bus line) after work completes
 - Detector verifies and emits **APPROVE** or **TRAP**
-- Condenser listens for **APPROVE**, opens PR, waits for checks, and merges if green
+- Condenser opens a PR when it sees **APPROVE** on the branch, then merges once checks are green
 
 - **Signals bus**: `phosphene/signals/bus.jsonl`
 - **Canonical lane**: `cerulean` (product-management must not run in other lanes)
@@ -65,22 +65,23 @@ sequenceDiagram
   P->>I: comment "@codex summon + DONE receipt command"
   I-->>CX: @codex mention
 
-  Note over CX: Work happens on the prism branch beam (no PR yet)
-  CX->>BUS: "append phosphene.done.product-management.receipt.v1 (parents=[branch_invoked])"
+  Note over CX: Work happens on a branch (Codex does not open PRs)
+  CX->>BUS: "append phosphene.done.product-management.receipt.v1 (parents=[branch_invoked])" 
 
-  BUS-->>D: push trigger (new DONE receipt line)
+  Note over BUS,D: Detector watches branch pushes for DONE receipts
+  BUS-->>D: push trigger (new DONE receipt line on branch)
   D->>D: verify work (id validate + PRD bundle validator + done score)
 
   Note over D,BUS: Detector emits either APPROVE (pass) or TRAP (verification_failed)
   D->>BUS: "append phosphene.detector.product-management.approve.v1 (parents=[done_receipt])"
   D->>BUS: "append phosphene.detector.product-management.trap.v1 (parents=[done_receipt], reason=verification_failed)"
 
-  BUS-->>K: push trigger (new APPROVE line)
-  K->>PR: open PR (branch beam -> main)
+  Note over BUS,K: Condenser watches branch pushes for APPROVE
+  BUS-->>K: push trigger (new APPROVE line on branch)
+  K->>PR: open PR (branch -> main)
   PR-->>CI: run checks
-
-  Note over K,PR: If checks are green, condenser merges
-  K->>PR: merge
+  Note over CI,K: When checks complete, condenser re-evaluates and merges if clean
+  K->>PR: merge (only if mergeable_state=clean)
   K->>BUS: "append phosphene.merge_complete.product-management.v1 (parents=[approve])"
   K->>I: comment completion + links (PR, merge)
 

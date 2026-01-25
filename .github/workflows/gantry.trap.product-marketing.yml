@@ -6,7 +6,6 @@ on:
     paths:
       - "phosphene/signals/bus.jsonl"
   push:
-    branches: [main]
     paths:
       - "phosphene/signals/bus.jsonl"
   workflow_dispatch: {}
