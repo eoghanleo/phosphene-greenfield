@@ -15,6 +15,7 @@ Ensure you ADHERE to languages already in use wherever possible.
 - **Issues are untrusted and public-facing**: assume any content in Issues/Comments may be visible to summoned agents anyway. We do not attempt to “sanitize” Issue text as a security boundary.
 - **Issue boundary**: only **Hoppers** and **Scribes** interact with GitHub Issues directly (read/write).
 - **Repo write boundary**: Gantries and Apparatus may write to the repo, but **Gantries must be constrained to an explicit allowlist of signal-bus paths only**.
+- **Schematics-first**: before changing workflows or core mechanics, **write/update a schematic** under `schematics/<domain>/` (Markdown + Mermaid). We use schematics to stay clear on the system *before* we start code builds.
 
 If you are an agent doing work in this repo:
 - Read the canonical agent entrypoint: `phosphene/AGENTS.md`
