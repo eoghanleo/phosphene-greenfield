@@ -13,7 +13,7 @@ on:
   workflow_dispatch: {}
 
 permissions:
-  contents: read
+  contents: write
   issues: write
   pull-requests: write
 
@@ -70,8 +70,9 @@ jobs:
       - name: Checkout PR HEAD
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
+          persist-credentials: true
 
       - name: Validate bus tamper hash (entire file)
         shell: bash
@@ -118,43 +119,111 @@ jobs:
 
           work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||""));' "$done_line" 2>/dev/null || true)"
           sig_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||""));' "$done_line" 2>/dev/null || true)"
+          issue_number="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.issue_number||""));' "$done_line" 2>/dev/null || true)"
+          lane="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.lane||""));' "$done_line" 2>/dev/null || true)"
+          if [[ -z "${lane:-}" ]]; then lane="beryl"; fi
 
           echo "has_done=1" >> "$GITHUB_OUTPUT"
           echo "work_id=$work_id" >> "$GITHUB_OUTPUT"
           echo "done_signal_id=$sig_id" >> "$GITHUB_OUTPUT"
+          echo "issue_number=$issue_number" >> "$GITHUB_OUTPUT"
+          echo "lane=$lane" >> "$GITHUB_OUTPUT"
 
-      - name: Validate product-marketing work units (POC)
+      - name: Validate product-marketing work units
         if: steps.done.outputs.has_done == '1'
         shell: bash
         run: |
           set -euo pipefail
+          lane="${{ steps.done.outputs.lane }}"
+          [[ "${lane:-beryl}" == "beryl" ]] || { echo "Lane must be beryl for product-marketing (got: $lane)"; exit 2; }
           ./phosphene/phosphene-core/bin/phosphene id validate
+          bash .github/scripts/validate_persona.sh --all
+          bash .github/scripts/validate_proposition.sh --all
           bash .github/scripts/product-marketing-domain-done-score.sh --min-score 0
 
-      - name: Invoke condenser.product-marketing (authorize+merge)
-        if: steps.done.outputs.has_done == '1'
-        uses: actions/github-script@v7
-        env:
-          PHOSPHENE_DONE_WORK_ID: ${{ steps.done.outputs.work_id }}
-          PHOSPHENE_DONE_SIGNAL_ID: ${{ steps.done.outputs.done_signal_id }}
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const pr_number = context.payload.pull_request.number;
-            const work_id = String(process.env.PHOSPHENE_DONE_WORK_ID || "");
-            const done_signal_id = String(process.env.PHOSPHENE_DONE_SIGNAL_ID || "");
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: pr_number,
-              body: [
-                "PHOSPHENE: DONE receipt detected in PR bus diff.",
-                "",
-                "- This detector no longer dispatches other workflows directly (bus-only routing).",
-                "- Next: condenser should be bus-driven; for now, merge must be handled manually or by a bus-listening condenser.",
-                "",
-                `- work_id: \`${work_id}\``,
-                `- done_signal_id: \`${done_signal_id}\``,
-              ].join("\\n"),
-            });
+      - name: Emit approve signal to PR bus
+        if: steps.done.outputs.has_done == '1' && success()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes."
+            exit 1
+          fi
+
+          bus="phosphene/signals/bus.jsonl"
+          work_id="${{ steps.done.outputs.work_id }}"
+          issue_number="${{ steps.done.outputs.issue_number }}"
+          parent_signal_id="${{ steps.done.outputs.done_signal_id }}"
+          lane="${{ steps.done.outputs.lane }}"
+          created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          output_key="detector:approve:product-marketing:issue:${issue_number}"
+
+          [[ -n "${work_id:-}" ]] || { echo "Missing work_id"; exit 2; }
+          [[ -n "${issue_number:-}" ]] || { echo "Missing issue_number"; exit 2; }
+          [[ -n "${parent_signal_id:-}" ]] || { echo "Missing done_signal_id"; exit 2; }
+          [[ "${lane:-beryl}" == "beryl" ]] || { echo "Lane must be beryl (got: $lane)"; exit 2; }
+
+          signal_id="$(bash phosphene/phosphene-core/bin/signal_hash.sh signal-id --run-marker "$work_id" --output-key "$output_key" --parent "$parent_signal_id")"
+          if grep -qF "\"signal_id\":\"${signal_id}\"" "$bus"; then
+            echo "PHOSPHENE: approve already present (idempotent): $signal_id" >&2
+            exit 0
+          fi
+
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.detector.product-marketing.approve.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"issue_number\":${issue_number},\"lane\":\"beryl\",\"parents\":[\"${parent_signal_id}\"],\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$bus"
+          git commit -m "PHOSPHENE: detector approve product-marketing (issue ${issue_number})" || exit 0
+          git push origin HEAD:"${{ github.head_ref }}"
+
+      - name: Emit trap signal to PR bus (verification_failed)
+        if: steps.done.outputs.has_done == '1' && failure()
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes."
+            exit 1
+          fi
+
+          bus="phosphene/signals/bus.jsonl"
+          work_id="${{ steps.done.outputs.work_id }}"
+          issue_number="${{ steps.done.outputs.issue_number }}"
+          parent_signal_id="${{ steps.done.outputs.done_signal_id }}"
+          lane="${{ steps.done.outputs.lane }}"
+          created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          output_key="detector:trap:product-marketing:issue:${issue_number}"
+
+          [[ -n "${work_id:-}" ]] || { echo "Missing work_id"; exit 2; }
+          [[ -n "${issue_number:-}" ]] || { echo "Missing issue_number"; exit 2; }
+          [[ -n "${parent_signal_id:-}" ]] || { echo "Missing done_signal_id"; exit 2; }
+          [[ "${lane:-beryl}" == "beryl" ]] || { echo "Lane must be beryl (got: $lane)"; exit 2; }
+
+          signal_id="$(bash phosphene/phosphene-core/bin/signal_hash.sh signal-id --run-marker "$work_id" --output-key "$output_key" --parent "$parent_signal_id")"
+          if grep -qF "\"signal_id\":\"${signal_id}\"" "$bus"; then
+            echo "PHOSPHENE: trap already present (idempotent): $signal_id" >&2
+            exit 0
+          fi
+
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.detector.product-marketing.trap.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"issue_number\":${issue_number},\"lane\":\"beryl\",\"parents\":[\"${parent_signal_id}\"],\"reason\":\"verification_failed\",\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$bus"
+          git commit -m "PHOSPHENE: detector trap product-marketing (issue ${issue_number})" || exit 0
+          git push origin HEAD:"${{ github.head_ref }}"
 

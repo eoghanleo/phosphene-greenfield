@@ -5,7 +5,7 @@ Scope: **only** the `<product-marketing>` orchestration subflow, driven entirely
 - Autoscribe → Hopper → Prism → `@codex` summon
 - Codex emits a **DONE receipt signal** (bus line) after work completes
 - Detector verifies and emits **APPROVE** or **TRAP**
-- Condenser listens for **APPROVE**, opens PR, waits for checks, and merges if green
+- Condenser listens for **APPROVE** and merges the PR if green
 
 - **Signals bus**: `phosphene/signals/bus.jsonl`
 - **Canonical lane**: `beryl` (product-marketing must not run in other lanes)
@@ -68,19 +68,17 @@ sequenceDiagram
   Note over CX: Work happens on the prism branch beam (no PR yet)
   CX->>BUS: append phosphene.done.product-marketing.receipt.v1\n(on branch beam, parents=[branch_invoked])
 
-  BUS-->>D: push trigger (new DONE receipt line)
+  Note over D,PR: Detector reads the PR bus diff for a DONE receipt
   D->>D: verify work\nphosphene id validate\nvalidate_persona --all\nvalidate_proposition --all\nproduct-marketing done score
 
   Note over D,BUS: Detector emits either APPROVE (pass) or TRAP (verification_failed)
   D->>BUS: append phosphene.detector.product-marketing.approve.v1\nparents=[done_receipt]
   D->>BUS: append phosphene.detector.product-marketing.trap.v1\nparents=[done_receipt]\nreason=verification_failed
 
-  BUS-->>K: push trigger (new APPROVE line)
-  K->>PR: open PR (branch beam -> main)
+  Note over K,PR: Condenser reads PR bus diff for APPROVE
   PR-->>CI: run checks
 
   Note over K,PR: If checks are green, condenser approves+merges
-  K->>PR: approve
   K->>PR: merge
   K->>BUS: append phosphene.merge_complete.product-marketing.v1\nparents=[approve]
   K->>I: comment completion + links (PR, merge)

@@ -96,7 +96,7 @@ fi
 
 # Construct a single-line JSON object (no newlines).
 # Values are kept minimal to avoid complex escaping in bash.
-line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.done.product-marketing.receipt.v1\",\"work_id\":\"${WORK_ID}\",\"domain\":\"product-marketing\",\"issue_number\":${ISSUE_NUMBER},\"phos_id\":\"${phos_id}\",\"parents\":[\"${parent_signal_id}\"],\"run_marker\":\"${run_marker}\",\"output_key\":\"${output_key}\",\"ok\":true,\"created_utc\":\"${created_utc}\"}"
+line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.done.product-marketing.receipt.v1\",\"work_id\":\"${WORK_ID}\",\"domain\":\"product-marketing\",\"issue_number\":${ISSUE_NUMBER},\"lane\":\"beryl\",\"phos_id\":\"${phos_id}\",\"parents\":[\"${parent_signal_id}\"],\"run_marker\":\"${run_marker}\",\"output_key\":\"${output_key}\",\"ok\":true,\"created_utc\":\"${created_utc}\"}"
 
 # Append via official tool (adds/updates per-line tamper_hash).
 bash "$BUS_IMPL" append --bus "$BUS" --line "$line"

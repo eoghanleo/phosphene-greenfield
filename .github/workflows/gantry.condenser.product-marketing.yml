@@ -1,6 +1,11 @@
 name: "gantry.condenser.product-marketing"
 
 on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "phosphene/signals/bus.jsonl"
+      - "phosphene/domains/product-marketing/**"
   workflow_dispatch:
     inputs:
       pr_number:
@@ -15,6 +20,10 @@ on:
         description: "DONE receipt signal_id (optional; used as parent for merge-complete)"
         required: false
         type: string
+      issue_number:
+        description: "Issue number (optional; recommended for signal emission)"
+        required: false
+        type: number
 
 permissions:
   contents: write
@@ -29,11 +38,195 @@ env:
   PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
 
 concurrency:
-  group: instrument-condenser-product-marketing-${{ inputs.pr_number }}
+  group: instrument-condenser-product-marketing-${{ github.event.pull_request.number || inputs.pr_number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
-  merge:
+  maybe_merge:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR head branch
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Extract approve signal (product-marketing) from PR diff
+        id: approve
+        shell: bash
+        run: |
+          set -euo pipefail
+          bus="phosphene/signals/bus.jsonl"
+          base="${{ github.event.pull_request.base.ref }}"
+          git fetch origin "$base:refs/remotes/origin/$base" --force
+          git diff --unified=0 "origin/$base"...HEAD -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/pr_new_lines.txt || true
+
+          approve_line="$(node -e '
+            const fs=require("fs");
+            const raw=fs.existsSync("/tmp/pr_new_lines.txt")?fs.readFileSync("/tmp/pr_new_lines.txt","utf8"):"";
+            const lines=raw.split(/\n/).map(l=>l.trim()).filter(Boolean);
+            for (const line of lines) {
+              try {
+                const j=JSON.parse(line);
+                if (j.signal_type==="phosphene.detector.product-marketing.approve.v1") {
+                  process.stdout.write(line);
+                  process.exit(0);
+                }
+              } catch {}
+            }
+            process.exit(1);
+          ' && true || true)"
+
+          if [[ -z "${approve_line:-}" ]]; then
+            echo "has_approve=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||""));' "$approve_line")"
+          issue_number="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.issue_number||""));' "$approve_line")"
+          approve_signal_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||""));' "$approve_line")"
+
+          echo "has_approve=1" >> "$GITHUB_OUTPUT"
+          echo "work_id=$work_id" >> "$GITHUB_OUTPUT"
+          echo "issue_number=$issue_number" >> "$GITHUB_OUTPUT"
+          echo "approve_signal_id=$approve_signal_id" >> "$GITHUB_OUTPUT"
+
+      - name: Merge PR (API)
+        id: merge
+        if: steps.approve.outputs.has_approve == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const pr_number = context.payload.pull_request.number;
+            try {
+              await github.rest.pulls.merge({
+                owner,
+                repo,
+                pull_number: pr_number,
+                merge_method: "merge",
+              });
+              core.setOutput("merged", "1");
+            } catch (e) {
+              core.notice(`PHOSPHENE: merge failed: ${e?.message || e}`);
+              core.setOutput("merged", "0");
+              core.setOutput("error", String(e?.message || e));
+            }
+
+      - name: Emit trap signal to PR bus (checks_failed)
+        if: steps.approve.outputs.has_approve == '1' && steps.merge.outputs.merged != '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes."
+            exit 1
+          fi
+
+          bus="phosphene/signals/bus.jsonl"
+          work_id="${{ steps.approve.outputs.work_id }}"
+          issue_number="${{ steps.approve.outputs.issue_number }}"
+          parent_signal_id="${{ steps.approve.outputs.approve_signal_id }}"
+          created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          output_key="condenser:trap:product-marketing:issue:${issue_number}"
+
+          signal_id="$(bash phosphene/phosphene-core/bin/signal_hash.sh signal-id --run-marker "$work_id" --output-key "$output_key" --parent "$parent_signal_id")"
+          if grep -qF "\"signal_id\":\"${signal_id}\"" "$bus"; then
+            echo "PHOSPHENE: trap already present (idempotent): $signal_id" >&2
+            exit 0
+          fi
+
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.detector.product-marketing.trap.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"issue_number\":${issue_number},\"lane\":\"beryl\",\"parents\":[\"${parent_signal_id}\"],\"reason\":\"checks_failed\",\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$bus"
+          git commit -m "PHOSPHENE: condenser trap product-marketing (issue ${issue_number})" || exit 0
+          git push origin HEAD:"${{ github.head_ref }}"
+
+      - name: Checkout main (post-merge)
+        if: steps.approve.outputs.has_approve == '1' && steps.merge.outputs.merged == '1'
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Append merge-complete signal to bus (main)
+        if: steps.approve.outputs.has_approve == '1' && steps.merge.outputs.merged == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes (would suppress downstream workflows)."
+            exit 1
+          fi
+
+          bus="phosphene/signals/bus.jsonl"
+          pr_number="${{ github.event.pull_request.number }}"
+          work_id="${{ steps.approve.outputs.work_id }}"
+          issue_number="${{ steps.approve.outputs.issue_number }}"
+          parent_signal_id="${{ steps.approve.outputs.approve_signal_id }}"
+          created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          output_key="condenser:merge-complete:product-marketing:pr:${pr_number}"
+
+          signal_id="$(bash phosphene/phosphene-core/bin/signal_hash.sh signal-id --run-marker "$work_id" --output-key "$output_key" --parent "$parent_signal_id")"
+          if grep -qF "\"signal_id\":\"${signal_id}\"" "$bus"; then
+            echo "PHOSPHENE: merge_complete already present (idempotent): $signal_id" >&2
+            exit 0
+          fi
+
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.merge_complete.product-marketing.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"issue_number\":${issue_number},\"pr_number\":${pr_number},\"lane\":\"beryl\",\"parents\":[\"${parent_signal_id}\"],\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$bus"
+          git commit -m "PHOSPHENE: product-marketing merge complete for PR #${pr_number}" || exit 0
+          git push origin HEAD:main
+
+      - name: Comment completion on issue
+        if: steps.approve.outputs.has_approve == '1' && steps.merge.outputs.merged == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = Number("${{ steps.approve.outputs.issue_number }}");
+            const pr_number = context.payload.pull_request.number;
+            const work_id = String("${{ steps.approve.outputs.work_id }}");
+            if (!issue_number) return;
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: [
+                "PHOSPHENE: product-marketing merge complete.",
+                "",
+                `- work_id: \`${work_id}\``,
+                `- pr: #${pr_number}`,
+              ].join("\n"),
+            });
+
+  merge_dispatch:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -96,9 +289,13 @@ jobs:
           pr_number="${{ inputs.pr_number }}"
           work_id="${{ inputs.work_id }}"
           parent_signal_id="${{ inputs.parent_signal_id }}"
+          issue_number="${{ inputs.issue_number }}"
 
           if [[ -z "${work_id:-}" ]]; then
             work_id="UNKNOWN"
+          fi
+          if [[ -z "${issue_number:-}" ]]; then
+            issue_number="0"
           fi
 
           created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
@@ -116,7 +313,7 @@ jobs:
             parents_json="[]"
           fi
 
-          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.merge_complete.product-marketing.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"pr_number\":${pr_number},\"parents\":${parents_json},\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.merge_complete.product-marketing.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-marketing\",\"issue_number\":${issue_number},\"pr_number\":${pr_number},\"lane\":\"beryl\",\"parents\":${parents_json},\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
           bash phosphene/phosphene-core/bin/signal_bus.sh append --bus phosphene/signals/bus.jsonl --line "$line"
 
       - name: Commit + push bus append
@@ -127,11 +324,14 @@ jobs:
           export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
           bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
 
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes (would suppress downstream workflows)."
+            exit 1
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [[ -n "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
-            git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          fi
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add "phosphene/signals/bus.jsonl"
           git commit -m "PHOSPHENE: product-marketing merge complete for PR #${{ inputs.pr_number }}"
           git push origin HEAD:main
