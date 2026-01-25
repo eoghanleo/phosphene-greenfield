@@ -116,8 +116,8 @@ jobs:
             exit 0
           fi
 
-          work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||\"\"));' "$done_line")"
-          sig_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||\"\"));' "$done_line")"
+          work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||""));' "$done_line" 2>/dev/null || true)"
+          sig_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||""));' "$done_line" 2>/dev/null || true)"
 
           echo "has_done=1" >> "$GITHUB_OUTPUT"
           echo "work_id=$work_id" >> "$GITHUB_OUTPUT"
