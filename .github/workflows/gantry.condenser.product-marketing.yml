@@ -47,7 +47,8 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const pr_number = Number(core.getInput("pr_number", { required: true }));
+            const pr_number = Number((context?.payload?.inputs || {})["pr_number"]);
+            if (!pr_number) throw new Error("Missing required workflow_dispatch input: pr_number");
             const pr = await github.rest.pulls.get({ owner, repo, pull_number: pr_number });
             core.setOutput("head_sha", String(pr.data.head.sha));
             core.setOutput("base_ref", String(pr.data.base.ref));
@@ -72,7 +73,8 @@ jobs:
         with:
           script: |
             const { owner, repo } = context.repo;
-            const pr_number = Number(core.getInput("pr_number", { required: true }));
+            const pr_number = Number((context?.payload?.inputs || {})["pr_number"]);
+            if (!pr_number) throw new Error("Missing required workflow_dispatch input: pr_number");
             await github.rest.pulls.merge({
               owner,
               repo,
