@@ -4,4 +4,4 @@ ID: PRD-002
 
 | Date | Decision | Rationale | Owner | Link |
 |---|---|---|---|---|
-| [date] | [decision] | [why] | | [ADR link] |
+| 2026-01-25 | Use PRD bundle decomposition (assembled view + authoritative subfiles) for PRD-002. | Keeps edits modular while preserving a single assembled artifact for reading/review. | codex | (n/a) |
