@@ -65,7 +65,7 @@ jobs:
           set -euo pipefail
           bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
           ./phosphene/phosphene-core/bin/phosphene id validate
-          bash phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 0
+          bash .github/scripts/product-marketing-domain-done-score.sh --min-score 0
 
       - name: Merge PR (API)
         uses: actions/github-script@v7

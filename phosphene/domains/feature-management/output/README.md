@@ -10,9 +10,9 @@ Canonical locations:
   - `phosphene/domains/feature-management/output/fr_dependencies.md`
 
 Primary commands:
-- `./phosphene/domains/feature-management/scripts/create_feature_request.sh`
-- `./phosphene/domains/feature-management/scripts/validate_feature_request.sh`
-- `./phosphene/domains/feature-management/scripts/approve_feature_request.sh --id FR-001`
-- `./phosphene/domains/feature-management/scripts/update_feature_request_status.sh phosphene/domains/feature-management/output/frs/FR-001-... \"In Progress\"`
+- `./.codex/skills/phosphene/cerulean/feature-management/modulator/scripts/create_feature_request.sh`
+- `./.github/scripts/validate_feature_request.sh`
+- `./.codex/skills/phosphene/cerulean/feature-management/modulator/scripts/approve_feature_request.sh --id FR-001`
+- `./.codex/skills/phosphene/cerulean/feature-management/modulator/scripts/update_feature_request_status.sh phosphene/domains/feature-management/output/frs/FR-001-... \"In Progress\"`
 
 

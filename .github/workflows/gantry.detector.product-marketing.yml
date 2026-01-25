@@ -129,7 +129,7 @@ jobs:
         run: |
           set -euo pipefail
           ./phosphene/phosphene-core/bin/phosphene id validate
-          bash phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 0
+          bash .github/scripts/product-marketing-domain-done-score.sh --min-score 0
 
       - name: Invoke condenser.product-marketing (authorize+merge)
         if: steps.done.outputs.has_done == '1'

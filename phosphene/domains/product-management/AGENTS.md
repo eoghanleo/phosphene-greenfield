@@ -59,7 +59,9 @@ Include (minimum):
 
 - Use the `<product-management>` tag to indicate scope/boundaries in handoffs.
 - Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
-- Artifacts for this domain live in canonical `output/`, `scripts/`, and `signals/` areas within the repo.
+- Artifacts for this domain live in canonical `output/` and `signals/` areas within the repo.
+  - Control scripts live under: `.codex/skills/phosphene/cerulean/product-management/modulator/scripts/`
+  - Validators live under: `.github/scripts/`
 
 ## In-doc script hints (`[V-SCRIPT]`)
 

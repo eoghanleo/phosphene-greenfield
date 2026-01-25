@@ -8,7 +8,7 @@ PHOSPHENE is a **git-native harness for continuous product development**: a way 
 
 At its core:
 - **GitHub (PRs + Actions) is the scheduler**
-- **Codex is the worker** (often via `@codex` mentions)
+- **A worker agent is the runtime** (often invoked via `@mention` summons)
 - **The repo is shared memory**
 - **PR merge is the officialization point**
 
@@ -154,7 +154,9 @@ Hard requirement:
 - `phosphene/` must exist at the **repo root**
 
 Canonical scaffold:
-- `phosphene/domains/<domain>/{docs,templates,scripts}/`
+- `phosphene/domains/<domain>/{docs,templates,output}/`
+- Domain control scripts: `.codex/skills/phosphene/<colour>/<domain>/modulator/scripts/`
+- Shared validators: `.github/scripts/`
 - Central signal bus: `phosphene/signals/`
 
 Domain reference convention:

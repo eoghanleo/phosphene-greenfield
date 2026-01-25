@@ -10,14 +10,15 @@ PHOSPHENE is a lightweight agentic harness built on a simple premise:
 
 If you need the deeper model (contracts + workflows), start with:
 - Domain outputs under: `phosphene/domains/<domain>/output/`
-- Domain scripts under: `phosphene/domains/<domain>/scripts/` (script-first; creation + mutation)
-- The domain skill (if present): `.codex/skills/phosphene/<domain>/SKILL.md`
+- Domain control scripts under: `.codex/skills/phosphene/<colour>/<domain>/modulator/scripts/` (script-first; creation + mutation)
+- Domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/--skill.md`
+- Validators (shared): `.github/scripts/`
 
 
 ### How to work (agent checklist)
 
 - **Know your primary domain** (exactly one): `<research>`, `<product-marketing>`, etc.
-- Read the domain skill (mandatory): `.codex/skills/phosphene/<domain>/SKILL.md`
+- Read the domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/--skill.md`
 - Use **control scripts** (don’t hand-edit script-managed artifacts).
 - Run the domain validator(s).
 - Write a **DONE receipt** signal as a JSONL record in `phosphene/signals/bus.jsonl` (required for “registration”).
@@ -25,8 +26,9 @@ If you need the deeper model (contracts + workflows), start with:
 
 ### Repo layout (canonical)
 
-- Domains live under: `phosphene/domains/<domain>/{output,scripts}/`
-- Skills live under: `.codex/skills/phosphene/<domain>/`
+- Domains live under: `phosphene/domains/<domain>/output/`
+- Skills live under: `.codex/skills/phosphene/<colour>/<domain>/modulator/`
+- Validators live under: `.github/scripts/`
 - Some domains may still include `templates/` as transitional scaffolding.
 - Where control scripts exist, **scripts are the single source of truth** for canonical artifact structure (avoid relying on templates at runtime).
 

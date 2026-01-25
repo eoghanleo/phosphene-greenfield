@@ -181,9 +181,9 @@ jobs:
 
               const domainTag = "<product-marketing>";
               const upstreamDomainTag = "<research>";
-              const domainSkillPath = ".codex/skills/phosphene/product-marketing/SKILL.md";
-              const domainScriptsPath = "phosphene/domains/product-marketing/scripts/";
-              const domainDoneScoreCmd = "./phosphene/domains/product-marketing/scripts/product-marketing-domain-done-score.sh --min-score 0";
+              const domainSkillPath = ".codex/skills/phosphene/beryl/product-marketing/modulator/--skill.md";
+              const domainScriptsPath = ".codex/skills/phosphene/beryl/product-marketing/modulator/scripts/";
+              const domainDoneScoreCmd = "./.github/scripts/product-marketing-domain-done-score.sh --min-score 0";
 
               const phospheneBlock = [
                 "[PHOSPHENE]",

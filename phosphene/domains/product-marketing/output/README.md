@@ -17,12 +17,12 @@ Canonical locations:
 Create a new VPD bundle:
 
 ```bash
-./phosphene/domains/product-marketing/scripts/create_value_proposition_design_bundle.sh --title "..."
+./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/create_value_proposition_design_bundle.sh --title "..."
 ```
 
 Validation (recommended):
-- `./phosphene/domains/product-marketing/scripts/validate_persona.sh --all`
-- `./phosphene/domains/product-marketing/scripts/validate_proposition.sh --all`
+- `./.github/scripts/validate_persona.sh --all`
+- `./.github/scripts/validate_proposition.sh --all`
 
 Note:
 - Every `PER-*` and `PROP-*` must include a `VPD-###` in its `Dependencies:` header.
@@ -33,11 +33,11 @@ JTBD IDs convention (natural keys):
   - `<PersonaID>` is the persona `PER-####` from the file header
 
 Helper (optional):
-- `./phosphene/domains/product-marketing/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
+- `./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/add_persona_jtbd_item.sh --persona phosphene/domains/product-marketing/output/value-proposition-designs/VPD-001-.../10-personas/PER-0001.md --type JOB --text "..." --importance 3`
 
 Workflow policy (preferred):
 - For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).
-- See `.codex/skills/phosphene/product-marketing/SKILL.md` for the full control script list.
+- See `.codex/skills/phosphene/beryl/product-marketing/modulator/--skill.md` for the full control script list.
 
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.

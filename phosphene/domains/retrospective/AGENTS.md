@@ -13,7 +13,9 @@ This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
 
 - Use the `<retrospective>` tag to indicate scope/boundaries in handoffs.
 - Avoid “go to this directory” pointers inside handoff/spec docs; those can hijack an agent early.
-- Artifacts for this domain live in canonical `output/`, `scripts/`, and `signals/` areas within the repo.
+- Artifacts for this domain live in canonical `output/` and `signals/` areas within the repo.
+  - Control scripts live under: `.codex/skills/phosphene/chartreuse/retrospective/modulator/scripts/`
+  - Validators live under: `.github/scripts/`
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
