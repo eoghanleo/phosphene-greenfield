@@ -9,6 +9,8 @@ metadata:
 
 Primary domain: `<product-marketing>`
 
+Lane (color): `beryl` (canonical; do not use other lanes for `<product-marketing>`).
+
 ## What you produce
 
 - VPD bundles: `phosphene/domains/product-marketing/output/value-proposition-designs/VPD-###-*/00-coversheet.md`

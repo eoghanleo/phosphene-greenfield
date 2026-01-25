@@ -15,8 +15,8 @@ on:
         description: "Lane"
         required: false
         type: choice
-        options: ["beryl", "cerulean"]
-        default: "cerulean"
+        options: ["beryl"]
+        default: "beryl"
       intent:
         description: "Intent string for the work"
         required: false
@@ -156,7 +156,7 @@ jobs:
             const createPmIssueAndEmit = async ({ work_id, lane, intent, parent_signal_id }) => {
               const resolvedWorkId = String(work_id || "").trim();
               const resolvedParentSignalId = String(parent_signal_id || "").trim();
-              const resolvedLane = String(lane || "cerulean").trim().toLowerCase();
+              const resolvedLane = String(lane || "beryl").trim().toLowerCase();
               const resolvedIntent = String(intent || "proposition-development").trim();
 
               if (!resolvedWorkId) return null;
@@ -281,7 +281,7 @@ jobs:
               const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
               const out = await createPmIssueAndEmit({
                 work_id: workIdInput,
-                lane: laneInput || "cerulean",
+                lane: laneInput || "beryl",
                 intent: intentInput || "proposition-development",
                 parent_signal_id: parentSignalId,
               });
@@ -298,7 +298,7 @@ jobs:
                 const parent_signal_id = String(j.signal_id || "").trim();
                 const out = await createPmIssueAndEmit({
                   work_id,
-                  lane: "cerulean",
+                  lane: "beryl",
                   intent: "proposition-development",
                   parent_signal_id,
                 });

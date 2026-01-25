@@ -19,8 +19,8 @@ on:
         description: "Lane"
         required: true
         type: choice
-        options: ["beryl", "cerulean"]
-        default: "cerulean"
+        options: ["beryl"]
+        default: "beryl"
       intent:
         description: "Intent string"
         required: true
@@ -136,10 +136,16 @@ jobs:
             const emitForStart = async ({ issue_number, work_id, lane, intent, parent_signal_id }) => {
               const issueNum = Number(issue_number || 0);
               const workId = String(work_id || "").trim();
-              const ln = String(lane || "cerulean").trim().toLowerCase();
+              const ln = String(lane || "beryl").trim().toLowerCase();
               const it = String(intent || "proposition-development").trim();
               const parent = String(parent_signal_id || "").trim();
               if (!issueNum || !workId || !parent) return null;
+
+              // Product-marketing is strictly the beryl lane.
+              if (ln !== "beryl") {
+                core.notice(`PHOSPHENE: ignoring product-marketing start signal with non-beryl lane: ${ln}`);
+                return null;
+              }
 
               if (alreadyInvokedForParent(parent)) {
                 core.notice(`PHOSPHENE: prism already invoked for parent_signal_id=${parent} (skip).`);

@@ -4,6 +4,8 @@ Primary domain: `<product-marketing>`
 
 This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
 
+Lane (color): `beryl` (canonical; do not use other lanes for `<product-marketing>`).
+
 ## What you produce
 
 - `value-proposition-design` (VPD-###) bundles (WTBD parent)

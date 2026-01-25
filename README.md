@@ -55,6 +55,7 @@ In practice, each colour is a **lens** with a simple contract:
 ## **Beryl** — creative clarity, the emergence of structure
 
 - **Domains**: Product-marketing; Product-strategy
+- **Canonical lane note**: `<product-marketing>` work is always `beryl` (do not associate it with other lanes).
 - **Takes as inputs**:
   - A Viridian idea that’s “real enough” to shape
   - Early research (optional but powerful) and any known competitors/alternatives

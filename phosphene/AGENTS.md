@@ -43,6 +43,12 @@ Refer to domains using angle brackets:
 - `<test-management>` → test plans (TP)
 - `<retrospective>` → postmortems (PM) + playbooks (PB)
 
+### Lanes (color mapping)
+
+When a workflow/issue/signal includes a `lane`, it must match the canonical domain color:
+
+- `<product-marketing>` is **`beryl`** (canonical)
+
 ### DONE signals (completion + registration)
 
 PHOSPHENE uses a **DONE signal** as the completion handshake *and* the “register this work” event.

@@ -201,7 +201,7 @@ jobs:
               reportLines.push(`- **Work type**: ${work_type ? "`" + work_type + "`" : "(missing)"}`);
               reportLines.push(`- **Work ID**: ${work_id ? "`" + work_id + "`" : "(missing)"}`);
 
-              if (work_type !== "product-marketing" || lane !== "cerulean") {
+              if (work_type !== "product-marketing" || lane !== "beryl") {
                 reportLines.push(`- **Eligible**: NO (work_type/lane mismatch for product-marketing)`);
                 await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
                 continue;
