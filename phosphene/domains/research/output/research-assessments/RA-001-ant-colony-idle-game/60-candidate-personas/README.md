@@ -9,6 +9,6 @@ Important:
 Create new CPE docs (preferred):
 
 ```bash
-  ./.codex/skills/phosphene/beryl/research/modulator/scripts/create_candidate_persona.sh --bundle "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game" --name "..." --segment SEG-0001
+  ./.codex/skills/phosphene/viridian/research/modulator/scripts/create_candidate_persona.sh --bundle "phosphene/domains/research/output/research-assessments/RA-001-ant-colony-idle-game" --name "..." --segment SEG-0001
 ```
 

@@ -51,11 +51,11 @@ These are the “rails” that prevent the kinds of drift we saw in `<product-ma
 Before finalizing a SPEC, run:
 
 ```bash
-./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh validate
-./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh where RA-001
-./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh where PER-0003
-./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh where PROP-0002
-./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh where E-0009
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh validate
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh where RA-001
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh where PER-0003
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh where PROP-0002
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh where E-0009
 ```
 
 If an ID doesn’t resolve, you must either:

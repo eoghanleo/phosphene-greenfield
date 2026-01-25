@@ -39,7 +39,7 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Viridian** — the colour of new ideas and fertile beginnings
 
-- **Domains**: Ideation; Moonshot (to be developed)
+- **Domains**: Ideation; Research; Moonshot (to be developed)
 - **Takes as inputs**:
   - Raw sparks (notes, user pain, customer quotes, founder intuition)
   - Constraints (time, budget, technical realities, market context)

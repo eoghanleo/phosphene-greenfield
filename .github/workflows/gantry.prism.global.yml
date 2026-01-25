@@ -45,15 +45,16 @@ jobs:
             }
 
             // Format:
+            //   /phosphene viridian <intent...>
             //   /phosphene beryl <intent...>
             //   /phosphene cerulean <intent...>
-            const match = firstLine.match(/^\/phosphene\s+(beryl|cerulean)\s*(.*)$/i);
+            const match = firstLine.match(/^\/phosphene\s+(viridian|beryl|cerulean)\s*(.*)$/i);
             if (!match) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number,
-                body: "PHOSPHENE: Unknown summon. Use `/phosphene beryl <intent>` or `/phosphene cerulean <intent>`.",
+                body: "PHOSPHENE: Unknown summon. Use `/phosphene viridian <intent>`, `/phosphene beryl <intent>`, or `/phosphene cerulean <intent>`.",
               });
               core.setOutput("ok", "0");
               return;
@@ -66,6 +67,38 @@ jobs:
             core.setOutput("lane", lane);
             core.setOutput("intent", intent);
             core.setOutput("issue_number", String(issue_number));
+
+  viridian:
+    if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'viridian'
+    needs: [parse]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Summon apparatus (comment-only; no apparatus workflows)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const issue_number = Number("${{ needs.parse.outputs.issue_number }}");
+            const intent = String("${{ needs.parse.outputs.intent }}");
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number,
+              body: [
+                "@codex take issue.",
+                "",
+                "PHOSPHENE: prism dispatch (viridian).",
+                "",
+                `- **Intent**: ${intent}`,
+                "",
+                "Constraints:",
+                "- Read `phosphene/AGENTS.md`",
+                "- Read `.codex/skills/phosphene/viridian/research/modulator/SKILL.md`",
+                "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
+                "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
+              ].join(\"\\n\"),
+            });
 
   beryl:
     if: needs.parse.outputs.ok == '1' && needs.parse.outputs.lane == 'beryl'
@@ -93,7 +126,7 @@ jobs:
                 "",
                 "Constraints:",
                 "- Read `phosphene/AGENTS.md`",
-                "- Read `.codex/skills/phosphene/beryl/research/modulator/--skill.md`",
+                "- Read `.codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
@@ -125,7 +158,8 @@ jobs:
                 "",
                 "Constraints:",
                 "- Read `phosphene/AGENTS.md`",
-                "- Read `.codex/skills/phosphene/beryl/product-marketing/modulator/--skill.md`",
+                "- Read `.codex/skills/phosphene/cerulean/product-management/modulator/SKILL.md`",
+                "- Read `.codex/skills/phosphene/cerulean/feature-management/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),

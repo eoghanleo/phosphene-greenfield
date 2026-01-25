@@ -41,24 +41,24 @@ All object IDs must be globally unique across `phosphene/domains/**/output/**`:
 
 Use the registry:
 
-- Build: `./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh build`
-- Validate: `./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh validate`
-- Allocate: `./.codex/skills/phosphene/beryl/research/modulator/scripts/research_id_registry.sh next --type ra|pitch|evidence|refsol|segment|cpe|persona`
+- Build: `./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh build`
+- Validate: `./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh validate`
+- Allocate: `./.codex/skills/phosphene/viridian/research/modulator/scripts/research_id_registry.sh next --type ra|pitch|evidence|refsol|segment|cpe|persona`
 
 ## Script-first workflow (preferred)
 
 - Create RA bundle:
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/create_research_assessment_bundle.sh --title "..." --priority Medium`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/create_research_assessment_bundle.sh --title "..." --priority Medium`
 - Validate bundle:
   - `./.github/scripts/validate_research_assessment_bundle.sh <bundle_dir>`
 - Assemble single-file view:
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/assemble_research_assessment_bundle.sh <bundle_dir>`
 - Create pitches / add evidence / add reference solutions:
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/create_product_pitch.sh <bundle_dir>`
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/add_evidence_record.sh <bundle_dir>`
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/add_reference_solution.sh <bundle_dir>`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/create_product_pitch.sh <bundle_dir>`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/add_evidence_record.sh <bundle_dir>`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/add_reference_solution.sh <bundle_dir>`
 - Create candidate personas (1:1 proposals for <product-marketing> personas):
-  - `./.codex/skills/phosphene/beryl/research/modulator/scripts/create_candidate_persona.sh --bundle <bundle_dir> --name "..." --segment SEG-0001`
+  - `./.codex/skills/phosphene/viridian/research/modulator/scripts/create_candidate_persona.sh --bundle <bundle_dir> --name "..." --segment SEG-0001`
 
 ## In-doc script hints (`[V-SCRIPT]`)
 

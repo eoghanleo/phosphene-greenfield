@@ -37,7 +37,7 @@ Helper (optional):
 
 Workflow policy (preferred):
 - For repeatable performance, prefer **script-first updates** for persona artifacts (avoid hand-editing).
-- See `.codex/skills/phosphene/beryl/product-marketing/modulator/--skill.md` for the full control script list.
+- See `.codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md` for the full control script list.
 
 Handoff (default):
 - **To Product Strategy** with market framing and messaging constraints.

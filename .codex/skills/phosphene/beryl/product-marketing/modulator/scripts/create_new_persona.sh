@@ -101,7 +101,7 @@ Status: Draft
 Updated:
 Dependencies: 
 Owner: 
-EditPolicy: DO_NOT_EDIT_DIRECTLY (use scripts; see .codex/skills/phosphene/beryl/product-marketing/modulator/--skill.md)
+EditPolicy: DO_NOT_EDIT_DIRECTLY (use scripts; see .codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md)
 
 ## Snapshot summary
 

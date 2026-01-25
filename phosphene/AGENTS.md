@@ -11,14 +11,14 @@ PHOSPHENE is a lightweight agentic harness built on a simple premise:
 If you need the deeper model (contracts + workflows), start with:
 - Domain outputs under: `phosphene/domains/<domain>/output/`
 - Domain control scripts under: `.codex/skills/phosphene/<colour>/<domain>/modulator/scripts/` (script-first; creation + mutation)
-- Domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/--skill.md`
+- Domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/SKILL.md`
 - Validators (shared): `.github/scripts/`
 
 
 ### How to work (agent checklist)
 
 - **Know your primary domain** (exactly one): `<research>`, `<product-marketing>`, etc.
-- Read the domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/--skill.md`
+- Read the domain skill (mandatory): `.codex/skills/phosphene/<colour>/<domain>/modulator/SKILL.md`
 - Use **control scripts** (don’t hand-edit script-managed artifacts).
 - Run the domain validator(s).
 - Write a **DONE receipt** signal as a JSONL record in `phosphene/signals/bus.jsonl` (required for “registration”).
@@ -50,6 +50,7 @@ Refer to domains using angle brackets:
 When a workflow/issue/signal includes a `lane`, it must match the canonical domain color:
 
 - `<product-marketing>` is **`beryl`** (canonical)
+- `<research>` is **`viridian`** (canonical)
 
 ### DONE signals (completion + registration)
 
