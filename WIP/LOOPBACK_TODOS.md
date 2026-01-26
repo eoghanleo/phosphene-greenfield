@@ -25,3 +25,4 @@ These are **memory anchors** for near-term follow-ups. They are *not* an executi
 
 - [x] **3) README tip: VS Code Markdown Preview editor association**
   - **Goal**: add a short note to the public `README.md` recommending setting VS Code’s Markdown “Preview” editor association for `*.md` so navigation/reading is smoother.
+

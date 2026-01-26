@@ -209,3 +209,4 @@ Labels must include:
 - **Prism idempotency**: if a bus `branch_invoked` already exists whose `parents` contains the `start` signal ID, prism no-ops.
 - **Detector idempotency**: if an `approve` or `trap` already exists whose `parents` contains the `done_receipt` signal ID, detector no-ops.
 - **Condenser idempotency**: if the PR already has a condenser approval review, condenser no-ops.
+

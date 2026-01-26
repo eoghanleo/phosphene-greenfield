@@ -8,5 +8,5 @@ PHOSFLOW is the **single** standard notation for reactor sections.
 
 Read the canonical conventions + example here:
 
-- `reactor_notation/PHOSFLOW.md`
+- `WIP/reactor_notation/PHOSFLOW.md`
 

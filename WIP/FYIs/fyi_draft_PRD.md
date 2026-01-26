@@ -644,3 +644,4 @@ Define explicit criteria and scoring.
 ## 18.7 Appendix: ADRs (optional index)
 - ADR-001: [title] [link]
 - ADR-002: [title] [link]
+
