@@ -84,6 +84,36 @@ PHOSPHENE treats flimsies as a controlled interface. Tool permissions are delibe
 
 ---
 
+### Substrate mapping (how instruments become a delegated cloud system)
+
+The Reactor metaphor stays honest because it names the substrate directly. **Gantries are GitHub Actions workflows** (the deterministic orchestration plane), and **apparatus are bash skill bundles and scripts** (the phos-shaping plane) executed by a delegated runtime that may be generative, remote, and autonomous. What makes PHOSPHENE unusual is that these are not two separate systems glued together with ad-hoc calls; they are one continuous control surface whose shared memory is the repo itself.
+
+In implementation terms, gantries live under `.github/workflows/` and behave like simple sensors and actuators: they observe perturbations (pushes and controlled work-order changes), run narrow verification and routing logic, and then emit the next perturbation. They are designed to be boring on purpose, because you want the orchestration layer to be predictable, replayable, and safe to run in a fully delegated environment.
+
+Apparatus, by contrast, are intentionally “strong” inside their containment volume. A modulator or collector can exercise judgment, generate content, and reshape a branch beam into a new configuration of artifacts; it can be run by a cloud agent (currently optimized for a Codex Cloud worker via `@codex` summons) or by other delegated runtimes later. The key constraint is not “don’t be powerful,” it is “be powerful in a beam, then prove what you did with receipts and validators before coupling.”
+
+The reason the repo is treated as primary state is practical: delegated systems need a place to put memory that survives process boundaries and provider boundaries. In PHOSPHENE, **the reactor log is git history**, and the bus is a file in that history. That choice makes the entire harness portable: if it’s in the repo, it is schedulable, auditable, testable, and reproducible without introducing a second database that must be trusted.
+
+#### No direct wiring: routing happens through signals, not workflow-to-workflow calls
+
+PHOSPHENE intentionally avoids “instrument-to-instrument” links as an architectural coupling mechanism. In particular, it does not rely on daisy-chaining actions via `workflow_dispatch` as the main routing fabric. Instead, instruments communicate by leaving traces in the substrate: **signals are appended to the bus**, and downstream instruments react to those repo perturbations. This is why the system can remain coherent across fully remote, fully delegated workers: the substrate carries the message, not the process.
+
+#### Signals are pheromones (stigmergy, but made legible and checkable)
+
+The signals system is explicitly stigmergic: coordination happens through **environmental traces** rather than direct messaging. `phosphene/signals/bus.jsonl` is the pheromone trail: a durable, append-only-by-convention log of “what just happened,” “what should happen next,” and “what must be verified.” Gantries and apparatus do not need to know each other; they only need to recognize a small vocabulary of trace types and respond with their own small output traces.
+
+Those traces are engineered to be hard to counterfeit casually and easy to audit. Each bus record carries a `tamper_hash` computed over the line bytes (with the `tamper_hash` value normalized), which makes hand edits detectable unless the official update step is run (`phosphene/phosphene-core/bin/signal_bus.sh` and `signal_tamper_hash.sh`). This is not secret-key authentication, but it is a practical integrity guardrail, and it composes with git’s own content-addressed history to make the reactor’s trace layer meaningfully tamper-evident in practice.
+
+Separately, PHOSPHENE uses stable SHA-256 IDs to uniquely identify signals as nodes in a monotonic DAG: a signal ID is derived from its parents plus a run marker and output key (`phosphene/phosphene-core/bin/signal_hash.sh`). That means “what you emitted” is uniquely named in a way downstream instruments can reference without needing an external coordinator.
+
+#### The harness-of-harnesses principle (why colours and domains exist)
+
+The apparent complexity is the price of tight scope. Each instrument is deliberately small in what it can interpret and what it is allowed to output, in the same way a colony can exhibit complex swarm behavior even when any single insect is following a tiny set of rules based on local pheromone gradients. The agent’s intelligence is not removed; it is contained. A worker can be unbounded inside a branch beam while still being unable to rewrite the reactor’s governance, because the only sanctioned path back to the stable beam is through receipts, detectors, and coupling rules.
+
+Colours and domains are how you scale that containment without breaking the reactor. If you want new capability, you do the upfront work to define a new lane or a new domain contract (validators, scripts, signals, and detector predicates). Once that harness exists, you can deploy it as part of the whole system with high confidence: it will scale in delegated cloud environments because it is forced to speak in the same trace language, obey the same coupling gates, and leave the same kind of verifiable footprints.
+
+---
+
 ### Spooling and safety (auxiliary workflows)
 
 Spooling and safety workflows are not the mainline orchestration loop, but they occupy the same ecosystem: they exist for controlled instantiation, release, deployment, and guardrail actions where you want deterministic, auditable automation.
