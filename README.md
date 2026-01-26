@@ -517,9 +517,9 @@ This compact loop is the mental model you should keep even as domains vary: gant
 ```mermaid
 flowchart LR
   %% Reactor anatomy notes (metaphor mode)
-  NOTE_MAIN["main beam = `main` branch"]
-  NOTE_BRANCH["branch beam = a git branch (issue-named)"]
-  NOTE_LOOP["containment loop: perturb → verify → couple → record"]
+  NOTE_MAIN["main beam = main branch"]
+  NOTE_BRANCH["branch beam = git branch (issue named)"]
+  NOTE_LOOP["containment loop: perturb -> verify -> couple -> record"]
 
   %% Gantries (circles)
   AS((AUTOSCRIBE))
@@ -531,7 +531,7 @@ flowchart LR
 
   %% Apparatus (square)
   MOD[MODULATOR]
-  HUM[Human PR merge]
+  HUM[HUMAN PR MERGE]
 
   %% Decision (diamond)
   DEC{Approve?}
@@ -548,8 +548,8 @@ flowchart LR
   DEC -->|trap| T
 
   %% Reactor loops
-  K -->|approve PR| HUM
-  HUM -->|merge_complete (manual)| AS
+  K -->|approve_pr| HUM
+  HUM -->|merge_complete_manual| AS
   T -->|remediate| MOD
 
   %% Notes (dotted anchors)
