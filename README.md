@@ -158,6 +158,7 @@ Canonical scaffold:
 - Domain control scripts: `.codex/skills/phosphene/<colour>/<domain>/modulator/scripts/`
 - Shared validators: `.github/scripts/`
 - Central signal bus: `phosphene/signals/`
+- Config (owner-adjustable): `phosphene/config/<color>.yml`
 
 Domain reference convention:
 - Refer to domains using angle brackets: `<ideation>`, `<product-marketing>`, `<feature-management>`, etc.

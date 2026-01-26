@@ -60,6 +60,16 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Load done score config
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color cerulean --key product-management.done_score_min --default 80)"
+          [[ -n "${done_score_min:-}" ]] || done_score_min="80"
+          echo "done_score_min=$done_score_min" >> "$GITHUB_OUTPUT"
+          echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
+
       - name: Extract newly added bus lines
         id: diff
         if: github.event_name == 'push'
@@ -206,7 +216,8 @@ jobs:
               const upstreamDomainTag = "<product-marketing>";
               const domainSkillPath = ".codex/skills/phosphene/cerulean/product-management/modulator/SKILL.md";
               const domainScriptsPath = ".codex/skills/phosphene/cerulean/product-management/modulator/scripts/";
-              const domainDoneScoreCmd = "./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score 80";
+            const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
+            const domainDoneScoreCmd = `./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score ${doneScoreMin}`;
 
               const phospheneBlock = [
                 "[PHOSPHENE]",
@@ -237,7 +248,7 @@ jobs:
                   .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
                   .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
                   .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", "phosphene/signals/bus.jsonl (DONE receipt line)")
-                  .replaceAll("{{DONE_SCORE_MIN}}", "80")
+                  .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
                   .replaceAll("{{INTENT}}", resolvedIntent)
                   .replaceAll("{{POINTERS_BULLETS}}", [

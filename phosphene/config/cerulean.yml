@@ -1,0 +1,3 @@
+# Cerulean config (product-management, feature-management)
+# Format: key: value (flat, no nesting)
+product-management.done_score_min: 80

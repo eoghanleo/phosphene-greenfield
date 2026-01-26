@@ -85,6 +85,15 @@ jobs:
             }
             core.setOutput("has_done", "0");
 
+      - name: Load done score config
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color cerulean --key product-management.done_score_min --default 80)"
+          [[ -n "${done_score_min:-}" ]] || done_score_min="80"
+          echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
+
       - name: Validate PRD bundle + compute detector result
         id: validate
         if: steps.done.outputs.has_done == '1'
@@ -110,7 +119,7 @@ jobs:
           bundle_dir="$(cd "$(dirname "$rel_path")" && pwd)"
 
           bash .github/scripts/validate_prd_bundle.sh --strict "$bundle_dir"
-          bash .github/scripts/product-management-domain-done-score.sh "$bundle_dir" --min-score 80
+          bash .github/scripts/product-management-domain-done-score.sh "$bundle_dir" --min-score "${PHOSPHENE_DONE_SCORE_MIN:-80}"
 
           echo "bundle_dir=$bundle_dir" >> "$GITHUB_OUTPUT"
 

@@ -29,6 +29,7 @@ If you need the deeper model (contracts + workflows), start with:
 - Domains live under: `phosphene/domains/<domain>/output/`
 - Skills live under: `.codex/skills/phosphene/<colour>/<domain>/modulator/`
 - Validators live under: `.github/scripts/`
+- Config (owner-adjustable): `phosphene/config/<color>.yml`
 - Some domains may still include `templates/` as transitional scaffolding.
 - Where control scripts exist, **scripts are the single source of truth** for canonical artifact structure (avoid relying on templates at runtime).
 

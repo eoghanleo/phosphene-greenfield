@@ -87,6 +87,15 @@ jobs:
           echo "issue_number=$issue_number" >> "$GITHUB_OUTPUT"
           echo "lane=$lane" >> "$GITHUB_OUTPUT"
 
+      - name: Load done score config
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color beryl --key product-marketing.done_score_min --default 80)"
+          [[ -n "${done_score_min:-}" ]] || done_score_min="80"
+          echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
+
       - name: Validate product-marketing work units
         if: steps.done.outputs.has_done == '1'
         shell: bash
@@ -97,7 +106,7 @@ jobs:
           ./phosphene/phosphene-core/bin/phosphene id validate
           bash .github/scripts/validate_persona.sh --all
           bash .github/scripts/validate_proposition.sh --all
-          bash .github/scripts/product-marketing-domain-done-score.sh --min-score 0
+          bash .github/scripts/product-marketing-domain-done-score.sh --min-score "${PHOSPHENE_DONE_SCORE_MIN:-80}"
 
       - name: Emit approve signal to PR bus
         if: steps.done.outputs.has_done == '1' && success()

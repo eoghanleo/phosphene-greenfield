@@ -44,4 +44,5 @@ GitHub Actions requires workflow YAML files to live **directly** in `.github/wor
 - Prefer adding new behaviors by extending the **existing** `gantry.<instrument>.<domain>.yml` file for that domain/instrument.
 - Only add a new gantry workflow file when introducing a **new** `<instrument>.<domain>` combination.
 - Prefer shared logic in `lib.*.yml`.
+- Workflow config values live under `phosphene/config/` and are read via `phosphene/phosphene-core/bin/phosphene_config.sh`.
 

@@ -1,0 +1,3 @@
+# Beryl config (product-marketing, product-strategy)
+# Format: key: value (flat, no nesting)
+product-marketing.done_score_min: 80
