@@ -223,7 +223,7 @@ jobs:
                   "**CRITICAL**",
                   "- Work on the issue-named branch above (create it from `origin/main` if needed).",
                   "- Commit + push the branch to `origin` when finished (the remote branch must exist).",
-                  "- Do NOT open or submit PRs manually (condenser handles PR creation/merge).",
+                  "- Do NOT open or submit PRs manually (a human opens the PR; condenser approves after checks).",
                   "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                   `  - \`./.codex/skills/phosphene/cerulean/product-management/modulator/scripts/product-management_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,
                   "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",

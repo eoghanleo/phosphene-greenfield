@@ -17,7 +17,7 @@ GitHub Actions requires workflow YAML files to live **directly** in `.github/wor
 - **Prisms**: `gantry.prism.<domain>.yml`
   - Dispatch/fanout into apparatus runs (summons agents; does not do work itself).
 - **Condensers**: `gantry.condenser.<domain>.yml`
-  - Coupling authorization / rejection decisions (approve/label/auto-merge enable); still **no commits**.
+  - Coupling approval decisions (approve after checks); no PR creation/merge and **no commits**.
 - **Autoscribes**: `gantry.autoscribe.<domain>.yml`
   - Create **flimsies** (GitHub Issues) from explicit triggers (e.g. `workflow_dispatch`, `/flimsie ...`).
   - Must be locked down to **no repo writes** (e.g. `contents: read` only).

@@ -108,7 +108,7 @@ jobs:
                 "- Read `.codex/skills/phosphene/viridian/research/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                 "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (do not open PRs manually)",
+                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });
@@ -153,7 +153,7 @@ jobs:
                 "- Read `.codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                 "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (do not open PRs manually)",
+                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });
@@ -199,7 +199,7 @@ jobs:
                 "- Read `.codex/skills/phosphene/cerulean/feature-management/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                 "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (do not open PRs manually)",
+                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });

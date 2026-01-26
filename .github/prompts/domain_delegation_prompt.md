@@ -40,7 +40,7 @@ Your only allowed upstream inputs are the pointers listed here (do not introduce
 4) Git workflow (mandatory):
    - Work on a branch named after this issue title.
    - Commit + push the branch to `origin` when complete so it is visible remotely.
-   - Do NOT open PRs manually; condensers handle PR creation/merge after detector approval.
+   - Do NOT open PRs manually; a human opens the PR and condensers approve after checks.
 5) Never “invent the repo”:
    - Only reference IDs that exist.
    - If you cannot ground a claim, mark it clearly as hypothesis and keep it out of authoritative statements.
@@ -71,7 +71,7 @@ You are DONE only when all of the following are true:
 4) Done-score gate (if applicable):
    - You ran `{{DOMAIN_DONE_SCORE_CMD}}`
    - If it FAILs, you must iterate until it PASSes before writing your DONE signal.
-5) Your changes are committed and pushed to `origin` on your issue-named branch (do not open a PR).
+5) Your changes are committed and pushed to `origin` on your issue-named branch (a human opens the PR).
 6) You wrote a DONE signal (mandatory) in the domain signals folder:
    - `{{DOMAIN_DONE_SIGNAL_PATH}}`
    - Name it after the parent WORK_ID (the top-level artifact you are delivering).

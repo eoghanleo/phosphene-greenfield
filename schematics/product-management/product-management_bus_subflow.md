@@ -1,15 +1,16 @@
 ## `<product-management>` subflow — bus-only orchestration (lane: `cerulean`)
 
-Scope: **only** the `<product-management>` orchestration subflow, driven entirely by **bus commits**:
+Scope: **only** the `<product-management>` orchestration subflow, driven by **bus commits + PR events**:
 
 - Autoscribe → Hopper → Prism → `@codex` summon
 - Codex emits a **DONE receipt signal** (bus line) after work completes
-- Detector verifies and emits **APPROVE** or **TRAP**
-- Condenser opens a PR when it sees **APPROVE** on the branch, then merges once checks are green
+- Human opens a PR from the Codex branch to `main` (PR contains the DONE receipt)
+- Detector verifies the PR receipt and emits **APPROVE** or **TRAP**
+- Condenser waits for checks to pass, then **approves** the PR (no auto-open, no auto-merge)
 
 - **Signals bus**: `phosphene/signals/bus.jsonl`
 - **Canonical lane**: `cerulean` (product-management must not run in other lanes)
-- **Routing rule**: gantries **listen on bus push** and **emit follow-on signals to the bus** (no workflow-to-workflow routing via `workflow_dispatch`).
+- **Routing rule**: upstream gantries **listen on bus push**; detectors/condensers **listen on PR events + checks**; follow-on signals still land on the bus (no workflow-to-workflow routing via `workflow_dispatch`).
 
 ---
 
@@ -42,6 +43,7 @@ sequenceDiagram
   participant T as gantry.trap.product_management
   participant I as GitHubIssue
   participant PR as GitHubPR
+  participant HM as Human (PR author)
   participant CI as CIChecks
   participant CX as Codex
 
@@ -65,28 +67,22 @@ sequenceDiagram
   P->>I: comment "@codex summon + DONE receipt command"
   I-->>CX: @codex mention
 
-  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so gantries can see it.
+  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so a human can open a PR.
   CX->>BUS: "append phosphene.done.product-management.receipt.v1 (parents=[branch_invoked])" 
 
-  Note over BUS,D: Detector watches branch pushes for DONE receipts
-  BUS-->>D: push trigger (new DONE receipt line on branch)
+  HM->>PR: open PR (branch -> main)
+  PR-->>D: pull_request opened (DONE receipt present in diff)
+
+  Note over BUS,D: Detector watches PR creation for DONE receipts
   D->>D: verify work (id validate + PRD bundle validator + done score)
 
   Note over D,BUS: Detector emits either APPROVE (pass) or TRAP (verification_failed)
   D->>BUS: "append phosphene.detector.product-management.approve.v1 (parents=[done_receipt])"
   D->>BUS: "append phosphene.detector.product-management.trap.v1 (parents=[done_receipt], reason=verification_failed)"
 
-  Note over BUS,K: Condenser watches branch pushes for APPROVE
-  BUS-->>K: push trigger (new APPROVE line on branch)
-  K->>PR: open PR (branch -> main)
   PR-->>CI: run checks
-  Note over CI,K: When checks complete, condenser re-evaluates and merges if clean
-  K->>PR: merge (only if mergeable_state=clean)
-  K->>BUS: "append phosphene.merge_complete.product-management.v1 (parents=[approve])"
-  K->>I: comment completion + links (PR, merge)
-
-  Note over K,BUS: If checks fail, condenser emits TRAP (checks_failed)
-  K->>BUS: "append phosphene.detector.product-management.trap.v1 (parents=[approve], reason=checks_failed)"
+  Note over CI,K: When checks complete, condenser approves if green and APPROVE is present
+  K->>PR: approve (review)
 
   BUS-->>T: push trigger (new TRAP line)
   T->>I: comment "@codex TRAP remediation (fix + re-emit DONE receipt)"
@@ -96,12 +92,14 @@ sequenceDiagram
 
 ### Trigger surface (what makes the machinery move)
 
-Everything is activated by **pushes to `phosphene/signals/bus.jsonl`**.
+Everything is activated by **bus pushes** and **PR events**.
 
 - If a gantry needs to create a “footprint” that triggers the next stage, it **must**:
   - append a signal line to `bus.jsonl`, then
   - **commit + push** the bus change using `PHOSPHENE_HUMAN_TOKEN` (PAT-authored), and
   - ensure checkout does **not** persist `GITHUB_TOKEN` credentials (so the PAT is actually used).
+- Detectors trigger on **PR opened** events when the PR contains a DONE receipt in the diff.
+- Condensers trigger on **checks completed** events and approve when checks are green.
 
 ---
 
@@ -178,14 +176,10 @@ Everything is activated by **pushes to `phosphene/signals/bus.jsonl`**.
 - **Idempotency (recommended)**
   - include a marker in the trap comment like `PHOSPHENE-TRAP:signal_id:<trap_signal_id>` and no-op if it already exists.
 
-#### `phosphene.merge_complete.product-management.v1`
+#### Condenser approval (PR review)
 
-- **Purpose**: registers that the condenser merged the PR successfully.
-- **Must include**
-  - `work_id`
-  - `issue_number`
-  - `lane:"cerulean"`
-  - `parents:[<approve_signal_id>]`
+- **Purpose**: confirm checks are green and approve the PR (no bus signal emitted).
+- **Gate**: approval only occurs if an APPROVE signal exists in the PR diff and checks are green.
 
 ---
 
@@ -214,4 +208,4 @@ Labels must include:
 - **Hopper idempotency**: if a bus `start` already exists for the `issue_number`, hopper no-ops.
 - **Prism idempotency**: if a bus `branch_invoked` already exists whose `parents` contains the `start` signal ID, prism no-ops.
 - **Detector idempotency**: if an `approve` or `trap` already exists whose `parents` contains the `done_receipt` signal ID, detector no-ops.
-- **Condenser idempotency**: if `merge_complete` already exists whose `parents` contains the `approve` signal ID, condenser no-ops.
+- **Condenser idempotency**: if the PR already has a condenser approval review, condenser no-ops.

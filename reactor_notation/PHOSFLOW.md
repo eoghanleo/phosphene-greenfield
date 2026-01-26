@@ -34,6 +34,7 @@ flowchart LR
 
   %% Apparatus (square)
   MOD[MODULATOR]
+  HUM[HUMAN PR MERGE]
 
   %% Decision (diamond)
   DEC{Approve?}
@@ -50,7 +51,8 @@ flowchart LR
   DEC -->|trap| T
 
   %% Reactor loops
-  K -->|merge_complete| AS
+  K -->|approve| HUM
+  HUM -->|merge_complete (manual)| AS
   T -->|remediate| MOD
 ```
 

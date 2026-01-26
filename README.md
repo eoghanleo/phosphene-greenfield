@@ -14,7 +14,7 @@ At its core:
 
 ## What Phosphene nails (and most “vibe context management” repos don’t)
 
-- **Total autonomous operations**: Humans don’t have to be in the loop unless they *want* to be. You can run end-to-end cycles that create artifacts, validate them, open PRs, and route the next step automatically. The system is cylical and non-linear by design. Ralph-Wiggum to your hearts content, or speed run the whole cycle. Or both.
+- **Total autonomous operations (with a human PR gate for now)**: The harness runs end-to-end cycles that create artifacts and validate them. A human opens the PR from the Codex branch; condensers approve after checks. The system is cylical and non-linear by design. Ralph-Wiggum to your hearts content, or speed run the whole cycle. Or both.
 
 - **Fully cloud powered operations**: The harness is designed so the *work* can run in the cloud. You can steer it from anywhere—yes, including from your phone.
 
@@ -172,7 +172,7 @@ Common expectations:
 - Prefer **control scripts** (don’t hand-edit script-managed artifacts)
 - Run validators when available
 - Keep IDs stable and consistent
-- Work on a branch named after the issue title; **commit + push to `origin`** when complete (do not open PRs manually; condensers handle PR creation/merge)
+- Work on a branch named after the issue title; **commit + push to `origin`** when complete (do not open PRs manually; a human opens the PR and condensers approve after checks)
 
 ## Completion signals: JSONL bus record (required)
 
@@ -348,7 +348,7 @@ Gantries are the traffic controllers. They read signals, interpret state, and mo
       />
     </td>
     <td valign="top">
-      The `CONDENSER` is the coupler: it turns a green ruling into a coupling action, bringing a validated branch beam back into resonance with the main beam. In implementation terms, that typically means “open a PR, wait for checks, merge when clean, and leave a durable footprint that coupling completed.” Condensers exist so the reactor can be strict about verification without being precious about process: if the work is verified, the condenser does the mechanical merge work and records it in the reactor log; if the work isn’t mergeable, it emits a trap reason that routes back into remediation rather than silently failing.
+      The `CONDENSER` is the coupler: it turns a green ruling into a coupling approval, confirming checks are green and approving the PR. Condensers do **not** open PRs or merge them; a human opens the PR and merges after approval. The point remains the same: if the work is verified, the condenser issues a deterministic approval so coupling can proceed; if it isn’t, the loop routes back into remediation rather than silently failing.
     </td>
   </tr>
 </table>
@@ -531,6 +531,7 @@ flowchart LR
 
   %% Apparatus (square)
   MOD[MODULATOR]
+  HUM[Human PR merge]
 
   %% Decision (diamond)
   DEC{Approve?}
@@ -547,7 +548,8 @@ flowchart LR
   DEC -->|trap| T
 
   %% Reactor loops
-  K -->|merge_complete| AS
+  K -->|approve PR| HUM
+  HUM -->|merge_complete (manual)| AS
   T -->|remediate| MOD
 
   %% Notes (dotted anchors)
@@ -558,7 +560,7 @@ flowchart LR
 
 #### Concrete bus-only sequence loop
 
-The diagram below is copied from the existing schematic `schematics/product-marketing/product-marketing_bus_subflow.md`. It is intentionally “bus-only”: every stage is triggered by pushes to the signals bus, and every stage leaves a durable footprint by appending a new line and pushing again. This specific instance names the current runtime supplier in its participant label (`Codex (apparatus)`), but functionally you can read that participant as “the modulator” in the abstract model above.
+The diagram below is copied from the existing schematic `schematics/product-marketing/product-marketing_bus_subflow.md`. It is intentionally **bus-first**: upstream stages are triggered by pushes to the signals bus, while detector/condensers react to PR events and checks; each stage leaves a durable footprint by appending a new line and pushing again (where applicable). This specific instance names the current runtime supplier in its participant label (`Codex (apparatus)`), but functionally you can read that participant as “the modulator” in the abstract model above.
 
 ```mermaid
 sequenceDiagram
@@ -572,6 +574,7 @@ sequenceDiagram
   participant T as gantry.trap.product-marketing
   participant I as GitHub Issue
   participant PR as GitHub PR
+  participant HM as Human (PR author)
   participant CI as CI checks
   participant CX as Codex (apparatus)
 
@@ -596,30 +599,26 @@ sequenceDiagram
   P->>I: comment @codex summon + instructions\n(includes DONE receipt command)
   I-->>CX: @codex mention, start work
 
-  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so gantries can see it.
+  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so a human can open a PR.
   CX->>BUS: append phosphene.done.product-marketing.receipt.v1\n(on branch, parents=[branch_invoked])
 
-  Note over D,BUS: Detector watches branch pushes for DONE receipts
+  HM->>PR: open PR (branch -> main)
+  PR-->>D: pull_request opened (DONE receipt present in diff)
+
+  Note over D,BUS: Detector watches PR creation for DONE receipts
   D->>D: verify work\nphosphene id validate\nvalidate_persona --all\nvalidate_proposition --all\nproduct-marketing done score
 
   Note over D,BUS: Detector emits either APPROVE (pass) or TRAP (verification_failed)
   D->>BUS: append phosphene.detector.product-marketing.approve.v1\nparents=[done_receipt]
   D->>BUS: append phosphene.detector.product-marketing.trap.v1\nparents=[done_receipt]\nreason=verification_failed
 
-  Note over K,BUS: Condenser watches branch pushes for APPROVE and opens the PR
-  K->>PR: open PR (branch -> main)
   PR-->>CI: run checks
 
-  Note over CI,K: When checks complete, condenser re-evaluates and merges if clean
-  K->>PR: merge (only if mergeable_state=clean)
-  K->>BUS: append phosphene.merge_complete.product-marketing.v1\nparents=[approve]
-  K->>I: comment completion + links (PR, merge)
-
-  Note over K,BUS: If checks fail, condenser emits TRAP (checks_failed)
-  K->>BUS: append phosphene.detector.product-marketing.trap.v1\nparents=[approve]\nreason=checks_failed
+  Note over CI,K: When checks complete, condenser approves if green and APPROVE is present
+  K->>PR: approve (review)
 
   BUS-->>T: push trigger (new TRAP line)
   T->>I: comment @codex TRAP remediation\nerror_mode from trap.reason\nfix and re-emit DONE receipt
 ```
 
-Read this loop as a set of expectations you can lean on. When an upstream signal lands, autoscribe will externalize it into a flimsie with a parseable PHOSPHENE block; hopper will either start the job or refuse it with a clear reason; prism will create the minimal execution anchor and summon the worker; the apparatus will do the work and leave a single, durable “DONE receipt” perturbation trace; detector will treat that receipt as an invitation to verify rather than a claim to trust; condenser will couple verified work back into the main beam (and, in implementation terms, merge it to `main`) and record the result; and trap will convert any failure state into a remediation loop that points back at the worker with enough context to try again. If everything goes well, the loop closes on `merge_complete`; if anything fails, the loop stays alive because failure becomes a first-class signal rather than a silent dead end.
+Read this loop as a set of expectations you can lean on. When an upstream signal lands, autoscribe will externalize it into a flimsie with a parseable PHOSPHENE block; hopper will either start the job or refuse it with a clear reason; prism will create the minimal execution anchor and summon the worker; the apparatus will do the work and leave a single, durable “DONE receipt” perturbation trace; detector will treat that receipt as an invitation to verify rather than a claim to trust; condenser will approve verified PRs after checks turn green; and trap will convert any failure state into a remediation loop that points back at the worker with enough context to try again. If everything goes well, the loop closes when the PR is manually merged and downstream handoffs emit their own coupling signals; if anything fails, the loop stays alive because failure becomes a first-class signal rather than a silent dead end.
