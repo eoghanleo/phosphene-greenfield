@@ -129,4 +129,7 @@ jobs:
                   marker,
                 ].join("\n"),
               });
+            }
+
+            core.notice(`PHOSPHENE: trap remediation processed (${traps.length} signal(s)).`);
 

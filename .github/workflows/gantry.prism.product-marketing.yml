@@ -206,7 +206,7 @@ jobs:
                   `- **intent**: ${it}`,
                   "",
                   "**CRITICAL**",
-                  "- Submit a PR immediately when you meet Definition of Done (do NOT wait for permission).",
+                  "- Do NOT open or submit PRs. Emitting the DONE receipt is the only required completion footprint.",
                   "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                   `  - \`./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,
                   "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
