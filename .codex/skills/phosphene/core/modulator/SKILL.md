@@ -20,7 +20,7 @@ Operate inside the PHOSPHENE harness using repo-native artifacts as the systemâ€
 
 - **Always work on a branch named after the issue title** (use a slug; include the issue number if helpful).
 - **Always commit + push your branch to `origin`** when you finish (so the branch is visible remotely and gantries can observe it).
-- **Do not open PRs manually**; condensers handle PR creation/merge once detector approval exists.
+- **Do not open PRs manually**; a human opens the PR and condensers approve after checks.
 
 ## Repo structure (canonical)
 
