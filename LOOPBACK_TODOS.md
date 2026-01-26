@@ -4,7 +4,7 @@ These are **memory anchors** for near-term follow-ups. They are *not* an executi
 
 ### Items
 
-- [ ] **1) Canonical schematic: `beryl` flow for `<product-marketing>`**
+- [x] **1) Canonical schematic: `beryl` flow for `<product-marketing>`**
   - **Goal**: one authoritative end-to-end schematic from *incoming upstream signal* → *issue lifecycle* → *completion registered on the issue*.
   - **Include**
     - **Trigger**: upstream signal types + required fields as they appear in `phosphene/signals/bus.jsonl`
@@ -23,5 +23,5 @@ These are **memory anchors** for near-term follow-ups. They are *not* an executi
     - **Detector responsibilities**: validation-only vs routing (and how routing is achieved purely via bus emissions)
   - **Output**: a single canonical spec doc + updated scripts/validators aligned to it.
 
-- [ ] **3) README tip: VS Code Markdown Preview editor association**
+- [x] **3) README tip: VS Code Markdown Preview editor association**
   - **Goal**: add a short note to the public `README.md` recommending setting VS Code’s Markdown “Preview” editor association for `*.md` so navigation/reading is smoother.
