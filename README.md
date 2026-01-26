@@ -1,5 +1,5 @@
 
-![phosphene](https://github.com/user-attachments/assets/b2d36a5c-96db-404b-9c9b-10b544ce6e4f)
+![FLORA-Text Modification Request-52d07bab](https://github.com/user-attachments/assets/4a988c21-d2d3-4cc2-ab9f-67a7679b2ec5)
 
 
 ## PHOSPHENE
@@ -264,6 +264,9 @@ Some Codex configurations may ignore `github-actions[bot]` comments. If you see 
 
 ---
 
+<img width="2364" height="1317" alt="CleanShot 2026-01-26 at 16 47 20" src="https://github.com/user-attachments/assets/582d17bc-6b30-4df0-aa4e-168b9f01cb81" />
+
+
 ## THE PHOSPHENE REACTOR
 
 **Scope:** This is a human-readable map of the PHOSPHENE Reactor: the in-universe physics (how a git repo behaves inside the reactor), the control surfaces humans see, and the instrument taxonomy that manipulates beams and signals. It does not define new runtime behavior. It exists to make operational truth legible: what each instrument does, what it touches, and what it emits downstream.
@@ -300,13 +303,19 @@ Gantries are the traffic controllers. They read signals, interpret state, and mo
 
 #### DETECTOR
 
+<img width="1024" height="1024" alt="FLORA-Obsidian Detector Render-fce2117b" src="https://github.com/user-attachments/assets/c8f1a4d7-098a-47cf-be2e-496cf7313ec6" />
+
 The `DETECTOR` is the ruling corridor: you hand it a ref (a branch beam or the main beam) and it deterministically evaluates predicates against what it finds there. A detector is how PHOSPHENE turns “someone says it’s done” into “the system agrees it’s done,” because it can validate IDs, run domain validators, and compute “done scores” in a consistent way. Detectors treat receipts as invitations to verify, and treat verification as beam physics, not social trust. When it finishes, it emits a ruling signal (approve or trap) that downstream gantries can treat as a reliable gate rather than a conversation.
 
 #### PRISM
 
+<img width="1024" height="1024" alt="FLORA-Crystal Prism Rendering-75375f03" src="https://github.com/user-attachments/assets/dc51bd88-c5bb-4c50-a422-29e928d58230" />
+
 The `PRISM` is the dispatcher: it splits and aims branch beams, fanning work out into an execution context without doing the work itself. In practice, that means it issues the minimal execution anchor inside the reactor (for example, a prism-owned branch beam reference and a prism-issued ID), and it issues the summons that starts the apparatus running. If the detector is the judge, the prism is the stage manager: it sets the scene, points the spotlight, and then gets out of the way.
 
 #### CONDENSER
+
+<img width="1024" height="1024" alt="FLORA-3D Engine Design-ab46daf9" src="https://github.com/user-attachments/assets/356f020b-6605-4387-ac2c-bc56ac1da650" />
 
 The `CONDENSER` is the coupler: it turns a green ruling into a coupling action, bringing a validated branch beam back into resonance with the main beam. In implementation terms, that typically means “open a PR, wait for checks, merge when clean, and leave a durable footprint that coupling completed.” Condensers exist so the reactor can be strict about verification without being precious about process: if the work is verified, the condenser does the mechanical merge work and records it in the reactor log; if the work isn’t mergeable, it emits a trap reason that routes back into remediation rather than silently failing.
 
