@@ -461,6 +461,8 @@ PHOSPHENE treats flimsies as a controlled interface. Tool permissions are delibe
 
 ---
 
+<img width="2554" height="1076" alt="CleanShot 2026-01-26 at 21 42 08" src="https://github.com/user-attachments/assets/f6123046-a650-4146-98c5-783014ba8a0d" />
+
 ### Substrate mapping (how instruments become a delegated cloud system)
 
 The Reactor metaphor stays honest because it names the substrate directly. **Gantries are GitHub Actions workflows** (the deterministic orchestration plane), and **apparatus are bash skill bundles and scripts** (the phos-shaping plane) executed by a delegated runtime that may be generative, remote, and autonomous. What makes PHOSPHENE unusual is that these are not two separate systems glued together with ad-hoc calls; they are one continuous control surface whose shared memory is the repo itself.
