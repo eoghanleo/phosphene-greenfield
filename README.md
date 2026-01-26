@@ -172,6 +172,7 @@ Common expectations:
 - Prefer **control scripts** (don’t hand-edit script-managed artifacts)
 - Run validators when available
 - Keep IDs stable and consistent
+- Work on a branch named after the issue title; **commit + push to `origin`** when complete (do not open PRs manually; condensers handle PR creation/merge)
 
 ## Completion signals: JSONL bus record (required)
 
@@ -517,7 +518,7 @@ This compact loop is the mental model you should keep even as domains vary: gant
 flowchart LR
   %% Reactor anatomy notes (metaphor mode)
   NOTE_MAIN["main beam = `main` branch"]
-  NOTE_BRANCH["branch beam = a git branch (often prism-owned)"]
+  NOTE_BRANCH["branch beam = a git branch (issue-named)"]
   NOTE_LOOP["containment loop: perturb → verify → couple → record"]
 
   %% Gantries (circles)
@@ -574,7 +575,7 @@ sequenceDiagram
   participant CI as CI checks
   participant CX as Codex (apparatus)
 
-  Note over BUS: Main beam: main branch. Branch beam: prism-owned branch ref. Reactor log: git history.
+  Note over BUS: Main beam: main branch. Branch beam: issue-named branch ref. Reactor log: git history.
   Note over BUS: Each append is commit+push using PAT auth (GITHUB_TOKEN pushes do not trigger downstream workflows)
 
   rect rgb(245,245,245)
@@ -591,11 +592,11 @@ sequenceDiagram
   H->>BUS: append phosphene.hopper.product-marketing.start.v1\nparents=[issue_created]
 
   BUS-->>P: push trigger (new start line)
-  P->>BUS: append phosphene.prism.product-marketing.branch_invoked.v1\nphos_id issued, parents=[start]\nbranch_beam_ref issued (prism-owned)
+  P->>BUS: append phosphene.prism.product-marketing.branch_invoked.v1\nphos_id issued, parents=[start]
   P->>I: comment @codex summon + instructions\n(includes DONE receipt command)
   I-->>CX: @codex mention, start work
 
-  Note over CX: Work happens on a branch (Codex does not open PRs)
+  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so gantries can see it.
   CX->>BUS: append phosphene.done.product-marketing.receipt.v1\n(on branch, parents=[branch_invoked])
 
   Note over D,BUS: Detector watches branch pushes for DONE receipts

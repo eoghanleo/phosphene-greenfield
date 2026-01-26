@@ -37,12 +37,16 @@ Your only allowed upstream inputs are the pointers listed here (do not introduce
    - Do NOT hand-edit script-managed artifacts.
    - Use control scripts under: `{{DOMAIN_SCRIPTS_PATH}}`
    - Use `[V-SCRIPT]` blocks to discover the correct scripts for each section.
-4) Never “invent the repo”:
+4) Git workflow (mandatory):
+   - Work on a branch named after this issue title.
+   - Commit + push the branch to `origin` when complete so it is visible remotely.
+   - Do NOT open PRs manually; condensers handle PR creation/merge after detector approval.
+5) Never “invent the repo”:
    - Only reference IDs that exist.
    - If you cannot ground a claim, mark it clearly as hypothesis and keep it out of authoritative statements.
-5) Stay inside scope:
+6) Stay inside scope:
    - Primary domain is `{{DOMAIN_TAG}}` only.
-6) Bash-only:
+7) Bash-only:
    - You may only invoke bash + standard unix tools (awk/sed/grep/find/date, etc.).
 
 ## Global ID uniqueness (mandatory)
@@ -67,11 +71,12 @@ You are DONE only when all of the following are true:
 4) Done-score gate (if applicable):
    - You ran `{{DOMAIN_DONE_SCORE_CMD}}`
    - If it FAILs, you must iterate until it PASSes before writing your DONE signal.
-5) You wrote a DONE signal (mandatory) in the domain signals folder:
+5) Your changes are committed and pushed to `origin` on your issue-named branch (do not open a PR).
+6) You wrote a DONE signal (mandatory) in the domain signals folder:
    - `{{DOMAIN_DONE_SIGNAL_PATH}}`
    - Name it after the parent WORK_ID (the top-level artifact you are delivering).
    - It must enumerate: inputs, outputs, checks run, timestamp_utc, and commit_sha.
-6) Your output is PR-ready:
+7) Your output is condenser-ready (PR-ready for automation):
    - minimal diffs
    - no manual edits to script-managed sections
    - no broken markdown structure (especially fenced blocks)

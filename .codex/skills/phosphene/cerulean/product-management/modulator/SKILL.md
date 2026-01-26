@@ -67,7 +67,7 @@ If an ID doesn’t resolve, you must either:
 - fix the reference, or
 - create the authoritative upstream artifact first (in its correct domain).
 
-## DONE signal (required for PR-ready work)
+## DONE signal (required for condenser-ready work)
 
 Emit a DONE receipt to `phosphene/signals/bus.jsonl` (append-only JSONL bus):
 

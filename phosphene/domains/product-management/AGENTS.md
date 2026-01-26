@@ -38,7 +38,7 @@ Canonical location:
 
 ## ID hygiene (required)
 
-Before finalizing a PRD for PR, run:
+Before finalizing a PRD for condenser coupling (PR-gated officialization), run:
 
 ```bash
 ./phosphene/phosphene-core/bin/phosphene id validate
@@ -47,7 +47,7 @@ Before finalizing a PRD for PR, run:
 
 And run `where <ID>` for any ID you cite in the PRD.
 
-## DONE signal (required for PR-ready work)
+## DONE signal (required for condenser-ready work)
 
 Emit a DONE receipt to the signal bus:
 
