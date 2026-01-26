@@ -303,33 +303,106 @@ Gantries are the traffic controllers. They read signals, interpret state, and mo
 
 #### DETECTOR
 
-<img width="1024" height="1024" alt="FLORA-Obsidian Detector Render-fce2117b" src="https://github.com/user-attachments/assets/c8f1a4d7-098a-47cf-be2e-496cf7313ec6" />
-
-The `DETECTOR` is the ruling corridor: you hand it a ref (a branch beam or the main beam) and it deterministically evaluates predicates against what it finds there. A detector is how PHOSPHENE turns “someone says it’s done” into “the system agrees it’s done,” because it can validate IDs, run domain validators, and compute “done scores” in a consistent way. Detectors treat receipts as invitations to verify, and treat verification as beam physics, not social trust. When it finishes, it emits a ruling signal (approve or trap) that downstream gantries can treat as a reliable gate rather than a conversation.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/c8f1a4d7-098a-47cf-be2e-496cf7313ec6"
+        alt="FLORA-Obsidian Detector Render-fce2117b"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `DETECTOR` is the ruling corridor: you hand it a ref (a branch beam or the main beam) and it deterministically evaluates predicates against what it finds there. A detector is how PHOSPHENE turns “someone says it’s done” into “the system agrees it’s done,” because it can validate IDs, run domain validators, and compute “done scores” in a consistent way. Detectors treat receipts as invitations to verify, and treat verification as beam physics, not social trust. When it finishes, it emits a ruling signal (approve or trap) that downstream gantries can treat as a reliable gate rather than a conversation.
+    </td>
+  </tr>
+</table>
 
 #### PRISM
 
-<img width="1024" height="1024" alt="FLORA-Crystal Prism Rendering-75375f03" src="https://github.com/user-attachments/assets/dc51bd88-c5bb-4c50-a422-29e928d58230" />
-
-The `PRISM` is the dispatcher: it splits and aims branch beams, fanning work out into an execution context without doing the work itself. In practice, that means it issues the minimal execution anchor inside the reactor (for example, a prism-owned branch beam reference and a prism-issued ID), and it issues the summons that starts the apparatus running. If the detector is the judge, the prism is the stage manager: it sets the scene, points the spotlight, and then gets out of the way.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/dc51bd88-c5bb-4c50-a422-29e928d58230"
+        alt="FLORA-Crystal Prism Rendering-75375f03"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `PRISM` is the dispatcher: it splits and aims branch beams, fanning work out into an execution context without doing the work itself. In practice, that means it issues the minimal execution anchor inside the reactor (for example, a prism-owned branch beam reference and a prism-issued ID), and it issues the summons that starts the apparatus running. If the detector is the judge, the prism is the stage manager: it sets the scene, points the spotlight, and then gets out of the way.
+    </td>
+  </tr>
+</table>
 
 #### CONDENSER
 
-<img width="1024" height="1024" alt="FLORA-3D Engine Design-ab46daf9" src="https://github.com/user-attachments/assets/356f020b-6605-4387-ac2c-bc56ac1da650" />
-
-The `CONDENSER` is the coupler: it turns a green ruling into a coupling action, bringing a validated branch beam back into resonance with the main beam. In implementation terms, that typically means “open a PR, wait for checks, merge when clean, and leave a durable footprint that coupling completed.” Condensers exist so the reactor can be strict about verification without being precious about process: if the work is verified, the condenser does the mechanical merge work and records it in the reactor log; if the work isn’t mergeable, it emits a trap reason that routes back into remediation rather than silently failing.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/356f020b-6605-4387-ac2c-bc56ac1da650"
+        alt="FLORA-3D Engine Design-ab46daf9"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `CONDENSER` is the coupler: it turns a green ruling into a coupling action, bringing a validated branch beam back into resonance with the main beam. In implementation terms, that typically means “open a PR, wait for checks, merge when clean, and leave a durable footprint that coupling completed.” Condensers exist so the reactor can be strict about verification without being precious about process: if the work is verified, the condenser does the mechanical merge work and records it in the reactor log; if the work isn’t mergeable, it emits a trap reason that routes back into remediation rather than silently failing.
+    </td>
+  </tr>
+</table>
 
 #### AUTOSCRIBE
 
-The `AUTOSCRIBE` is the cleric that creates the public record. It turns explicit triggers into flimsies (GitHub Issues) with a canonical, machine-readable `[PHOSPHENE] ... [/PHOSPHENE]` block that other instruments can safely interpret. Operationally, autoscribe is special because it is the only instrument allowed to create or mutate flimsies (title/body/labels/assignees/state); that strictness keeps the “case file” coherent even when many other instruments are active and beams are splitting and recombining.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/b45948d2-dc60-4241-b535-633bac23863c"
+        alt="FLORA-Mechanized Scribe Console-088097e6"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `AUTOSCRIBE` is the cleric that creates the public record. It turns explicit triggers into flimsies (GitHub Issues) with a canonical, machine-readable `[PHOSPHENE] ... [/PHOSPHENE]` block that other instruments can safely interpret. Operationally, autoscribe is special because it is the only instrument allowed to create or mutate flimsies (title/body/labels/assignees/state); that strictness keeps the “case file” coherent even when many other instruments are active and beams are splitting and recombining.
+    </td>
+  </tr>
+</table>
 
 #### HOPPER
 
-The `HOPPER` is the gate at the flimsie boundary. It watches flimsie updates, checks whether a flimsie is eligible to start (domain label, lane, ready/not-blocked, and whether it can parse the canonical PHOSPHENE block), and then emits the “start” signal that wakes a prism. The hopper’s personality is intentionally strict and boring: if it can’t parse, it asks autoscribe to fix; if it’s not eligible, it says why; if it is eligible, it starts the machine and gets out of the way.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/9da052b1-6590-45dd-a7aa-f9b3e0742204"
+        alt="FLORA-Studio Hero Shot-119972a7"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `HOPPER` is the gate at the flimsie boundary. It watches flimsie updates, checks whether a flimsie is eligible to start (domain label, lane, ready/not-blocked, and whether it can parse the canonical PHOSPHENE block), and then emits the “start” signal that wakes a prism. The hopper’s personality is intentionally strict and boring: if it can’t parse, it asks autoscribe to fix; if it’s not eligible, it says why; if it is eligible, it starts the machine and gets out of the way.
+    </td>
+  </tr>
+</table>
 
 #### TRAP
 
-The `TRAP` is the error-loop switchboard. It listens for trap signals (for example, “verification failed” or “checks failed”) and converts them into a targeted remediation prompt attached to the work’s public record (typically as a flimsie comment that includes the worker summon). The trap’s value is that it keeps failure handling dynamic without smearing ad-hoc error logic across every other instrument: detectors and condensers simply emit reasons; trap turns those reasons into a next action that routes the loop back toward stable containment, and a clear instruction to re-emit a fresh completion receipt when fixed.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/28ee172d-7967-4bea-b85e-a8460c901a86"
+        alt="FLORA-Containment Snare Design-66a7e5a1"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `TRAP` is the error-loop switchboard. It listens for trap signals (for example, “verification failed” or “checks failed”) and converts them into a targeted remediation prompt attached to the work’s public record (typically as a flimsie comment that includes the worker summon). The trap’s value is that it keeps failure handling dynamic without smearing ad-hoc error logic across every other instrument: detectors and condensers simply emit reasons; trap turns those reasons into a next action that routes the loop back toward stable containment, and a clear instruction to re-emit a fresh completion receipt when fixed.
+    </td>
+  </tr>
+</table>
+
 
 #### TEST.EMITTER / TEST.LISTENER
 
@@ -343,11 +416,38 @@ Apparatus are the workers. Where a gantry manipulates beams and records footprin
 
 #### MODULATOR
 
-The `MODULATOR` is the canonical apparatus shape: the work-configured executor that performs domain tasks under the constraints of the lane and the dossier. It is deliberately described as an instrument rather than a brand-name runtime: the runtime supplier is not hard-wired, and PHOSFLOW conventions explicitly avoid baking a specific supplier into diagrams. The expectation you should carry is simple: modulators shape phos from within; collectors import and refine phos from outside. In both cases, the apparatus emits a completion receipt signal; the receipt is the durable perturbation trace detectors use for verification.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/29f372ee-efdc-481b-b6a6-74bbf240ccfb"
+        alt="FLORA-Modular Machine Shot-8e5b940d"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `MODULATOR` is the canonical apparatus shape: the work-configured executor that performs domain tasks under the constraints of the lane and the dossier. It is deliberately described as an instrument rather than a brand-name runtime: the runtime supplier is not hard-wired, and PHOSFLOW conventions explicitly avoid baking a specific supplier into diagrams. The expectation you should carry is simple: modulators shape phos from within; collectors import and refine phos from outside. In both cases, the apparatus emits a completion receipt signal; the receipt is the durable perturbation trace detectors use for verification.
+    </td>
+  </tr>
+</table>
 
 #### COLLECTOR
 
-The `COLLECTOR` is an apparatus that acquires raw phos from outside the reactor and refines it into a usable form. Operationally, it is how the reactor gains new information: ingesting external sources (research, docs, datasets, transcripts, reference repos) and transforming them into repo-native artifacts that can be verified, versioned, and coupled back into the main beam. A collector emits the same kind of durable completion receipt as other apparatus, so downstream detectors can treat ingestion as verifiable work rather than a narrative claim.
+<table width="100%">
+  <tr>
+    <td width="340" valign="top">
+      <img
+        src="https://github.com/user-attachments/assets/7be18c9c-adde-4ec6-8518-137ce5e8c4cd"
+        alt="FLORA-Studio Hero Shot-4c8a2eda"
+        width="340"
+      />
+    </td>
+    <td valign="top">
+      The `COLLECTOR` is an apparatus that acquires raw phos from outside the reactor and refines it into a usable form. Operationally, it is how the reactor gains new information: ingesting external sources (research, docs, datasets, transcripts, reference repos) and transforming them into repo-native artifacts that can be verified, versioned, and coupled back into the main beam. A collector emits the same kind of durable completion receipt as other apparatus, so downstream detectors can treat ingestion as verifiable work rather than a narrative claim.
+    </td>
+  </tr>
+</table>
+
 
 ---
 
