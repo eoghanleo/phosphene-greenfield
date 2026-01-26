@@ -22,7 +22,7 @@ If you need the deeper model (contracts + workflows), start with:
 - Use **control scripts** (don’t hand-edit script-managed artifacts).
 - Run the domain validator(s).
 - Write a **DONE receipt** signal as a JSONL record in `phosphene/signals/bus.jsonl` (required for “registration”).
-- Open a PR. Nothing is canonical until merged.
+- Work in a branch named after the issue title. **Commit + push that branch to origin** so it is visible in the remote. Do **not** open PRs manually; condensers handle PR creation/merge (PR merge remains the officialization point).
 
 ### Repo layout (canonical)
 

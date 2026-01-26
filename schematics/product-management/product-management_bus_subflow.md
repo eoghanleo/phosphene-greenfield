@@ -65,7 +65,7 @@ sequenceDiagram
   P->>I: comment "@codex summon + DONE receipt command"
   I-->>CX: @codex mention
 
-  Note over CX: Work happens on a branch (Codex does not open PRs)
+  Note over CX: Work happens on a branch named after the issue title (Codex does not open PRs). Codex must commit + push the branch to origin so gantries can see it.
   CX->>BUS: "append phosphene.done.product-management.receipt.v1 (parents=[branch_invoked])" 
 
   Note over BUS,D: Detector watches branch pushes for DONE receipts

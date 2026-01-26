@@ -116,6 +116,13 @@ jobs:
               await github.rest.issues.createComment({ owner, repo, issue_number, body });
             };
 
+            const slugify = (s) => String(s || "")
+              .toLowerCase()
+              .trim()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-+|-+$/g, "")
+              .slice(0, 60);
+
             const busPath = "phosphene/signals/bus.jsonl";
             const busText = fs.existsSync(busPath) ? fs.readFileSync(busPath, "utf8") : "";
             const busLines = busText.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
@@ -151,6 +158,11 @@ jobs:
                 core.notice(`PHOSPHENE: prism already invoked for parent_signal_id=${parent} (skip).`);
                 return null;
               }
+
+              const issueResp = await github.rest.issues.get({ owner, repo, issue_number: issueNum });
+              const issueTitle = String(issueResp?.data?.title || "").trim();
+              const slug = slugify(issueTitle);
+              const branchName = (slug ? `issue-${issueNum}-${slug}` : `issue-${issueNum}`);
 
               const seed = `${issueNum}:${parent}:${it}`;
               const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
@@ -204,9 +216,17 @@ jobs:
                   `- **work_id**: \`${workId}\``,
                   `- **phos_id**: \`${phos_id}\``,
                   `- **intent**: ${it}`,
+                  `- **branch**: \`${branchName}\``,
+                  "",
+                  "Constraints:",
+                  "- Read `phosphene/AGENTS.md`",
+                  "- Read `.codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md`",
+                  "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                   "",
                   "**CRITICAL**",
-                  "- Do NOT open or submit PRs. Emitting the DONE receipt is the only required completion footprint.",
+                  "- Work on the issue-named branch above (create it from `origin/main` if needed).",
+                  "- Commit + push the branch to `origin` when finished (the remote branch must exist).",
+                  "- Do NOT open or submit PRs manually (condenser handles PR creation/merge).",
                   "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                   `  - \`./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,
                   "  - (this appends to `phosphene/signals/bus.jsonl` in your branch; it must parent this prism signal)",
