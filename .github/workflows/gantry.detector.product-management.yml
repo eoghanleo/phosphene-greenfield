@@ -94,6 +94,13 @@ jobs:
           [[ -n "${done_score_min:-}" ]] || done_score_min="80"
           echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
 
+      - name: Run domain tests (product-management)
+        if: steps.done.outputs.has_done == '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tests/run.sh --product-management
+
       - name: Validate PRD bundle + compute detector result
         id: validate
         if: steps.done.outputs.has_done == '1'

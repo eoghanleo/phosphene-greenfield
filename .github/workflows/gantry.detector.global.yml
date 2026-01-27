@@ -152,30 +152,6 @@ jobs:
             echo "- **Scope**: \`phosphene/signals/bus.jsonl\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  tests:
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
-    name: "Deterministic tests"
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-        with:
-          fetch-depth: 1
-
-      - name: Run
-        shell: bash
-        run: "bash ./tests/run.sh"
-
-      - name: Summary
-        if: always()
-        run: |
-          {
-            echo "### Detector summary"
-            echo ""
-            echo "- **Command**: \`bash ./tests/run.sh\`"
-            echo "- **Result**: ${{ job.status }}"
-          } >> "$GITHUB_STEP_SUMMARY"
-
   predicates:
     if: github.event_name == 'workflow_dispatch' && inputs.action == 'runtime_predicates'
     name: ${{ inputs.title }}
