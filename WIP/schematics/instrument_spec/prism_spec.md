@@ -25,7 +25,8 @@
 - MUST emit `phosphene.prism.<domain>.branch_invoked.v1` to the bus.
 - MUST generate `phos_id` using the standard format:
   - `PHOS-<12hex>` where `<12hex>` is the first 12 hex chars of `sha256("<issue_number>:<parent_signal_id>:<intent>")`.
-- MUST generate branch name `issue-<number>-<slug>`.
+- MUST generate a **suggested** branch name `issue-<number>-<slug>`.
+- MUST NOT create branches; branch creation is the agent/runtime responsibility.
 - MUST post summon comment with instructions and required scripts.
 - MUST validate lane and domain before dispatching.
 
@@ -53,6 +54,7 @@
 - MUST require `PHOSPHENE_HUMAN_TOKEN` for bus commits.
 - MUST enforce write allowlist via `gantry_write_allowlist_guard.sh`.
 - MUST enforce lane-to-domain mapping (beryl/product-marketing, cerulean/product-management).
+- MUST read `phosphene/config/global.yml` key `prism.create_branch` (default `false`) to control branch guidance.
 
 ### Constraints
 

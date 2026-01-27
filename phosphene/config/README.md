@@ -5,6 +5,7 @@ color has a dedicated YAML file with **flat** `key: value` pairs.
 
 ### Files
 
+- `global.yml` (posture toggles shared across all domains)
 - `beryl.yml`
 - `cerulean.yml`
 - `viridian.yml`
@@ -23,5 +24,6 @@ color has a dedicated YAML file with **flat** `key: value` pairs.
 
 ```text
 product-marketing.done_score_min: 80
+prism.create_branch: false
 ```
 

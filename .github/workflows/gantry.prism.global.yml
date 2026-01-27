@@ -14,7 +14,7 @@ env:
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-prism-global-${{ github.event.issue.number || github.run_id }}
+  group: instrument-prism-global-${{ github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -99,14 +99,15 @@ jobs:
                 "PHOSPHENE: prism dispatch (viridian).",
                 "",
                 `- **Intent**: ${intent}`,
-                `- **Branch**: \`${branchName}\``,
+                `- **Branch (suggested)**: \`${branchName}\``,
                 "",
                 "Constraints:",
                 "- Read `phosphene/AGENTS.md`",
                 "- Read `.codex/skills/phosphene/viridian/research/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
-                "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
+                "- Do NOT pre-create or assume an existing branch.",
+                "- Let the agent create a fresh branch from `main` when it commits.",
+                "- Use the suggested branch name if possible, then push to `origin` (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });
@@ -144,14 +145,15 @@ jobs:
                 "PHOSPHENE: prism dispatch (beryl).",
                 "",
                 `- **Intent**: ${intent}`,
-                `- **Branch**: \`${branchName}\``,
+                `- **Branch (suggested)**: \`${branchName}\``,
                 "",
                 "Constraints:",
                 "- Read `phosphene/AGENTS.md`",
                 "- Read `.codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
-                "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
+                "- Do NOT pre-create or assume an existing branch.",
+                "- Let the agent create a fresh branch from `main` when it commits.",
+                "- Use the suggested branch name if possible, then push to `origin` (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });
@@ -189,15 +191,16 @@ jobs:
                 "PHOSPHENE: prism dispatch (cerulean).",
                 "",
                 `- **Intent**: ${intent}`,
-                `- **Branch**: \`${branchName}\``,
+                `- **Branch (suggested)**: \`${branchName}\``,
                 "",
                 "Constraints:",
                 "- Read `phosphene/AGENTS.md`",
                 "- Read `.codex/skills/phosphene/cerulean/product-management/modulator/SKILL.md`",
                 "- Read `.codex/skills/phosphene/cerulean/feature-management/modulator/SKILL.md`",
                 "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
-                "- Work on the issue-named branch above (create it from `origin/main` if needed)",
-                "- Commit + push the branch to `origin` when finished (a human will open the PR)",
+                "- Do NOT pre-create or assume an existing branch.",
+                "- Let the agent create a fresh branch from `main` when it commits.",
+                "- Use the suggested branch name if possible, then push to `origin` (a human will open the PR)",
                 "- Emit DONE receipt to `phosphene/signals/bus.jsonl` when complete",
               ].join(\"\\n\"),
             });

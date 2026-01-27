@@ -6,6 +6,7 @@ runtime by bash-only helpers and never hard-coded inside workflows.
 
 ### Files
 
+- `phosphene/config/global.yml` (posture toggles, e.g., prism.create_branch)
 - `phosphene/config/<color>.yml` (flat `key: value` pairs)
 - `phosphene/phosphene-core/bin/phosphene_config.sh` (bash-only getter)
 
@@ -21,6 +22,7 @@ flowchart LR
 
   CFG -->|read done_score_min| AUTOSCRIBE
   CFG -->|read done_score_min| DETECTOR
+  CFG -->|read prism.create_branch| PRISM
   AUTOSCRIBE -->|DONE_SCORE_MIN injected| ISSUE
   DETECTOR -->|--min-score <value>| VALIDATE
 ```

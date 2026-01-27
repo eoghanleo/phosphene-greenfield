@@ -56,6 +56,18 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Load prism posture config
+        id: posture
+        shell: bash
+        run: |
+          set -euo pipefail
+          create_branch="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color global --key prism.create_branch --default false)"
+          create_branch="$(printf "%s" "$create_branch" | tr '[:upper:]' '[:lower:]')"
+          if [[ "$create_branch" != "true" && "$create_branch" != "false" ]]; then
+            create_branch="false"
+          fi
+          echo "PHOSPHENE_PRISM_CREATE_BRANCH=$create_branch" >> "$GITHUB_ENV"
+
       - name: Extract newly added bus lines
         id: diff
         if: github.event_name == 'push'
@@ -85,6 +97,7 @@ jobs:
             const { owner, repo } = context.repo;
 
             const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
+            const createBranch = String(process.env.PHOSPHENE_PRISM_CREATE_BRANCH || "false").trim().toLowerCase() === "true";
             const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
             const apiHeaders = (token) => ({
               accept: "application/vnd.github+json",
@@ -206,6 +219,20 @@ jobs:
                 JSON.stringify(signal),
               ], { stdio: "inherit" });
 
+              const branchLine = createBranch
+                ? `- **branch**: \`${branchName}\``
+                : `- **branch (suggested)**: \`${branchName}\``;
+              const branchPolicy = createBranch
+                ? [
+                    "- Create the branch before work (from `origin/main` if needed).",
+                    "- Commit + push the branch to `origin` when finished (the remote branch must exist).",
+                  ]
+                : [
+                    "- Do NOT pre-create or assume an existing branch.",
+                    "- Let the agent create a fresh branch from `main` when it commits.",
+                    "- Use the suggested branch name if possible, then push to `origin`.",
+                  ];
+
               await postComment({
                 issue_number: issueNum,
                 body: [
@@ -216,7 +243,7 @@ jobs:
                   `- **work_id**: \`${workId}\``,
                   `- **phos_id**: \`${phos_id}\``,
                   `- **intent**: ${it}`,
-                  `- **branch**: \`${branchName}\``,
+                  branchLine,
                   "",
                   "Constraints:",
                   "- Read `phosphene/AGENTS.md`",
@@ -224,8 +251,7 @@ jobs:
                   "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                   "",
                   "**CRITICAL**",
-                  "- Work on the issue-named branch above (create it from `origin/main` if needed).",
-                  "- Commit + push the branch to `origin` when finished (the remote branch must exist).",
+                  ...branchPolicy,
                   "- Do NOT open or submit PRs manually (a human opens the PR; condenser approves after checks).",
                   "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                   `  - \`./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,

@@ -4,21 +4,21 @@
 
 ## PHOSPHENE
 
-PHOSPHENE is a **git-native harness for continuous product development**: a way to keep ideas, decisions, artifacts, and handoffs legible over time—without needing a heavyweight platform.
+PHOSPHENE is a **git-native multi-agent harness for continuous autonomous product development**: a way to keep ideas, decisions, artifacts, documents, code, memory, learnings and handoffs legible over time—without needing a heavyweight platform.
 
 At its core:
-- **GitHub (PRs + Actions) is the scheduler**
-- **A worker agent is the runtime** (often invoked via `@mention` summons)
-- **The repo is shared memory**
-- **PR merge is the officialization point**
+- **GitHub Actions is the orchestrator**
+- **A worker agent is the runtime in specialised harnesses** (often invoked via `@mention` summons)
+- **The repo is shared memory AND shared messaging**
+- **PR merge is the gatekeeper**
 
 ## What Phosphene nails (and most “vibe context management” repos don’t)
 
-- **Total autonomous operations (with a human PR gate for now)**: The harness runs end-to-end cycles that create artifacts and validate them. A human opens the PR from the Codex branch; condensers approve after checks. The system is cylical and non-linear by design. Ralph-Wiggum to your hearts content, or speed run the whole cycle. Or both.
+- **Total autonomous operations (with a human PR gate for now)**: The harness runs end-to-end cycles that create artifacts and validate them. A human opens the PR from the Codex branch at the moment, but once that limit is lifted, the ring is autonomous. The system is cylical and non-linear by design. Ralph-Wiggum to your hearts content, or speed run the whole cycle. Or both.
 
 - **Fully cloud powered operations**: The harness is designed so the *work* can run in the cloud. You can steer it from anywhere—yes, including from your phone.
 
-- **Consumer license friendly**: If you’ve got a paid ChatGPT subscription, you’re good. No API keys required for the core `@codex`-driven workflow.
+- **Consumer license friendly**: If you’ve got a paid ChatGPT subscription, you’re good. No API keys required for the core `@codex`-driven workflow. No special code libraries. No changes to your runtime. It's not even an app - it's literally folders in your directory.
 
 - **Repo-first architecture**: If it lands in GitHub, it’s immediately schedulable and testable. This fits modern repo-first stacks (e.g. Vercel Next.js, database-as-a-service like PlanetScale): push → build → test → play in a little over a minute.
 
