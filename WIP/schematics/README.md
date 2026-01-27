@@ -1,6 +1,11 @@
 ## Schematics
 
-Working directory for short architecture guides and flow notes, organized by domain.
+Working directory for short architecture guides and flow notes.
+
+Structure:
+
+- `instrument_spec/` — cross-domain instrument specs (canonical behavior).
+- `domain_subflows/<color>/<domain>/` — per-domain orchestration flows grouped by color.
 
 ### Conventions
 

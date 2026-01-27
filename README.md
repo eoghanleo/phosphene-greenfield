@@ -563,7 +563,7 @@ flowchart LR
 
 #### Concrete bus-only sequence loop
 
-The diagram below is copied from the existing schematic `WIP/schematics/product-marketing/product-marketing_bus_subflow.md`. It is intentionally **bus-first**: upstream stages are triggered by pushes to the signals bus, while detector/condensers react to PR events and checks; each stage leaves a durable footprint by appending a new line and pushing again (where applicable). This specific instance names the current runtime supplier in its participant label (`Codex (apparatus)`), but functionally you can read that participant as “the modulator” in the abstract model above.
+The diagram below is copied from the existing schematic `WIP/schematics/domain_subflows/beryl/product-marketing/product-marketing_bus_subflow.md`. It is intentionally **bus-first**: upstream stages are triggered by pushes to the signals bus, while detector/condensers react to PR events and checks; each stage leaves a durable footprint by appending a new line and pushing again (where applicable). This specific instance names the current runtime supplier in its participant label (`Codex (apparatus)`), but functionally you can read that participant as “the modulator” in the abstract model above.
 
 ```mermaid
 sequenceDiagram
