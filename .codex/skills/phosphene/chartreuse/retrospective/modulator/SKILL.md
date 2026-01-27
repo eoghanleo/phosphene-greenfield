@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<retrospective>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Postmortems: `phosphene/domains/retrospective/output/postmortems/PM-*.md`
@@ -29,13 +33,11 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet:
-- Write PM/PB artifacts directly (then write a DONE signal when complete).
+No domain scripts yet.
 
-## DONE signal (required)
+## DONE signal
 
-Write a DONE signal named after the retrospective artifact you produced:
-- `phosphene/signals/<PM-###>-DONE.json` or `phosphene/signals/<PB-###>-DONE.json`
+Not active. DONE receipt scripts are not implemented for this domain yet.
 
 Include (minimum) listing:
 

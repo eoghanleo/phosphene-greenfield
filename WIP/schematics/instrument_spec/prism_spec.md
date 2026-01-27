@@ -17,45 +17,69 @@
 
 ### Purpose
 
-- [Define the canonical intent of the prism.]
+- Dispatch work by creating branch anchors and summoning apparatus.
+- Provide a minimal execution context (phos_id + branch name + work_id).
 
 ### Responsibilities
 
-- [Issue branch anchors and summons.]
+- MUST emit `phosphene.prism.<domain>.branch_invoked.v1` to the bus.
+- MUST generate `phos_id` using the standard format:
+  - `PHOS-<12hex>` where `<12hex>` is the first 12 hex chars of `sha256("<issue_number>:<parent_signal_id>:<intent>")`.
+- MUST generate branch name `issue-<number>-<slug>`.
+- MUST post summon comment with instructions and required scripts.
+- MUST validate lane and domain before dispatching.
 
 ### Inputs (expected)
 
-- [Signals, issue metadata, and lane/domain context.]
+- `phosphene.hopper.<domain>.start.v1` signals (bus).
+- Issue metadata (title, labels, PHOSPHENE block).
+- Manual `workflow_dispatch` inputs (issue_number, work_id, intent, parent_signal_id).
+- `/phosphene <lane> <intent>` comment (global prism).
 
 ### Outputs (signals / side effects)
 
-- [branch_invoked signals, issue comments/summons.]
+- Bus signals: `phosphene.prism.<domain>.branch_invoked.v1`.
+- Issue comments containing `@codex` summons and work instructions.
+- Explicit branch name (e.g., `issue-<number>-<slug>`) and phos_id.
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- MUST trigger on `push` to `main` when bus changes.
+- `workflow_dispatch` MAY be supported for manual runs.
+- Issue/comment triggers are non-canonical and MUST NOT be relied on.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- MUST require `PHOSPHENE_HUMAN_TOKEN` for bus commits.
+- MUST enforce write allowlist via `gantry_write_allowlist_guard.sh`.
+- MUST enforce lane-to-domain mapping (beryl/product-marketing, cerulean/product-management).
 
 ### Constraints
 
-- [Write boundaries, scope, and safety limits.]
+- MUST write only to `phosphene/signals/**` and `phosphene/signals/indexes/**`.
+- MUST NOT perform the work; only dispatches.
+- MUST NOT open PRs; human opens PR after branch push.
 
 ### Idempotency
 
-- [How prism avoids duplicate summons/anchors.]
+- MUST check for an existing `branch_invoked` signal with matching parent signal id.
+- MUST no-op if a prior invocation already exists.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Missing required inputs (issue_number/work_id/parent_signal_id).
+- Invalid lane for the domain (skip with notice).
+- Missing `PHOSPHENE_HUMAN_TOKEN` (refuses to write).
+- GitHub API errors when posting summon comments.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- Issue comment (summon) includes branch name and phos_id.
+- Bus commits record `branch_invoked` signals.
+- GitHub Actions logs list invoked issues and signal ids.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Should phos_id format be standardized across all lanes?
+- Do we want a reusable library workflow for prism dispatch?
 

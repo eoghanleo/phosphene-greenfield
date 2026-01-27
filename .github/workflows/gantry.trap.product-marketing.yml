@@ -98,17 +98,16 @@ jobs:
                 continue;
               }
 
-              const fixSteps = [
-                "- Re-run: `./phosphene/phosphene-core/bin/phosphene id validate`",
-                "- Re-run: `bash .github/scripts/validate_persona.sh --all`",
-                "- Re-run: `bash .github/scripts/validate_proposition.sh --all`",
-                "- Re-run: `bash .github/scripts/product-marketing-domain-done-score.sh --min-score 0`",
-                "- Fix whatever failed, then re-emit DONE receipt:",
-                `  - \`./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
+              const requiredActions = [
+                "- Validate ID registry: `./phosphene/phosphene-core/bin/phosphene id validate`",
+                "- Validate personas: `bash .github/scripts/validate_persona.sh --all --strict`",
+                "- Validate propositions: `bash .github/scripts/validate_proposition.sh --all --strict`",
+                "- Run done-score: `bash .github/scripts/product-marketing-domain-done-score.sh --min-score 80`",
+                `- Re-emit DONE receipt: \`./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
               ];
 
               if (reason === "checks_failed") {
-                fixSteps.unshift("- Check failing CI checks on the PR and address them.");
+                requiredActions.unshift("- Fix failing CI checks on the PR and re-run until green.");
               }
 
               await github.rest.issues.createComment({
@@ -118,13 +117,20 @@ jobs:
                 body: [
                   "@codex take issue.",
                   "",
-                  "PHOSPHENE TRAP: product-marketing remediation required.",
+                  "PHOSPHENE TRAP: remediation required.",
                   "",
-                  `- **work_id**: \`${work_id}\``,
-                  `- **reason**: \`${reason}\``,
+                  "## Context",
+                  `- domain: product-marketing`,
+                  `- work_id: \`${work_id}\``,
+                  `- issue_number: #${issue_number}`,
+                  `- reason: \`${reason}\``,
+                  `- trap_signal_id: \`${trap_signal_id}\``,
                   "",
-                  "Fix plan:",
-                  ...fixSteps,
+                  "## Required actions (MUST)",
+                  ...requiredActions,
+                  "",
+                  "## Completion",
+                  "- Emit a NEW DONE receipt signal after fixes.",
                   "",
                   marker,
                 ].join("\n"),

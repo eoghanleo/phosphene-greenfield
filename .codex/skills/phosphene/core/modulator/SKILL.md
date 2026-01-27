@@ -1,6 +1,6 @@
 ---
 name: phosphene-core
-description: PHOSPHENE core harness: PR-gated officialization, repo-as-shared-memory, domains (<domain>), DONE signals (<WORK_ID>-DONE.json), and signals conventions.
+description: PHOSPHENE core harness: PR-gated officialization, repo-as-shared-memory, domains (<domain>), DONE signals (JSONL bus), and signals conventions.
 metadata:
   short-description: PHOSPHENE core harness conventions
 ---
@@ -34,6 +34,10 @@ Operate inside the PHOSPHENE harness using repo-native artifacts as the systemâ€
 - Domain control scripts live under: `.codex/skills/phosphene/<colour>/<domain>/modulator/scripts/`
 - Validators (shared) live under: `.github/scripts/`
 - Scripts should have **fully spelled-out, self-describing names** (avoid abbreviations).
+
+### CRUD script requirement (MUST)
+
+Unless a modulator explicitly allows an agent to write code directly, all work tasks MUST be executed via scripts. Each output section is expected to have CRUD coverage (create/read/update/delete) via scripts; the script surface should be a multiple of the output section surface.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 

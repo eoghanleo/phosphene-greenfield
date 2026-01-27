@@ -17,45 +17,60 @@
 
 ### Purpose
 
-- [Define the canonical intent of the trap.]
+- Convert trap signals into explicit remediation prompts on the issue.
+- Keep error-loop handling centralized and deterministic.
 
 ### Responsibilities
 
-- [Remediation loop creation and guidance.]
+- MUST detect new `phosphene.detector.<domain>.trap.v1` signals in bus diffs.
+- MUST post a remediation comment using the standard template (no domain-specific format drift).
+- MUST require a fresh DONE receipt after fixes.
+- MUST avoid duplicate remediation posts for the same trap signal.
 
 ### Inputs (expected)
 
-- [trap signals + reasons.]
+- Bus diffs containing trap signals and `reason` fields.
+- PR or push events that include `phosphene/signals/bus.jsonl` changes.
+- Manual `workflow_dispatch` inputs (if invoked by hand).
 
 ### Outputs (signals / side effects)
 
-- [Issue comments; optional rework summons.]
+- Issue comments containing remediation instructions and `@codex` summon.
+- No bus signals emitted (read-only gantry).
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- `pull_request` (opened/synchronize/reopened) with bus diffs.
+- `push` to `main` with bus changes.
+- `workflow_dispatch`.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- Domain-specific remediation steps are embedded in the workflow.
+- Read-only permissions (no bus or artifact writes).
 
 ### Constraints
 
-- [Comment-only policy, no issue mutation.]
+- MUST be comment-only (no issue edits or label changes).
+- MUST only process trap signals for its domain.
 
 ### Idempotency
 
-- [How trap avoids duplicate remediation posts.]
+- MUST check for a comment marker `PHOSPHENE-TRAP:signal_id:<trap_signal_id>`.
+- MUST no-op if a marker already exists.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Missing issue_number or trap_signal_id in the trap payload (skip).
+- No trap signals found in diff (no-op).
+- GitHub API error when posting a comment.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- Issue comments include work_id, reason, trap_signal_id, and required actions.
+- GitHub Actions logs indicate processed vs skipped signals.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Should traps emit follow-on bus signals when remediation is posted?
 

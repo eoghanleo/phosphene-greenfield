@@ -4,45 +4,50 @@
 
 ### Purpose
 
-- [Define the canonical intent of test listener.]
+- Confirm workflow triggers by reacting to probe file changes.
+- Provide a read-only regression observer for the orchestration substrate.
 
 ### Responsibilities
 
-- [React to probe signals for regression tests.]
+- MUST listen for probe file updates and log trigger context.
+- MUST avoid any repo writes (read-only observer).
 
 ### Inputs (expected)
 
-- [Probe signals from test emitter.]
+- `push` events to `main` that modify `phosphene/signals/indexes/workflow_trigger_probe.txt`.
 
 ### Outputs (signals / side effects)
 
-- [Ack signal(s), logs, or comments.]
+- Console logs with trigger metadata (`actor`, `ref`, `sha`).
+- No bus signals or file changes.
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- MUST trigger on `push` to `main` with path filter on the probe file.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- No configuration required.
 
 ### Constraints
 
-- [Write boundaries, scope, and safety limits.]
+- MUST be read-only: no repo writes or issue mutations.
 
 ### Idempotency
 
-- [How listener avoids duplicate reactions.]
+- Idempotent by design (logs only, no state mutation).
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Workflow execution failure (no side effects).
+- Missing context variables (unlikely).
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- GitHub Actions logs with trigger context.
+- Workflow run history.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Should the listener emit a lightweight bus acknowledgment signal?
 

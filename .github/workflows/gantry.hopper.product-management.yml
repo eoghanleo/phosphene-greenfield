@@ -98,16 +98,46 @@ jobs:
               if (closeIdx === -1) return null;
               return text.slice(openIdx, closeIdx + PH_CLOSE.length);
             };
-            const parseKv = (rawBlock) => {
+            const REQUIRED_KEYS = [
+              "lane",
+              "work_type",
+              "work_id",
+              "intent",
+              "depends_on",
+              "sequence",
+              "upstream_signal_id",
+            ];
+
+            const parseStrictBlock = (rawBlock) => {
               const kv = {};
-              const lines = rawBlock.split(/\r?\n/);
-              for (const line of lines) {
-                if (line.trim() === PH_OPEN || line.trim() === PH_CLOSE) continue;
-                const m = line.match(/^\s*([a-zA-Z_]+)\s*:\s*(.*?)\s*$/);
-                if (!m) continue;
-                kv[m[1].toLowerCase()] = m[2].trim();
+              const errors = [];
+              const lines = rawBlock.split(/\r?\n/).slice(1, -1);
+
+              if (lines.length !== REQUIRED_KEYS.length) {
+                errors.push(`expected ${REQUIRED_KEYS.length} lines, found ${lines.length}`);
               }
-              return kv;
+
+              for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                const m = line.match(/^\s*([a-zA-Z_]+)\s*:\s*(.*?)\s*$/);
+                if (!m) {
+                  errors.push(`line ${i + 1} is not key:value`);
+                  continue;
+                }
+                const key = m[1].toLowerCase();
+                const value = String(m[2] || "").trim();
+                const expected = REQUIRED_KEYS[i];
+                if (key !== expected) {
+                  errors.push(`line ${i + 1} expected key "${expected}", got "${key}"`);
+                  continue;
+                }
+                if (["lane", "work_type", "work_id", "intent"].includes(key) && !value) {
+                  errors.push(`"${key}" must be non-empty`);
+                }
+                kv[key] = value;
+              }
+
+              return { kv, errors };
             };
             const isInformalBlock = (rawBlock) => /(^|\n)\s*informal\s*(\n|$)/i.test(String(rawBlock || ""));
 
@@ -191,7 +221,15 @@ jobs:
                 continue;
               }
 
-              const kv = parseKv(rawBlock);
+              const parsed = parseStrictBlock(rawBlock);
+              if (parsed.errors.length > 0) {
+                reportLines.push(`- **Eligible**: NO (invalid [PHOSPHENE] block: ${parsed.errors.join("; ")})`);
+                reportLines.push("- **Action**: re-emit the upstream trigger so autoscribe regenerates a clean issue.");
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const kv = parsed.kv;
               const lane = String(kv.lane || "").trim().toLowerCase();
               const work_type = String(kv.work_type || "").trim().toLowerCase();
               const work_id = String(kv.work_id || "").trim();

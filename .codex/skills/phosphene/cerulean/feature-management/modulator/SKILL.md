@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<feature-management>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Feature Requests as bash-parseable Markdown dossiers:
@@ -46,16 +50,9 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `update_backlog_tree.sh`: Regenerate `output/backlog_tree.md` (auto-generated view).
 - `feature_request_dependency_tracker.sh`: Regenerate `output/fr_dependencies.md` (auto-generated dependency report).
 
-## DONE signal (required)
+## DONE signal
 
-When completing an FR change, add a DONE signal named after the FR you updated/approved:
-- `phosphene/signals/<FR-###>-DONE.json`
-
-Include (minimum) enumerating:
-
-- inputs (links/constraints)
-- outputs (FR dossier + refreshed reports)
-- checks run (validate + report refresh)
+Not active. DONE receipt scripts are not implemented for this domain yet.
 
 ## Constraints
 

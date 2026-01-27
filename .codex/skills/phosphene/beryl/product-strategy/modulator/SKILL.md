@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<product-strategy>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Product roadmaps: `phosphene/domains/product-strategy/output/product-roadmaps/ROADMAP-*.md`
@@ -27,13 +31,11 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet:
-- Write ROADMAP artifacts directly (then write a DONE signal when complete).
+No domain scripts yet.
 
-## DONE signal (required)
+## DONE signal
 
-Write a DONE signal named after the ROADMAP you produced:
-- `phosphene/signals/<ROADMAP-###>-DONE.json`
+Not active. DONE receipt scripts are not implemented for this domain yet.
 
 Include (minimum) listing:
 

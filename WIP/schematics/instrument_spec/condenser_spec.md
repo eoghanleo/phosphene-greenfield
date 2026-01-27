@@ -17,45 +17,67 @@
 
 ### Purpose
 
-- [Define the canonical intent of the condenser.]
+- Convert verified work into coupling approval by issuing a PR review after checks pass.
+- Emit a condenser approval signal to the bus to make coupling explicit.
 
 ### Responsibilities
 
-- [Approve coupling when checks and approvals are satisfied.]
+- MUST verify PR state (open, not draft, mergeable_state clean).
+- MUST confirm presence of detector APPROVE signals in PR diff.
+- MUST emit `phosphene.condenser.<domain>.approve.v1` to the bus (parented to the detector approve signal).
+- MUST approve PR via review (`event: APPROVE`) once checks are green and the condenser signal exists.
+- MAY request changes for manual trap handling when dispatched.
 
 ### Inputs (expected)
 
-- [Approve signals, PR state, checks context.]
+- `check_suite.completed` events (success conclusion).
+- PR metadata (open/draft/mergeable state).
+- Detector approve signals in PR diff (`phosphene.detector.<domain>.approve.v1`).
+- `workflow_dispatch` input `pr_number` (manual approval run).
 
 ### Outputs (signals / side effects)
 
-- [PR reviews, optional rejection comments.]
+- Bus signal: `phosphene.condenser.<domain>.approve.v1`.
+- PR review approval by `github-actions[bot]`.
+- Optional PR review request changes (global workflow).
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- MUST trigger on `check_suite.completed` (success) on PRs.
+- `workflow_dispatch` MAY be supported for manual approval.
+- Reusable `workflow_call` MAY be supported for shared logic.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- MUST be able to write `phosphene/signals/bus.jsonl` (bus signal emit).
+- MUST require `PHOSPHENE_HUMAN_TOKEN` for bus commits.
+- `pull-requests: write` for reviews.
 
 ### Constraints
 
-- [No PR creation/merge; no repo writes.]
+- MUST NOT open or merge PRs.
+- MUST only write to `phosphene/signals/**` and `phosphene/signals/indexes/**`.
+- MUST only approve when checks are green and detector APPROVE signal is present.
 
 ### Idempotency
 
-- [How condenser avoids duplicate approvals.]
+- MUST use deterministic signal IDs and skip if the condenser signal already exists in the bus.
+- MUST skip if an approval by `github-actions[bot]` already exists.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- No approve signal present in PR diff (no-op).
+- PR is draft/closed or mergeable_state not clean (skip approval).
+- Missing PR context in check suite (no-op with notice).
+- Missing `PHOSPHENE_HUMAN_TOKEN` (cannot emit bus signal).
+- GitHub API error when creating review.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- PR review body: `PHOSPHENE: condenser approval (checks green).`
+- GitHub Actions logs record skip reasons and approval status.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Do we need explicit handling for check failures beyond skip/no-op?
 

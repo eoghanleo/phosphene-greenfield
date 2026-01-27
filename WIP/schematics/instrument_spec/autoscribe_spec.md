@@ -17,45 +17,69 @@
 
 ### Purpose
 
-- [Define the canonical intent of the autoscribe.]
+- Create the authoritative public record (flimsie / GitHub Issue) from bus triggers.
+- Ensure each issue carries a canonical `[PHOSPHENE] ... [/PHOSPHENE]` block for downstream parsing.
 
 ### Responsibilities
 
-- [Issue creation, canonical PHOSPHENE block, labels.]
+- MUST create issues with canonical title/body/labels/assignees/state.
+- MUST embed a strict `[PHOSPHENE]` block with required keys and order:
+  - `lane`, `work_type`, `work_id`, `intent`, `depends_on`, `sequence`, `upstream_signal_id`.
+- MUST apply labels: `phosphene`, `phosphene:domain:<domain>`, `phosphene:lane:<lane>`, `phosphene:ready`.
+- MUST emit `phosphene.autoscribe.<domain>.issue_created.v1` to the bus.
+- MUST inject done-score thresholds into the issue prompt.
 
 ### Inputs (expected)
 
-- [Signals that request flimsie creation.]
+- Bus lines on `main` that match upstream trigger signals (e.g., `phosphene.merge.research.v1`).
+- `workflow_dispatch` inputs (work_id, lane, intent, parent_signal_id) MAY be supported for manual runs.
+- Issue prompt template: `.github/prompts/domain_delegation_prompt.md`.
 
 ### Outputs (signals / side effects)
 
-- [Issue creation, issue_created signals.]
+- GitHub Issue (flimsie) with canonical `[PHOSPHENE]` block and labels.
+- Bus signal: `phosphene.autoscribe.<domain>.issue_created.v1`.
+- Dedupe markers in the issue body for idempotency (e.g., `phosphene-signal-id:<parent>`).
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- MUST trigger on `push` to `main` when `phosphene/signals/bus.jsonl` changes.
+- `workflow_dispatch` MAY be supported for manual creation.
+- Issue/comment triggers are non-canonical and MUST NOT be relied on.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- MUST read `phosphene/config/<color>.yml` keys: `<domain>.done_score_min` (default 80).
+- MUST require `PHOSPHENE_HUMAN_TOKEN` for bus commits.
+- MUST enforce write allowlist via `gantry_write_allowlist_guard.sh`.
 
 ### Constraints
 
-- [Only instrument that mutates issues.]
+- MUST be the only instrument permitted to create or mutate issues.
+- MUST restrict writes to `phosphene/signals/**` and `phosphene/signals/indexes/**`.
+- MUST enforce lane correctness per domain (e.g., product-management = cerulean, product-marketing = beryl).
+- MUST emit only the strict `[PHOSPHENE]` schema (no extra keys or reordering).
 
 ### Idempotency
 
-- [How autoscribe avoids duplicate issues.]
+- MUST check the bus for an existing `issue_created` signal with `parents` containing the trigger signal id.
+- MUST search existing issues for dedupe markers tied to the trigger signal or work_id.
+- MUST no-op if a prior issue already exists for the same upstream trigger.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Missing `PHOSPHENE_HUMAN_TOKEN` (cannot push bus updates).
+- Invalid lane or missing template file.
+- Bus tamper hash validation failure.
+- GitHub API errors when creating or labeling issues.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- GitHub Actions logs and outputs (`issues`, `did_append`).
+- Bus commits announcing issue creation.
+- Issue contents show the canonical `[PHOSPHENE]` block and dedupe markers.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Which upstream trigger signals are canonical per domain beyond current use cases?
 

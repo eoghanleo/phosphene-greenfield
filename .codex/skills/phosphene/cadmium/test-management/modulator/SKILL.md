@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<test-management>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Test plans: `phosphene/domains/test-management/output/test-plans/TP-*.md`
@@ -26,13 +30,11 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet:
-- Write TP artifacts directly (then write a DONE signal when complete).
+No domain scripts yet.
 
-## DONE signal (required)
+## DONE signal
 
-Write a DONE signal named after the TP you produced:
-- `phosphene/signals/<TP-###>-DONE.json`
+Not active. DONE receipt scripts are not implemented for this domain yet.
 
 Include (minimum) listing:
 

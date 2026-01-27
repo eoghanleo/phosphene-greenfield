@@ -267,13 +267,8 @@ For repeatability, prefer using these scripts instead of manual edits:
   - `./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/add_proposition_note.sh --proposition ... --note "..." `
   - `./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/overwrite_proposition_notes.sh --proposition ... --notes-file /path/to/notes.md`
 
-## Receipts (recommended)
+## Receipts (required)
 
-Write a DONE signal named after the VPD you completed:
-- `phosphene/signals/<VPD-###>-DONE.json`
-
-Include (minimum) listing:
-
-- inputs (pointers to research bundle files / EvidenceIDs)
-- outputs (PER/PROP docs)
-- checks run (format/header compliance; any domain validators if/when added)
+Write a DONE receipt line to the JSONL bus:
+- `phosphene/signals/bus.jsonl`
+- Use: `./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh`

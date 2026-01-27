@@ -50,9 +50,6 @@ on:
         options: ["normalize", "report"]
         default: "normalize"
 
-  issue_comment:
-    types: [created]
-
 permissions:
   # CRITICAL: autoscribe may create issues, but MUST NOT be able to write repo contents.
   issues: write
@@ -134,39 +131,6 @@ jobs:
               assignees = splitCsv(core.getInput("assignees"));
               dedupe_marker = String(core.getInput("dedupe_marker") || "").trim();
               summon_codex = String(core.getInput("summon_codex") || "false").toLowerCase() === "true";
-            } else if (context.eventName === "issue_comment") {
-              const commentBody = String(context.payload.comment?.body || "");
-              const lines = commentBody.split(/\r?\n/);
-              const firstLine = (lines[0] || "").trim();
-
-              // Guard: only respond to explicit summons to avoid loops/noise.
-              const m =
-                firstLine.match(/^\/flimsie\s+(.+)$/i) ||
-                firstLine.match(/^\/phosphene\s+flimsie\s+(.+)$/i);
-              if (!m) return;
-
-              title = (m[1] || "").trim();
-              sourceIssueNumber = context.payload.issue?.number || null;
-              sourceUrl = String(context.payload.issue?.html_url || "");
-
-              if (!title) {
-                if (sourceIssueNumber) await postUsage(sourceIssueNumber);
-                return;
-              }
-
-              body = [
-                `PHOSPHENE: flimsie autoscribed from #${sourceIssueNumber}.`,
-                sourceUrl ? `- **Source**: ${sourceUrl}` : "",
-                "",
-                (lines.slice(1).join("\n") || "").trim(),
-              ]
-                .filter((x) => String(x).trim() !== "")
-                .join("\n");
-
-              labels = ["phosphene", "phosphene:flimsie"];
-              assignees = [];
-              dedupe_marker = `PHOSPHENE-AUTOSCRIBE-DEDUPE:source-issue:${sourceIssueNumber}`;
-              summon_codex = false;
             } else {
               core.notice(`PHOSPHENE: unsupported event ${context.eventName}; no-op.`);
               return;
@@ -255,13 +219,20 @@ jobs:
                 return [PH_OPEN, "INFORMAL", PH_CLOSE].join("\n");
               }
 
+              const required = ["lane", "work_type", "work_id", "intent"];
+              if (required.some((k) => !String(kv[k] || "").trim())) {
+                return [PH_OPEN, "INFORMAL", PH_CLOSE].join("\n");
+              }
+
               const lines = [
                 PH_OPEN,
                 `lane: ${kv.lane || ""}`.trimEnd(),
                 `work_type: ${kv.work_type || ""}`.trimEnd(),
+                `work_id: ${kv.work_id || ""}`.trimEnd(),
                 `intent: ${kv.intent || ""}`.trimEnd(),
                 `depends_on: ${kv.depends_on || ""}`.trimEnd(),
                 `sequence: ${kv.sequence || ""}`.trimEnd(),
+                `upstream_signal_id: ${kv.upstream_signal_id || ""}`.trimEnd(),
                 PH_CLOSE,
               ];
               return lines.join("\n");
@@ -321,20 +292,6 @@ jobs:
                 core.setFailed("Missing required input: issue_number (for action=enforce_issue_block)");
                 return;
               }
-            } else if (context.eventName === "issue_comment") {
-              const comment = context.payload.comment;
-              if (isBotUser(comment?.user)) return;
-
-              const body = String(comment?.body || "");
-              const firstLine = body.split(/\r?\n/, 1)[0].trim();
-              if (!(/^\/autoscribe\b/i.test(firstLine) || /^@autoscribe\b/i.test(firstLine))) return;
-
-              const arg = firstLine.replace(/^(@autoscribe|\/autoscribe)\b/i, "").trim().toLowerCase();
-              // /autoscribe fix | /autoscribe normalize | /autoscribe report
-              if (arg === "report") mode = "report";
-              else mode = "normalize";
-
-              issue_number = context.payload.issue?.number || null;
             } else {
               return;
             }

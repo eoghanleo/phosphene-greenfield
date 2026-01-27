@@ -4,45 +4,54 @@
 
 ### Purpose
 
-- [Define the canonical intent of test emitter.]
+- Emit probe changes to validate workflow triggering and signal paths.
+- Provide a regression harness independent of business flows.
 
 ### Responsibilities
 
-- [Emit probe signals for regression tests.]
+- MUST update the probe file to trigger the listener workflow.
+- MUST commit and push the probe update under controlled write boundaries.
+- MUST use the exact commit message: `chore(test): workflow trigger probe`.
 
 ### Inputs (expected)
 
-- [Manual dispatch or scheduled trigger.]
+- `workflow_dispatch` with optional auth mode (`github_token` or `human_token`).
 
 ### Outputs (signals / side effects)
 
-- [Probe signal(s) on the bus.]
+- Updates `phosphene/signals/indexes/workflow_trigger_probe.txt` with UTC timestamp.
+- Git commit labeled `chore(test): workflow trigger probe`.
 
 ### Trigger surface
 
-- [Which events trigger this instrument.]
+- MUST be `workflow_dispatch` only (manual).
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- MUST require `PHOSPHENE_HUMAN_TOKEN` when using `human_token` auth.
+- MUST enforce write allowlist via `gantry_write_allowlist_guard.sh`.
 
 ### Constraints
 
-- [Write boundaries, scope, and safety limits.]
+- MUST limit write boundary to `phosphene/signals/indexes/workflow_trigger_probe.txt`.
+- MUST remain outside the domain bus (file-based probe only).
 
 ### Idempotency
 
-- [How emitter avoids duplicate probes.]
+- Not idempotent by design (each run writes a new timestamp).
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Missing `PHOSPHENE_HUMAN_TOKEN` when `human_token` is selected.
+- Write allowlist violation.
+- Git push failures.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- Workflow logs and commit history.
+- Probe file contents (latest timestamp).
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Do we want a JSONL probe signal in the bus instead of file-based probes?
 

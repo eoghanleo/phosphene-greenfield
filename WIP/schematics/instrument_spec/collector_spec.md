@@ -15,47 +15,68 @@
   </tr>
 </table>
 
+**Status**: NOT IMPLEMENTED (spec deferred; requirements are not yet enforced).
+
 ### Purpose
 
-- [Define the canonical intent of the collector.]
+- Ingest external sources and convert them into repo-native artifacts.
+- Emit DONE receipts so ingestion is verifiable, not narrative.
 
 ### Responsibilities
 
-- [Ingest external sources and produce repo-native artifacts.]
+- SHOULD acquire external inputs (docs, transcripts, datasets, reference repos).
+- SHOULD normalize and structure ingested material into domain artifacts.
+- SHOULD maintain traceability back to sources and upstream IDs.
+- SHOULD emit `phosphene.done.<domain>.receipt.v1` after ingestion work completes.
 
 ### Inputs (expected)
 
-- [External sources, constraints, and scope.]
+- External sources (URLs, files, datasets, transcripts).
+- Issue intent and scope constraints (lane, domain, work_id).
+- Parent signal id from prism branch invocation.
 
 ### Outputs (signals / side effects)
 
-- [Artifacts, DONE receipts, commits on branch beams.]
+- Repo-native artifacts under `phosphene/domains/<domain>/output/`.
+- DONE receipt signal appended to `phosphene/signals/bus.jsonl`.
+- Git commits on the issue-named branch.
 
 ### Trigger surface
 
-- [How the collector is summoned.]
+- SHOULD be summoned via prism issue comments (same as modulators).
+- SHOULD operate under a domain skill definition when present.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- Domain skill path: `.codex/skills/phosphene/<color>/<domain>/modulator/SKILL.md`.
+- Script paths under `.codex/skills/phosphene/<color>/<domain>/modulator/scripts/`.
+- Signal bus tools (`signal_bus.sh`, `signal_hash.sh`) for DONE receipts.
 
 ### Constraints
 
-- [Script-first rules and allowed outputs.]
+- SHOULD be bash-only for scripts and artifacts.
+- SHOULD be script-first (no hand edits to script-managed outputs).
+- SHOULD NOT open PRs; human opens PR after branch push.
 
 ### Idempotency
 
-- [How collectors avoid duplicate outputs or ensure safe re-runs.]
+- DONE receipt scripts should check for existing signal_id before appending.
+- Re-runs should not duplicate artifacts if source inputs are unchanged.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Source unavailable or unreadable (ingestion fails).
+- Validation failures in downstream detectors (trap remediation).
+- Missing parent signal id (cannot emit DONE receipt).
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- Signal bus entries for DONE receipts.
+- Git commit history on the branch.
+- Source references embedded in produced artifacts.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- No collector-specific workflows or skills exist yet; define first implementation.
+- Do collectors require a dedicated validator surface distinct from modulators?
 

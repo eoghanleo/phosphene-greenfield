@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<ideation>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Ideas as repo artifacts:
@@ -27,16 +31,8 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet:
-- Write IDEA artifacts directly (then write a DONE signal when complete).
+No domain scripts yet.
 
-## DONE signal (required)
+## DONE signal
 
-Write a DONE signal named after the IDEA you produced:
-- `phosphene/signals/<IDEA-###>-DONE.json`
-
-Include (minimum) listing:
-
-- inputs (prompt/context)
-- outputs (the IDEA file)
-- checks run (format/header compliance)
+Not active. DONE receipt scripts are not implemented for this domain yet.

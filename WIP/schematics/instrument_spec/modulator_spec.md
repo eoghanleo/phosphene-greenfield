@@ -17,45 +17,67 @@
 
 ### Purpose
 
-- [Define the canonical intent of the modulator.]
+- Execute domain work inside the reactor and produce canonical artifacts.
+- Emit a DONE receipt to register completion and enable verification.
 
 ### Responsibilities
 
-- [Produce domain artifacts and emit DONE receipts.]
+- MUST produce domain artifacts using domain control scripts (script-first).
+- MUST maintain traceability across upstream IDs and dependencies.
+- MUST run domain validators before declaring done.
+- MUST emit `phosphene.done.<domain>.receipt.v1` to the JSONL bus (no JSON file DONE receipts).
+- MUST commit and push work on the issue-named branch.
+- MUST provide CRUD scripts for each output section unless explicitly allowed to hand-write code.
 
 ### Inputs (expected)
 
-- [Issue intent, lane, domain constraints, upstream artifacts.]
+- Issue intent and `[PHOSPHENE]` block (lane, work_id, work_type).
+- Prism summon comment containing branch name, phos_id, and scripts.
+- Domain constraints and upstream artifacts (RA, PER/PROP, ROADMAP).
+- Parent signal id from `branch_invoked` for DONE receipt linkage.
 
 ### Outputs (signals / side effects)
 
-- [Artifacts, DONE receipts, commits on branch beams.]
+- Domain artifacts under `phosphene/domains/<domain>/output/`.
+- DONE receipt signals in `phosphene/signals/bus.jsonl` (JSONL bus only).
+- Git commits on the prism-issued branch.
 
 ### Trigger surface
 
-- [How the modulator is summoned.]
+- Summoned via prism issue comments (`@codex`).
+- Reads domain skill at `.codex/skills/phosphene/<color>/<domain>/modulator/SKILL.md`.
 
 ### Configuration
 
-- [Config keys used, defaults, and overrides.]
+- MUST use script paths under `.codex/skills/phosphene/<color>/<domain>/modulator/scripts/`.
+- MUST use shared validators under `.github/scripts/` when available.
+- MUST use signal bus append/validate tools (`signal_bus.sh`, `signal_hash.sh`).
 
 ### Constraints
 
-- [Script-first rules and allowed outputs.]
+- MUST be bash-only for scripts and generated artifacts (no other languages).
+- MUST NOT hand-edit script-managed artifacts.
+- MUST NOT open PRs; a human opens the PR after branch push.
+- MUST emit a valid DONE receipt with tamper hash in `bus.jsonl`.
 
 ### Idempotency
 
-- [How modulators avoid duplicate outputs or ensure safe re-runs.]
+- MUST check for existing signal_id before appending DONE receipts.
+- Re-runs MUST be safe and produce deterministic IDs.
 
 ### Failure modes
 
-- [Known failures and remediation loop entry.]
+- Validator failures MUST block DONE receipt and route to trap remediation.
+- Missing parent `branch_invoked` signal MUST block DONE receipt.
+- ID resolution failures for upstream dependencies MUST be treated as hard failures.
 
 ### Observability
 
-- [Logs, summaries, and artifacts to inspect.]
+- Signal bus entries for DONE receipts.
+- Git commit history on the branch.
+- Validator output logs from `.github/scripts/`.
 
 ### Open questions
 
-- [Outstanding decisions or required clarifications.]
+- Should modulators record a summary report in the issue upon completion?
 

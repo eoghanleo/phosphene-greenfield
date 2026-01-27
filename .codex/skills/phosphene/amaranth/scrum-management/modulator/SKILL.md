@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<scrum-management>`
 
+## Status
+
+TODO (not in development). Do not run this domain in live flows.
+
 ## What you produce
 
 - Optional issue mirror docs (scaffold): `phosphene/domains/scrum-management/output/issues/ISSUE-*.md`
@@ -29,10 +33,9 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 No domain scripts yet:
 - Write ISSUE mirror docs directly when/if you mirror operational state into the repo.
 
-## DONE signal (required)
+## DONE signal
 
-Write a DONE signal named after the ISSUE mirror you produced/updated:
-- `phosphene/signals/<ISSUE-###>-DONE.json`
+Not active. DONE receipt scripts are not implemented for this domain yet.
 
 Include (minimum) listing:
 

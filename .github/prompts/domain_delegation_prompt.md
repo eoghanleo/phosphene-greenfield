@@ -72,10 +72,10 @@ You are DONE only when all of the following are true:
    - You ran `{{DOMAIN_DONE_SCORE_CMD}}`
    - If it FAILs, you must iterate until it PASSes before writing your DONE signal.
 5) Your changes are committed and pushed to `origin` on your issue-named branch (a human opens the PR).
-6) You wrote a DONE signal (mandatory) in the domain signals folder:
-   - `{{DOMAIN_DONE_SIGNAL_PATH}}`
-   - Name it after the parent WORK_ID (the top-level artifact you are delivering).
-   - It must enumerate: inputs, outputs, checks run, timestamp_utc, and commit_sha.
+6) You wrote a DONE receipt signal (mandatory) to the JSONL bus:
+   - `phosphene/signals/bus.jsonl` (append-only line)
+   - Use the domain `*_emit_done_receipt.sh` script.
+   - Required fields: `signal_type`, `signal_id`, `work_id`, `domain`, `issue_number`, `lane`, `parents`, `run_marker`, `output_key`, `ok`, `created_utc`, `tamper_hash`.
 7) Your output is condenser-ready (PR-ready for automation):
    - minimal diffs
    - no manual edits to script-managed sections

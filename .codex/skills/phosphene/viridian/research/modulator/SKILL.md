@@ -9,6 +9,10 @@ metadata:
 
 Primary domain: `<research>`
 
+## Status
+
+In development. Not yet production-ready; emit receipt script pending.
+
 ## What you produce
 
 - Research Assessments as **bundle folders** under `phosphene/domains/research/output/research-assessments/RA-###-<slug>/`.
@@ -76,16 +80,9 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `add_reference_solution.sh`: Append a new RefSol row (`RS-####`) to `10-reference-solutions.md` (allocates ID).
 - `create_candidate_persona.sh`: Create a new Candidate Persona (`CPE-####`) doc inside an RA bundle (allocates ID).
 
-## DONE signal (required)
+## DONE signal
 
-When done, write a DONE signal named after the RA you completed:
-- `phosphene/signals/<RA-###>-DONE.json`
-
-Include (minimum) enumerating:
-
-- inputs (idea stub, constraints, etc.)
-- outputs (bundle files)
-- checks run (validate bundle, assemble, ID registry validate)
+In development. DONE receipt script not yet implemented; do not run in live flows unless explicitly authorized.
 
 ## Constraints
 

@@ -72,5 +72,5 @@ jobs:
           fi
 
           git add phosphene/signals/indexes/workflow_trigger_probe.txt
-          git commit -m "chore(test): workflow trigger probe (${AUTH})"
+          git commit -m "chore(test): workflow trigger probe"
           git push origin HEAD:main

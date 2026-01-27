@@ -28,7 +28,7 @@ GitHub Actions requires workflow YAML files to live **directly** in `.github/wor
 - **Hopper**: `gantry.hopper.global.yml`
   - Interpret **Issues** (the core record) to decide whether to activate a Prism and start work.
   - The hopper is the only instrument that triggers directly on Issue updates; it is comment-only (no Issue mutation beyond comments).
-  - The hopper is strict: if it cannot parse the canonical `[PHOSPHENE]` block, it requests an autoscribe fix via `/autoscribe fix`.
+  - The hopper is strict: if it cannot parse the canonical `[PHOSPHENE]` block, it requires regeneration via bus-only autoscribe flow.
 
 ### Spooling / safety
 
