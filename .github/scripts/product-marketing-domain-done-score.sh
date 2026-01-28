@@ -8,6 +8,16 @@ set -euo pipefail
 # - Force recursive exploration by making "minimum-fill" patterns score poorly.
 # - Reward breadth + depth + interconnection (overlap) across personas <-> propositions.
 # - Stay bash-native (bash + awk + sed/grep/wc + gzip if available).
+# - Deterministic by construction for the same tree state across environments.
+#
+# Determinism contract:
+# - Locale + timezone are forced to stable values.
+# - File discovery is sorted.
+# - Scoring output must be identical across runners for the same tree state.
+
+export LC_ALL=C
+export LANG=C
+export TZ=UTC
 #
 # Usage:
 #   ./.github/scripts/product-marketing-domain-done-score.sh
@@ -171,8 +181,11 @@ clean_markdown_tree_words() {
   # Compute cleaned word count across an upstream markdown corpus directory.
   # Strips fenced code blocks and tables, then removes ID-like tokens and collapses whitespace.
   local dir="$1"
-  find "$dir" -type f -name "*.md" -print0 2>/dev/null \
-    | xargs -0 cat 2>/dev/null \
+  find "$dir" -type f -name "*.md" 2>/dev/null \
+    | sort \
+    | while IFS= read -r f; do
+        cat "$f" 2>/dev/null
+      done \
     | awk '
         BEGIN{ fence=0; }
         /^```/ { fence = !fence; next }
@@ -364,15 +377,20 @@ div_stats="$(cat "$CORPUS_CLEAN_TXT" 2>/dev/null \
         if (length(w) < 3) next;
         if (w ~ /^[0-9]+$/) next;
         if (stop[w]) next;
-        total++;
         cnt[w]++;
-        if (!seen[w]++){ uniq++; }
       }
+      END{
+        for (w in cnt) print w "\t" cnt[w];
+      }
+    ' \
+  | sort -t $'\t' -k1,1 \
+  | awk -F'\t' '
+      { total += $2; uniq++; cnts[uniq] = $2; }
       END{
         if (total<=0) { printf "0\t0\t0.0000\n"; exit }
         H=0;
-        for (w in cnt) {
-          p = cnt[w]/total;
+        for (i=1;i<=uniq;i++) {
+          p = cnts[i]/total;
           H += (-p * (log(p)/log(2)));
         }
         printf "%d\t%d\t%.4f\n", total+0, uniq+0, H;

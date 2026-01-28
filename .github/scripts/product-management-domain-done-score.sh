@@ -10,6 +10,15 @@ set -euo pipefail
 # - Keep it deterministic + bash-only (bash + awk + sed/grep/wc).
 # - Scale to the *incoming* product-marketing work (VPD / PER / PROP) via input→output ratios.
 #
+# Determinism contract:
+# - Locale + timezone are forced to stable values.
+# - File discovery is sorted.
+# - Scoring output must be identical across runners for the same tree state.
+
+export LC_ALL=C
+export LANG=C
+export TZ=UTC
+#
 # Usage:
 #   ./.github/scripts/product-management-domain-done-score.sh <bundle_dir> [--min-score 80] [--quiet]
 #   ./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score 0
@@ -226,7 +235,7 @@ index_input_personas_props() {
     rel_path="$("$PHOSPHENE" id where "$vpd" 2>/dev/null | head -n 1 | awk -F'\t' '{print $3}' || true)"
     [[ -n "${rel_path:-}" ]] || continue
     vpd_dir="$(cd "$(dirname "$ROOT/$rel_path")" && pwd)"
-    find "$vpd_dir" -type f -name "PER-*.md" 2>/dev/null | while IFS= read -r f; do
+    find "$vpd_dir" -type f -name "PER-*.md" 2>/dev/null | sort | while IFS= read -r f; do
       [[ -n "${f:-}" ]] || continue
       per_id="$(awk -F': ' '/^ID: PER-[0-9]{4}$/{print $2; exit}' "$f" || true)"
       [[ -n "${per_id:-}" ]] || continue
@@ -244,7 +253,7 @@ index_input_personas_props() {
       append_section_text "$f" "## Notes" >> "$INPUT_PM_CORPUS_TXT" || true
     done
 
-    find "$vpd_dir" -type f -name "PROP-*.md" 2>/dev/null | while IFS= read -r f; do
+    find "$vpd_dir" -type f -name "PROP-*.md" 2>/dev/null | sort | while IFS= read -r f; do
       [[ -n "${f:-}" ]] || continue
       prop_id="$(awk -F': ' '/^ID: PROP-[0-9]{4}$/{print $2; exit}' "$f" || true)"
       [[ -n "${prop_id:-}" ]] || continue
@@ -536,15 +545,20 @@ div_stats="$(cat "$CORPUS_CLEAN_TXT" 2>/dev/null \
         if (length(w) < 3) next;
         if (w ~ /^[0-9]+$/) next;
         if (stop[w]) next;
-        total++;
         cnt[w]++;
-        if (!seen[w]++){ uniq++; }
       }
+      END{
+        for (w in cnt) print w "\t" cnt[w];
+      }
+    ' \
+  | sort -t $'\t' -k1,1 \
+  | awk -F'\t' '
+      { total += $2; uniq++; cnts[uniq] = $2; }
       END{
         if (total<=0) { printf "0\t0\t0.0000\n"; exit }
         H=0;
-        for (w in cnt) {
-          p = cnt[w]/total;
+        for (i=1;i<=uniq;i++) {
+          p = cnts[i]/total;
           H += (-p * (log(p)/log(2)));
         }
         printf "%d\t%d\t%.4f\n", total+0, uniq+0, H;

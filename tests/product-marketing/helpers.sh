@@ -464,6 +464,22 @@ EOF
         --min-score 0 \
         --quiet
       ;;
+    product-marketing-domain-done-score-deterministic)
+      create_bundle "TEST VPD Bundle"
+      create_persona "Done Score Persona"
+      create_proposition "Done Score Proposition"
+      out1="$(env LC_ALL=C LANG=C TZ=UTC "$PM_SCRIPTS/product-marketing-domain-done-score.sh" \
+        --docs-root "$TEST_BUNDLE_DIR" \
+        --input-research-root "$RESEARCH_DOCS" \
+        --min-score 0)" || fail "done-score run 1 failed"
+      out2="$(env LC_ALL=C LANG=C TZ=UTC "$PM_SCRIPTS/product-marketing-domain-done-score.sh" \
+        --docs-root "$TEST_BUNDLE_DIR" \
+        --input-research-root "$RESEARCH_DOCS" \
+        --min-score 0)" || fail "done-score run 2 failed"
+      printf "%s\n" "$out1" | grep -qE 'Overall: [0-9]+[.][0-9]{2}' \
+        || fail "expected overall score formatted to 2 decimals"
+      [[ "$out1" == "$out2" ]] || fail "done-score output not deterministic across runs"
+      ;;
     *)
       fail "unknown test name: $name"
       ;;

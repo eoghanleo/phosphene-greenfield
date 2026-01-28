@@ -186,6 +186,20 @@ run_test() {
       echo "$out" | grep -qE "VPD\\(s\\):.*${TEST_VPD_ID}" || fail "expected done-score to list VPD ID"
       echo "$out" | grep -qE "personas:[[:space:]]*[1-9][0-9]*, propositions:[[:space:]]*[1-9][0-9]*" || fail "expected non-zero input personas/props"
       ;;
+    product_management_done_score_deterministic)
+      create_vpd_bundle "TEST VPD For PRD Done Score"
+      create_persona_in_vpd "TEST Persona"
+      create_proposition_in_vpd "TEST Proposition"
+      create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
+
+      out1="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+        || fail "done-score run 1 failed"
+      out2="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+        || fail "done-score run 2 failed"
+      printf "%s\n" "$out1" | grep -qE 'Overall: [0-9]+[.][0-9]{2}' \
+        || fail "expected overall score formatted to 2 decimals"
+      [[ "$out1" == "$out2" ]] || fail "done-score output not deterministic across runs"
+      ;;
     *)
       fail "unknown test name: $name"
       ;;
