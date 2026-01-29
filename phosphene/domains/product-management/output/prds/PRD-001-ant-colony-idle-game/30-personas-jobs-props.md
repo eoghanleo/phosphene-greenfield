@@ -58,6 +58,7 @@ For each persona, capture functional, emotional, and social jobs, plus triggers 
 | PROP-0019 | In-chat upgrade kiosk | Purchase transparency flows | Commerce protocol integration | Purchase success %, refund rate |
 | PROP-0020 | Benchmark arena | Side-by-side comparison UI | Simulation snapshot + scoring | Strategy compare usage |
 | PROP-0023 | Trust vault | Persistence audit UI | State hash + retention | Data-loss incidents |
+| PROP-0026 | Colony memory album | Memory album view + recap cards | Snapshot capture + shareable card service | Album views, share rate |
 
 ## 3.5 Persona narratives (context for requirements)
 PER-0001 expects a calming idle loop that respects time. A short session must still feel meaningful, with a visual payoff and a clear next action. If optional spend appears too frequently or blocks progress, this persona churns quickly, so the PRD treats fairness and pacing as non-negotiable requirements.
