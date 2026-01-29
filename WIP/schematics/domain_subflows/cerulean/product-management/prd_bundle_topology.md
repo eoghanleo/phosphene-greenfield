@@ -188,6 +188,23 @@ Rules:
 
 ---
 
+## Done score (quality gate) notes — anti-gaming constraint
+
+The detector uses a deterministic done-score script to gate `<product-management>` PRDs. The score is meant to reward:
+
+- substantive natural-language content (not placeholders)
+- requirements filled with acceptance criteria and telemetry
+- traceability and linkage density (REQ↔PER/PROP, FEAT↔REQ, traceability matrix coverage)
+
+**Anti-gaming rule:** the scorer intentionally ignores “token dumps” that inflate volume/diversity without adding actionable requirement substance, including:
+
+- giant comma-separated seed lists (e.g. `a,b,c,d,...`)
+- long single-line enumerations with many commas (e.g. “lexicon keywords include …, …, …”)
+
+If the bundle contains these, they should be treated as non-substantive and will not improve the done score.
+
+---
+
 ## File relationship diagram
 
 ```mermaid

@@ -130,81 +130,113 @@ run_test() {
   local name="${1:-}"
   [[ -n "$name" ]] || fail "missing test name"
 
-  init_test
+  # IMPORTANT: run each test in its own subshell so our EXIT trap executes per-test.
+  # Otherwise, only the last registered cleanup runs at process exit, leaking
+  # generated PRD/VPD artifacts into the working tree.
+  (
+    init_test
 
-  case "$name" in
-    create_prd_bundle_auto_id)
-      create_prd_bundle "TEST PRD Auto"
-      [[ -f "$TEST_BUNDLE_DIR/00-coversheet.md" ]] || fail "missing coversheet"
-      [[ -f "$TEST_BUNDLE_DIR/10-executive-summary.md" ]] || fail "missing executive summary"
-      [[ -d "$TEST_BUNDLE_DIR/60-requirements" ]] || fail "missing requirements dir"
-      assert_contains "$TEST_BUNDLE_DIR/00-coversheet.md" "ID: $TEST_PRD_ID"
-      ;;
-    create_prd_bundle_explicit_id)
-      create_prd_bundle "TEST PRD Explicit" "PRD-010"
-      [[ "$TEST_PRD_ID" == "PRD-010" ]] || fail "explicit ID not used"
-      ;;
-    assemble_prd_bundle)
-      create_prd_bundle "TEST PRD Assemble"
-      "$PM_SCRIPTS/assemble_prd_bundle.sh" "$TEST_BUNDLE_DIR" >/dev/null
-      [[ -f "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" ]] || fail "assembled file not created"
-      assert_contains "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" "AUTO-ASSEMBLED FILE"
-      assert_contains "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" "## Coversheet"
-      ;;
-    validate_prd_bundle_structure)
-      create_prd_bundle "TEST PRD Validate"
-      bash "$ROOT/.github/scripts/validate_prd_bundle.sh" --strict "$TEST_BUNDLE_DIR" >/dev/null
-      ;;
-    validate_prd_bundle_strict_fails_on_unresolved_id)
-      create_prd_bundle "TEST PRD Validate Strict"
-      printf "\n- RA-999\n" >> "$TEST_BUNDLE_DIR/10-executive-summary.md"
-      if bash "$ROOT/.github/scripts/validate_prd_bundle.sh" --strict "$TEST_BUNDLE_DIR" >/dev/null 2>&1; then
-        fail "expected strict validation to fail with unresolved ID"
-      fi
-      ;;
-    id_registry_where_prd)
-      create_prd_bundle "TEST PRD Registry"
-      "$ROOT/phosphene/phosphene-core/bin/id_registry.sh" build >/dev/null
-      result="$("$ROOT/phosphene/phosphene-core/bin/id_registry.sh" where "$TEST_PRD_ID")"
-      [[ -n "${result:-}" ]] || fail "ID not found in registry"
-      type="$(printf "%s\n" "$result" | head -n 1 | awk -F'\t' '{print $1}')"
-      [[ "${type:-}" == "prd" ]] || fail "expected type 'prd' in registry output (got: ${type:-})"
-      ;;
-    id_registry_next_prd)
-      "$ROOT/phosphene/phosphene-core/bin/id_registry.sh" build >/dev/null
-      next_id="$("$ROOT/phosphene/phosphene-core/bin/id_registry.sh" next --type prd)"
-      [[ "$next_id" =~ ^PRD-[0-9]{3}$ ]] || fail "invalid next ID format"
-      ;;
-    product_management_done_score_with_vpd_input)
-      create_vpd_bundle "TEST VPD For PRD Done Score"
-      create_persona_in_vpd "TEST Persona"
-      create_proposition_in_vpd "TEST Proposition"
-      create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
+    case "$name" in
+      create_prd_bundle_auto_id)
+        create_prd_bundle "TEST PRD Auto"
+        [[ -f "$TEST_BUNDLE_DIR/00-coversheet.md" ]] || fail "missing coversheet"
+        [[ -f "$TEST_BUNDLE_DIR/10-executive-summary.md" ]] || fail "missing executive summary"
+        [[ -d "$TEST_BUNDLE_DIR/60-requirements" ]] || fail "missing requirements dir"
+        assert_contains "$TEST_BUNDLE_DIR/00-coversheet.md" "ID: $TEST_PRD_ID"
+        ;;
+      create_prd_bundle_explicit_id)
+        create_prd_bundle "TEST PRD Explicit" "PRD-010"
+        [[ "$TEST_PRD_ID" == "PRD-010" ]] || fail "explicit ID not used"
+        ;;
+      assemble_prd_bundle)
+        create_prd_bundle "TEST PRD Assemble"
+        "$PM_SCRIPTS/assemble_prd_bundle.sh" "$TEST_BUNDLE_DIR" >/dev/null
+        [[ -f "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" ]] || fail "assembled file not created"
+        assert_contains "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" "AUTO-ASSEMBLED FILE"
+        assert_contains "$TEST_BUNDLE_DIR/${TEST_PRD_ID}.md" "## Coversheet"
+        ;;
+      validate_prd_bundle_structure)
+        create_prd_bundle "TEST PRD Validate"
+        bash "$ROOT/.github/scripts/validate_prd_bundle.sh" --strict "$TEST_BUNDLE_DIR" >/dev/null
+        ;;
+      validate_prd_bundle_strict_fails_on_unresolved_id)
+        create_prd_bundle "TEST PRD Validate Strict"
+        printf "\n- RA-999\n" >> "$TEST_BUNDLE_DIR/10-executive-summary.md"
+        if bash "$ROOT/.github/scripts/validate_prd_bundle.sh" --strict "$TEST_BUNDLE_DIR" >/dev/null 2>&1; then
+          fail "expected strict validation to fail with unresolved ID"
+        fi
+        ;;
+      id_registry_where_prd)
+        create_prd_bundle "TEST PRD Registry"
+        "$ROOT/phosphene/phosphene-core/bin/id_registry.sh" build >/dev/null
+        result="$("$ROOT/phosphene/phosphene-core/bin/id_registry.sh" where "$TEST_PRD_ID")"
+        [[ -n "${result:-}" ]] || fail "ID not found in registry"
+        type="$(printf "%s\n" "$result" | head -n 1 | awk -F'\t' '{print $1}')"
+        [[ "${type:-}" == "prd" ]] || fail "expected type 'prd' in registry output (got: ${type:-})"
+        ;;
+      id_registry_next_prd)
+        "$ROOT/phosphene/phosphene-core/bin/id_registry.sh" build >/dev/null
+        next_id="$("$ROOT/phosphene/phosphene-core/bin/id_registry.sh" next --type prd)"
+        [[ "$next_id" =~ ^PRD-[0-9]{3}$ ]] || fail "invalid next ID format"
+        ;;
+      product_management_done_score_with_vpd_input)
+        create_vpd_bundle "TEST VPD For PRD Done Score"
+        create_persona_in_vpd "TEST Persona"
+        create_proposition_in_vpd "TEST Proposition"
+        create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
 
-      out="$(bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)"
-      echo "$out" | grep -qF "Inputs (product-marketing):" || fail "expected done-score to print Inputs section"
-      echo "$out" | grep -qE "VPD\\(s\\):.*${TEST_VPD_ID}" || fail "expected done-score to list VPD ID"
-      echo "$out" | grep -qE "personas:[[:space:]]*[1-9][0-9]*, propositions:[[:space:]]*[1-9][0-9]*" || fail "expected non-zero input personas/props"
-      ;;
-    product_management_done_score_deterministic)
-      create_vpd_bundle "TEST VPD For PRD Done Score"
-      create_persona_in_vpd "TEST Persona"
-      create_proposition_in_vpd "TEST Proposition"
-      create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
+        out="$(bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)"
+        echo "$out" | grep -qF "Inputs (product-marketing):" || fail "expected done-score to print Inputs section"
+        echo "$out" | grep -qE "VPD\\(s\\):.*${TEST_VPD_ID}" || fail "expected done-score to list VPD ID"
+        echo "$out" | grep -qE "personas:[[:space:]]*[1-9][0-9]*, propositions:[[:space:]]*[1-9][0-9]*" || fail "expected non-zero input personas/props"
+        ;;
+      product_management_done_score_deterministic)
+        create_vpd_bundle "TEST VPD For PRD Done Score"
+        create_persona_in_vpd "TEST Persona"
+        create_proposition_in_vpd "TEST Proposition"
+        create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
 
-      out1="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
-        || fail "done-score run 1 failed"
-      out2="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
-        || fail "done-score run 2 failed"
-      printf "%s\n" "$out1" | grep -qE 'Overall: [0-9]+[.][0-9]{2}' \
-        || fail "expected overall score formatted to 2 decimals"
-      [[ "$out1" == "$out2" ]] || fail "done-score output not deterministic across runs"
-      ;;
-    *)
-      fail "unknown test name: $name"
-      ;;
-  esac
+        out1="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+          || fail "done-score run 1 failed"
+        out2="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+          || fail "done-score run 2 failed"
+        printf "%s\n" "$out1" | grep -qE 'Overall: [0-9]+[.][0-9]{2}' \
+          || fail "expected overall score formatted to 2 decimals"
+        [[ "$out1" == "$out2" ]] || fail "done-score output not deterministic across runs"
+        ;;
+      product_management_done_score_ignores_token_dumps)
+        create_vpd_bundle "TEST VPD For PRD Done Score"
+        create_persona_in_vpd "TEST Persona"
+        create_proposition_in_vpd "TEST Proposition"
+        create_prd_bundle "TEST PRD Done Score" "" "$TEST_VPD_ID"
 
-  echo "OK: product-management test passed (${name})."
+        # Baseline run.
+        out1="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+          || fail "done-score baseline failed"
+        base_words="$(printf "%s\n" "$out1" | grep -E '^  - output:[[:space:]]*[0-9]+ cleaned words' | head -n 1 | grep -oE '[0-9]+' | head -n 1 || true)"
+        [[ -n "${base_words:-}" ]] || fail "failed to parse baseline output cleaned words"
+
+        # Add a classic "seed list" (no spaces after commas) plus a lexicon-style list (spaces after commas).
+        # These should NOT increase cleaned word counts after the anti-gaming filter.
+        {
+          echo ""
+          echo "Tag seeds include a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,aa,ab,ac,ad,ae,af,ag,ah,ai,aj,ak,al,am,an,ao,ap,aq,ar,as,at,au,av,aw,ax,ay,az."
+          echo "Lexicon keywords include adaptation, calibration, cadence, coherence, convergence, equilibrium, friction, latency, resonance, granularity, harmonization, hysteresis, instrumentation, iteration, longitudinal, microeconomy, modulation, observability, optimization, orchestration."
+        } >> "$TEST_BUNDLE_DIR/180-appendix/glossary.md"
+
+        out2="$(env LC_ALL=C LANG=C TZ=UTC bash "$ROOT/.github/scripts/product-management-domain-done-score.sh" "$TEST_BUNDLE_DIR" --min-score 0)" \
+          || fail "done-score after token dump failed"
+        after_words="$(printf "%s\n" "$out2" | grep -E '^  - output:[[:space:]]*[0-9]+ cleaned words' | head -n 1 | grep -oE '[0-9]+' | head -n 1 || true)"
+        [[ -n "${after_words:-}" ]] || fail "failed to parse post-token-dump output cleaned words"
+
+        [[ "$after_words" == "$base_words" ]] || fail "expected token dumps to be ignored (cleaned output words changed: $base_words -> $after_words)"
+        ;;
+      *)
+        fail "unknown test name: $name"
+        ;;
+    esac
+
+    echo "OK: product-management test passed (${name})."
+  )
 }
 

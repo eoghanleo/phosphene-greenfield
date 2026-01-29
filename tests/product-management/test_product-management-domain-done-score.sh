@@ -7,4 +7,5 @@ source "$SCRIPT_DIR/helpers.sh"
 
 run_test "product_management_done_score_with_vpd_input"
 run_test "product_management_done_score_deterministic"
+run_test "product_management_done_score_ignores_token_dumps"
 

@@ -199,6 +199,10 @@ clean_pm_corpus() {
 
 clean_prd_corpus() {
   # Clean PRD corpus fragments: remove IDs/tags/paths/scripts and common placeholder-only patterns.
+  # NOTE: This cleaning step is also a *score hardening* layer:
+  # - We intentionally exclude "token dumps" (huge comma-separated seed lists and similar) because
+  #   they inflate volume/diversity without adding actionable requirement substance.
+  # - This keeps the score aligned to natural-language arguments and structured linkages.
   sed -E \
     -e 's/`[^`]*`/ /g' \
     -e 's#https?://[^[:space:]]+# #g' \
@@ -210,7 +214,27 @@ clean_prd_corpus() {
     -e 's/F-[A-Z]+-[0-9]{2}/ /g' \
     -e 's/[[:space:]]+/ /g' \
     -e 's/^[[:space:]]+//; s/[[:space:]]+$//' \
-    "$CORPUS_TXT" > "$CORPUS_CLEAN_TXT"
+    "$CORPUS_TXT" \
+    | awk '
+        # Drop likely "token dump" lines:
+        # - very high comma counts (e.g. lexicon keyword lists)
+        # - CSV-like sequences with no spaces after commas (e.g. seed lists: a,b,c,d,...)
+        # This is intentionally heuristic and conservative.
+        {
+          orig=$0
+          line=$0
+          commas=0
+          dense_commas=0
+          commas = gsub(/,/, "", line)
+          tmp=$0
+          dense_commas = gsub(/,[[:alnum:]]/, "", tmp)
+          # If a single line contains a very long enumeration, it is almost certainly non-substantive
+          # with respect to PRD requirements quality (and is easy to game).
+          if (commas >= 12) next
+          if (dense_commas >= 8) next
+          print orig
+        }
+      ' > "$CORPUS_CLEAN_TXT"
 }
 
 extract_input_vpds() {

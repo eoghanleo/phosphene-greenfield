@@ -75,6 +75,7 @@ sequenceDiagram
 
   Note over BUS,D: Detector watches PR creation for DONE receipts
   D->>D: verify work (id validate + PRD bundle validator + done score)
+  Note over D: Done score is hardened against “token dumps” (comma-list padding does not help).
 
   Note over D,BUS: Detector emits either APPROVE (pass) or TRAP (verification_failed)
   D->>BUS: "append phosphene.detector.product-management.approve.v1 (parents=[done_receipt])"
