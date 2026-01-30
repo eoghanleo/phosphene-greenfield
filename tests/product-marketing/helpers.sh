@@ -28,6 +28,12 @@ register_cleanup() {
 }
 
 init_test() {
+  # Some test files call run_test multiple times. Ensure we don't leak artifacts
+  # between invocations (and don't lose track of paths when the EXIT trap is
+  # overwritten).
+  if [[ "${#cleanup_paths[@]:-0}" -gt 0 ]]; then
+    cleanup || true
+  fi
   cleanup_paths=()
   trap cleanup EXIT
 }

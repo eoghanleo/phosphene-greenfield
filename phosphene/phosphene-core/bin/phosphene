@@ -107,6 +107,7 @@ Commands:
   doctor   Print banner + dependency diagnostics
   id       Global ID registry (build/validate/where/next)
   signal   Signal tooling (tamper hash)
+  autoscribe  Manual autoscribe helpers (issue tidy/adopt)
   help     Show this help
 
 ID registry:
@@ -212,11 +213,115 @@ signal_cmd() {
   esac
 }
 
+autoscribe_help() {
+  cat <<'EOF'
+PHOSPHENE AUTOSCRIBE (manual helpers)
+
+Purpose:
+  Help humans reintegrate hand-made GitHub Issues into the signal-driven flow by:
+  - enforcing a strict [PHOSPHENE] block
+  - applying the correct phosphene labels (domain + lane; and ready when adopting)
+  - optionally emitting the matching autoscribe issue_created signal onto the bus
+
+Usage:
+  ./phosphene/phosphene-core/bin/phosphene autoscribe issue help  --domain <domain> --issue-number <N>
+  ./phosphene/phosphene-core/bin/phosphene autoscribe issue tidy  --domain <domain> --issue-number <N> [--work-id <ID>] [--intent <s>] [--upstream-signal-id <sha256:...>]
+  ./phosphene/phosphene-core/bin/phosphene autoscribe issue adopt --domain <domain> --issue-number <N> [--work-id <ID>] [--intent <s>] [--upstream-signal-id <sha256:...>]
+
+Notes:
+  - This command dispatches a GitHub Actions workflow:
+      .github/workflows/gantry.autoscribe.issue-adopt.yml
+  - It requires GitHub CLI: gh
+  - adopt mode writes to main bus.jsonl (requires PHOSPHENE_HUMAN_TOKEN configured as a repo secret).
+
+Examples:
+  ./phosphene/phosphene-core/bin/phosphene autoscribe issue adopt --domain product-marketing --issue-number 123 --work-id RA-001
+  ./phosphene/phosphene-core/bin/phosphene autoscribe issue tidy  --domain product-management --issue-number 456 --work-id PRD-010 --intent "prd-development"
+EOF
+}
+
+autoscribe_cmd() {
+  local root
+  root="$(phosphene_find_project_root)" || {
+    echo "PHOSPHENE: not in a PHOSPHENE project (cannot find repo root with ./phosphene)." 1>&2
+    return 1
+  }
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "PHOSPHENE: missing dependency: gh (GitHub CLI)" 1>&2
+    echo "Install: https://cli.github.com/  (then: gh auth login)" 1>&2
+    return 2
+  fi
+
+  local sub="${1:-help}"
+  shift || true
+  case "$sub" in
+    -h|--help|help) autoscribe_help; return 0 ;;
+  esac
+
+  if [[ "$sub" != "issue" ]]; then
+    echo "PHOSPHENE: unknown autoscribe subcommand: $sub" 1>&2
+    autoscribe_help
+    return 2
+  fi
+
+  local action="${1:-help}"
+  shift || true
+  local mode="help"
+  case "$action" in
+    help) mode="help" ;;
+    tidy) mode="tidy" ;;
+    adopt) mode="adopt" ;;
+    -h|--help) autoscribe_help; return 0 ;;
+    *)
+      echo "PHOSPHENE: unknown autoscribe issue action: $action" 1>&2
+      autoscribe_help
+      return 2
+      ;;
+  esac
+
+  local domain=""
+  local issue_number=""
+  local work_id=""
+  local intent=""
+  local upstream_signal_id=""
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --domain) domain="${2:-}"; shift 2 ;;
+      --issue-number) issue_number="${2:-}"; shift 2 ;;
+      --work-id) work_id="${2:-}"; shift 2 ;;
+      --intent) intent="${2:-}"; shift 2 ;;
+      --upstream-signal-id) upstream_signal_id="${2:-}"; shift 2 ;;
+      -h|--help) autoscribe_help; return 0 ;;
+      *) echo "PHOSPHENE: unknown arg: $1" 1>&2; autoscribe_help; return 2 ;;
+    esac
+  done
+
+  [[ -n "${domain:-}" ]] || { echo "PHOSPHENE: missing --domain" 1>&2; return 2; }
+  [[ -n "${issue_number:-}" ]] || { echo "PHOSPHENE: missing --issue-number" 1>&2; return 2; }
+
+  local wf=".github/workflows/gantry.autoscribe.issue-adopt.yml"
+  [[ -f "$root/$wf" ]] || {
+    echo "PHOSPHENE: missing workflow: $wf" 1>&2
+    return 2
+  }
+
+  local -a args
+  args=(workflow run "$wf" --ref main -f "mode=$mode" -f "domain=$domain" -f "issue_number=$issue_number")
+  if [[ -n "${work_id:-}" ]]; then args+=(-f "work_id=$work_id"); fi
+  if [[ -n "${intent:-}" ]]; then args+=(-f "intent=$intent"); fi
+  if [[ -n "${upstream_signal_id:-}" ]]; then args+=(-f "upstream_signal_id=$upstream_signal_id"); fi
+
+  (cd "$root" && gh "${args[@]}")
+}
+
 case "$CMD" in
   banner) banner ;;
   doctor) doctor ;;
   id) id_cmd "$@" ;;
   signal) signal_cmd "$@" ;;
+  autoscribe) autoscribe_cmd "$@" ;;
   help|-h|--help) help ;;
   *)
     echo "Unknown command: $CMD" 1>&2
