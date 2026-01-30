@@ -7,6 +7,7 @@ Scope: **only** the `<product-marketing>` orchestration subflow, driven by **bus
 - Human opens a PR from the Codex branch to `main` (PR contains the DONE receipt)
 - Detector verifies the PR receipt and emits **APPROVE** or **TRAP**
 - Condenser waits for checks to pass, then **approves** the PR (no auto-open, no auto-merge)
+- Autoscribe may also react to **request signals** addressed to `<product-marketing>` (bus-native bounce)
 
 - **Signals bus**: `phosphene/signals/bus.jsonl`
 - **Canonical lane**: `beryl` (product-marketing must not run in other lanes)
@@ -101,6 +102,7 @@ Everything is activated by **bus pushes** and **PR events**.
   - ensure checkout does **not** persist `GITHUB_TOKEN` credentials (so the PAT is actually used).
 - Detectors trigger on **PR opened** events when the PR contains a DONE receipt in the diff.
 - Condensers trigger on **checks completed** events and approve when checks are green.
+- Autoscribe also consumes `phosphene.request.<requesting_domain>.product-marketing.<work_type>.v1` signals and treats them as upstream triggers (idempotent on `parents`).
 
 ---
 

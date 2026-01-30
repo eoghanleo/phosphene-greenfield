@@ -10,7 +10,7 @@ set -euo pipefail
 # Commands:
 #   build                Build/refresh index TSV (default)
 #   validate             Fail if duplicate authoritative definitions exist
-#   next --type <t>      Print next legal ID for type (ra|vpd|pitch|evidence|refsol|segment|cpe|persona|proposition)
+#   next --type <t>      Print next legal ID for type (ra|vpd|prd|roadmap|spec|fr|idea|vision|arch|eval|tp|pitch|evidence|refsol|segment|cpe|persona|proposition)
 #   where <ID>           Print authoritative path(s) for an ID (any type)
 #
 # Output:
@@ -30,7 +30,7 @@ Usage:
   ./phosphene/phosphene-core/bin/id_registry.sh [build|validate|where <ID>|next --type <type>]
 
 Types:
-  ra | vpd | prd | roadmap | spec | fr | pitch | evidence | refsol | segment | cpe | persona | proposition
+  ra | vpd | prd | roadmap | spec | fr | idea | vision | arch | eval | tp | pitch | evidence | refsol | segment | cpe | persona | proposition
 EOF
 }
 
@@ -145,6 +145,56 @@ build_index() {
           printf "pitch\t%s\t%s\n" "$pid" "$rel" >> "$tmp"
         fi
         ;;
+      IDEA-*.md)
+        idea_id="$((grep -E '^ID:[[:space:]]*IDEA-[0-9]{4}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${idea_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(IDEA-[0-9]{4}) ]]; then idea_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${idea_id:-}" ]]; then
+          printf "idea\t%s\t%s\n" "$idea_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      VISION-*.md)
+        vision_id="$((grep -E '^ID:[[:space:]]*VISION-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${vision_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(VISION-[0-9]{3}) ]]; then vision_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${vision_id:-}" ]]; then
+          printf "vision\t%s\t%s\n" "$vision_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      ARCH-*.md)
+        arch_id="$((grep -E '^ID:[[:space:]]*ARCH-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${arch_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(ARCH-[0-9]{3}) ]]; then arch_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${arch_id:-}" ]]; then
+          printf "arch\t%s\t%s\n" "$arch_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      EVAL-*.md)
+        eval_id="$((grep -E '^ID:[[:space:]]*EVAL-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${eval_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(EVAL-[0-9]{3}) ]]; then eval_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${eval_id:-}" ]]; then
+          printf "eval\t%s\t%s\n" "$eval_id" "$rel" >> "$tmp"
+        fi
+        ;;
+      TP-*.md)
+        tp_id="$((grep -E '^ID:[[:space:]]*TP-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
+        if [[ -z "${tp_id:-}" ]]; then
+          base="$(basename "$f" .md)"
+          if [[ "$base" =~ ^(TP-[0-9]{3}) ]]; then tp_id="${BASH_REMATCH[1]}"; fi
+        fi
+        if [[ -n "${tp_id:-}" ]]; then
+          printf "tp\t%s\t%s\n" "$tp_id" "$rel" >> "$tmp"
+        fi
+        ;;
       FR-*.md)
         # Feature requests: prefer ID line; fall back to filename prefix.
         fr_id="$((grep -E '^ID:[[:space:]]*FR-[0-9]{3}[[:space:]]*$' "$f" | head -n 1 | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//') || true)"
@@ -253,6 +303,31 @@ next_id() {
       max="$(awk -F'\t' '$1=="fr"{ sub(/^FR-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
       next=$((max + 1))
       printf "FR-%03d\n" "$next"
+      ;;
+    idea)
+      max="$(awk -F'\t' '$1=="idea"{ sub(/^IDEA-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "IDEA-%04d\n" "$next"
+      ;;
+    vision)
+      max="$(awk -F'\t' '$1=="vision"{ sub(/^VISION-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "VISION-%03d\n" "$next"
+      ;;
+    arch)
+      max="$(awk -F'\t' '$1=="arch"{ sub(/^ARCH-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "ARCH-%03d\n" "$next"
+      ;;
+    eval)
+      max="$(awk -F'\t' '$1=="eval"{ sub(/^EVAL-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "EVAL-%03d\n" "$next"
+      ;;
+    tp)
+      max="$(awk -F'\t' '$1=="tp"{ sub(/^TP-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
+      next=$((max + 1))
+      printf "TP-%03d\n" "$next"
       ;;
     pitch)
       max="$(awk -F'\t' '$1=="pitch"{ sub(/^PITCH-/, "", $2); if ($2+0>m) m=$2+0 } END{ print m+0 }' "$INDEX_TSV")"
