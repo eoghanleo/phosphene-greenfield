@@ -11,7 +11,7 @@ Primary domain: `<research>`
 
 ## Status
 
-In development. Not yet production-ready; emit receipt script pending.
+Active (bus + emit receipts). Research is now in development.
 
 ## What you produce
 
@@ -79,10 +79,22 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `add_evidence_record.sh`: Append a new EvidenceID row (`E-####`) to `50-evidence-bank.md` (allocates ID).
 - `add_reference_solution.sh`: Append a new RefSol row (`RS-####`) to `10-reference-solutions.md` (allocates ID).
 - `create_candidate_persona.sh`: Create a new Candidate Persona (`CPE-####`) doc inside an RA bundle (allocates ID).
+- `research_emit_done_receipt.sh`: Emit DONE receipt to the signal bus.
 
 ## DONE signal
 
-In development. DONE receipt script not yet implemented; do not run in live flows unless explicitly authorized.
+Emit a DONE receipt to the signal bus (append-only JSONL):
+
+```bash
+./.codex/skills/phosphene/viridian/research/modulator/scripts/research_emit_done_receipt.sh --issue-number <N> --work-id <RA-###>
+```
+
+## Validation (recommended)
+
+- Validate RA bundles:
+  - `./.github/scripts/validate_research_assessment_bundle.sh --all`
+- Domain done score:
+  - `./.github/scripts/research-domain-done-score.sh --min-score <PROMPT:done_score_min>`
 
 ## Constraints
 

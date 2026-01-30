@@ -11,7 +11,7 @@ Primary domain: `<scrum-management>`
 
 ## Status
 
-TODO (not in development). Do not run this domain in live flows.
+Active (bus + emit receipts). Scrum-management is now in development.
 
 ## What you produce
 
@@ -22,6 +22,7 @@ TODO (not in development). Do not run this domain in live flows.
 - Treat Issues (GitHub/Linear) as optional UX; keep the automation contract portable (labels + PR events).
 - If mirroring state into repo headers, do so via PR (audit trail).
 - Create artifacts directly under `phosphene/domains/scrum-management/output/issues/` (if/when you mirror issues into the repo).
+- Manual edits are allowed for these single-file artifacts; keep headings stable.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -30,15 +31,22 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet:
-- Write ISSUE mirror docs directly when/if you mirror operational state into the repo.
+- `create_issue_mirror.sh`: Create an ISSUE mirror doc (allocates ISSUE-###).
+- `validate_issue_mirror.sh`: Validate ISSUE headers/sections and ID conventions.
+- `scrum-management_emit_done_receipt.sh`: Emit DONE receipt to the signal bus.
+- `scrum-management-domain-done-score.sh`: Compute a minimal domain done score (programmatic).
 
 ## DONE signal
 
-Not active. DONE receipt scripts are not implemented for this domain yet.
+Emit a DONE receipt to the signal bus (append-only JSONL):
 
-Include (minimum) listing:
+```bash
+./.codex/skills/phosphene/amaranth/scrum-management/modulator/scripts/scrum-management_emit_done_receipt.sh --issue-number <N> --work-id <ISSUE-###>
+```
 
-- inputs (issue URLs, labels/status)
-- outputs (ISSUE mirror doc)
-- checks run (format/header compliance)
+## Validation (recommended)
+
+- Validate all issue mirrors:
+  - `./.github/scripts/validate_issue_mirror.sh --all`
+- Domain done score:
+  - `./.github/scripts/scrum-management-domain-done-score.sh --min-score <PROMPT:done_score_min>`

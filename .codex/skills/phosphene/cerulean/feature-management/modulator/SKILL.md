@@ -11,7 +11,7 @@ Primary domain: `<feature-management>`
 
 ## Status
 
-TODO (not in development). Do not run this domain in live flows.
+Active (bus + emit receipts). Feature-management is now in development.
 
 ## What you produce
 
@@ -49,10 +49,23 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 - `update_feature_request_status.sh`: Update the status field in an FR dossier.
 - `update_backlog_tree.sh`: Regenerate `output/backlog_tree.md` (auto-generated view).
 - `feature_request_dependency_tracker.sh`: Regenerate `output/fr_dependencies.md` (auto-generated dependency report).
+- `feature-management_emit_done_receipt.sh`: Emit DONE receipt to the signal bus.
+- `feature-management-domain-done-score.sh`: Compute a minimal domain done score (programmatic).
 
 ## DONE signal
 
-Not active. DONE receipt scripts are not implemented for this domain yet.
+Emit a DONE receipt to the signal bus (append-only JSONL):
+
+```bash
+./.codex/skills/phosphene/cerulean/feature-management/modulator/scripts/feature-management_emit_done_receipt.sh --issue-number <N> --work-id <FR-###>
+```
+
+## Validation (recommended)
+
+- Validate FR dossiers:
+  - `./.github/scripts/validate_feature_request.sh`
+- Domain done score:
+  - `./.github/scripts/feature-management-domain-done-score.sh --min-score <PROMPT:done_score_min>`
 
 ## Constraints
 

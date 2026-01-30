@@ -17,6 +17,7 @@ usage() {
   cat <<'EOF'
 Usage:
   ./.github/scripts/validate_research_assessment_bundle.sh <bundle_dir>
+  ./.github/scripts/validate_research_assessment_bundle.sh --all
 
 Checks:
   - required files exist
@@ -31,8 +32,40 @@ EOF
 fail() { echo "FAIL: $*" >&2; exit 1; }
 warn() { echo "WARN: $*" >&2; }
 
-BUNDLE_DIR="${1:-}"
-if [[ -z "$BUNDLE_DIR" || "$BUNDLE_DIR" == "-h" || "$BUNDLE_DIR" == "--help" ]]; then
+ALL=0
+TARGET=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --all) ALL=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) TARGET="$1"; shift ;;
+  esac
+done
+
+if [[ "$ALL" -eq 1 ]]; then
+  ROOT="$(phosphene_find_project_root)" || fail "Not in a PHOSPHENE project."
+  BASE="$ROOT/phosphene/domains/research/output/research-assessments"
+  [[ -d "$BASE" ]] || fail "Missing research assessments dir: $BASE"
+
+  bundles=()
+  while IFS= read -r f; do
+    [[ -n "${f:-}" ]] || continue
+    bundles+=("$(cd "$(dirname "$f")" && pwd)")
+  done < <(find "$BASE" -type f -name "00-coversheet.md" 2>/dev/null | sort)
+
+  if [[ "${#bundles[@]}" -eq 0 ]]; then
+    fail "No RA bundles found under: $BASE"
+  fi
+
+  for b in "${bundles[@]}"; do
+    bash "$SCRIPT_DIR/validate_research_assessment_bundle.sh" "$b"
+  done
+  exit 0
+fi
+
+BUNDLE_DIR="${TARGET:-}"
+if [[ -z "$BUNDLE_DIR" ]]; then
   usage
   exit 0
 fi
