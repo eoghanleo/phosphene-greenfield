@@ -42,7 +42,8 @@ sequenceDiagram
 Required:
 
 - `signal_type`: `phosphene.request.<requesting_domain>.<target_domain>.<work_type>.v1`
-- `work_id`: upstream work identifier (often the requester’s work_id)
+- `work_id`: requesting (upstream) work identifier
+- `requested_work_id`: requested (target-domain) work identifier (defaults to `work_id` if omitted)
 - `domain`: requesting domain (e.g., `product-management`)
 - `target_domain`: requested domain (e.g., `research`)
 - `issue_number`: (optional; requesting issue number if present)

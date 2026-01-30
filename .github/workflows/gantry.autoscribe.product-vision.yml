@@ -306,7 +306,9 @@ jobs:
                 try { j = JSON.parse(line); } catch { continue; }
                 const req = parseRequestSignal(j.signal_type);
                 if (!req || req.targetDomain !== "product-vision") continue;
-                const work_id = String(j.work_id || "").trim();
+                const requesting_work_id = String(j.work_id || "").trim();
+                const requested_work_id = String(j.requested_work_id || "").trim();
+                const work_id = requested_work_id || requesting_work_id;
                 if (!work_id) continue;
                 const parent_signal_id = String(j.signal_id || "").trim();
                 const upstream_domain = String(j.domain || req.requestingDomain || "").trim();
@@ -315,6 +317,7 @@ jobs:
                 const pointers = [
                   upstream_domain ? `- Requesting domain: <${upstream_domain}>` : "- Requesting domain: (unknown)",
                   issue_number ? `- Requesting issue: #${issue_number}` : "- Requesting issue: (n/a)",
+                  requesting_work_id ? `- Requesting work_id: \`${requesting_work_id}\`` : "- Requesting work_id: (n/a)",
                   `- Requested work_id: \`${work_id}\``,
                 ];
                 const out = await createIssueAndEmit({
@@ -324,7 +327,7 @@ jobs:
                   parent_signal_id,
                   upstream_domain,
                   pointers,
-                  upstream_work_id: work_id,
+                  upstream_work_id: requesting_work_id || work_id,
                 });
                 if (out) created.push(out);
               }

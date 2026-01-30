@@ -2,7 +2,7 @@ name: "gantry.detector.product-management"
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
     paths:
       - "phosphene/signals/bus.jsonl"
       - "phosphene/domains/product-management/**"
@@ -233,6 +233,7 @@ jobs:
                 --target-domain "$target" \
                 --work-type constraints \
                 --work-id "$work_id" \
+                --requested-work-id "$rid" \
                 --issue-number "$issue_number" \
                 --parent "$parent_signal_id"
             done

@@ -2,7 +2,7 @@ name: "gantry.detector.feature-management"
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, synchronize, reopened]
     paths:
       - "phosphene/signals/bus.jsonl"
       - "phosphene/domains/feature-management/**"
@@ -111,8 +111,16 @@ jobs:
           lane="${{ steps.done.outputs.lane }}"
           [[ "${lane:-cerulean}" == "cerulean" ]] || { echo "Lane must be cerulean for feature-management (got: $lane)"; exit 2; }
           ./phosphene/phosphene-core/bin/phosphene id validate
-          bash .github/scripts/validate_feature_request.sh --strict
-          bash .github/scripts/feature-management-domain-done-score.sh --min-score "${PHOSPHENE_DONE_SCORE_MIN:-10}"
+
+          work_id="${{ steps.done.outputs.work_id }}"
+          [[ -n "${work_id:-}" ]] || { echo "Missing work_id"; exit 2; }
+
+          rel_path="$(./phosphene/phosphene-core/bin/phosphene id where "$work_id" | head -n 1 | awk -F'\t' '{print $3}' || true)"
+          [[ -n "${rel_path:-}" ]] || { echo "Cannot resolve in id registry: $work_id"; exit 1; }
+          [[ -f "$rel_path" ]] || { echo "Resolved path is not a file: $rel_path"; exit 1; }
+
+          bash .github/scripts/validate_feature_request.sh --strict "$rel_path"
+          bash .github/scripts/feature-management-domain-done-score.sh --file "$rel_path" --min-score "${PHOSPHENE_DONE_SCORE_MIN:-10}"
 
       - name: Emit approve signal to PR bus
         if: steps.done.outputs.has_done == '1' && success()

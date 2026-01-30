@@ -17,7 +17,7 @@ source "$LIB_DIR/phosphene_env.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  ./.github/scripts/test-management-domain-done-score.sh [--docs-root <dir>] [--min-score <0..100>] [--quiet]
+  ./.github/scripts/test-management-domain-done-score.sh [--docs-root <dir>] [--file <path>] [--min-score <0..100>] [--quiet]
 EOF
 }
 
@@ -25,12 +25,14 @@ fail() { echo "FAIL: $*" >&2; exit 2; }
 
 ROOT="$(phosphene_find_project_root)"
 DOCS_ROOT="$ROOT/phosphene/domains/test-management/output"
+FILE=""
 MIN_SCORE="10"
 QUIET=0
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --docs-root) DOCS_ROOT="${2:-}"; shift 2 ;;
+    --file) FILE="${2:-}"; shift 2 ;;
     --min-score) MIN_SCORE="${2:-}"; shift 2 ;;
     --quiet) QUIET=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -38,18 +40,27 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$DOCS_ROOT" != /* ]]; then DOCS_ROOT="$ROOT/$DOCS_ROOT"; fi
-[[ -d "$DOCS_ROOT" ]] || fail "Missing docs root dir: $DOCS_ROOT"
+if [[ -n "${FILE:-}" ]]; then
+  if [[ "$FILE" != /* ]]; then FILE="$ROOT/$FILE"; fi
+  [[ -f "$FILE" ]] || fail "Missing file: $FILE"
+else
+  if [[ "$DOCS_ROOT" != /* ]]; then DOCS_ROOT="$ROOT/$DOCS_ROOT"; fi
+  [[ -d "$DOCS_ROOT" ]] || fail "Missing docs root dir: $DOCS_ROOT"
+fi
 
 if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
   fail "--min-score must be numeric (0..100)"
 fi
 
 files=()
-while IFS= read -r f; do
-  [[ -n "${f:-}" ]] || continue
-  files+=("$f")
-done < <(find "$DOCS_ROOT" -type f -name "TP-*.md" 2>/dev/null | sort)
+if [[ -n "${FILE:-}" ]]; then
+  files=("$FILE")
+else
+  while IFS= read -r f; do
+    [[ -n "${f:-}" ]] || continue
+    files+=("$f")
+  done < <(find "$DOCS_ROOT" -type f -name "TP-*.md" 2>/dev/null | sort)
+fi
 
 n_files="${#files[@]}"
 if [[ "$n_files" -eq 0 ]]; then

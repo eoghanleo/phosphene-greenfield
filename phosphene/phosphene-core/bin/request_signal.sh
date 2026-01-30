@@ -17,6 +17,7 @@ Usage:
     --target-domain <domain> \
     --work-type <type> \
     --work-id <ID> \
+    [--requested-work-id <ID>] \
     [--issue-number <N>] \
     [--lane <lane>] \
     [--parent <signal_id>]...
@@ -31,6 +32,7 @@ REQUESTING_DOMAIN=""
 TARGET_DOMAIN=""
 WORK_TYPE=""
 WORK_ID=""
+REQUESTED_WORK_ID=""
 ISSUE_NUMBER=""
 LANE=""
 PARENTS=()
@@ -41,6 +43,7 @@ while [[ $# -gt 0 ]]; do
     --target-domain) TARGET_DOMAIN="${2:-}"; shift 2 ;;
     --work-type) WORK_TYPE="${2:-}"; shift 2 ;;
     --work-id) WORK_ID="${2:-}"; shift 2 ;;
+    --requested-work-id) REQUESTED_WORK_ID="${2:-}"; shift 2 ;;
     --issue-number) ISSUE_NUMBER="${2:-}"; shift 2 ;;
     --lane) LANE="${2:-}"; shift 2 ;;
     --parent) PARENTS+=("${2:-}"); shift 2 ;;
@@ -53,6 +56,12 @@ done
 [[ -n "${TARGET_DOMAIN:-}" ]] || fail "missing --target-domain"
 [[ -n "${WORK_TYPE:-}" ]] || fail "missing --work-type"
 [[ -n "${WORK_ID:-}" ]] || fail "missing --work-id"
+
+if [[ -z "${REQUESTED_WORK_ID:-}" ]]; then
+  # Back-compat default: request is "about" the requesting work_id unless
+  # the caller provides a target-domain specific requested ID.
+  REQUESTED_WORK_ID="$WORK_ID"
+fi
 
 if [[ -n "${ISSUE_NUMBER:-}" ]] && ! [[ "$ISSUE_NUMBER" =~ ^[0-9]+$ ]]; then
   fail "--issue-number must be numeric"
@@ -108,7 +117,7 @@ if [[ "$allowed" -ne 1 ]]; then
 fi
 
 created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-output_key="request:${REQUESTING_DOMAIN}->${TARGET_DOMAIN}:${WORK_TYPE}:issue:${ISSUE_NUMBER:-0}"
+output_key="request:${REQUESTING_DOMAIN}->${TARGET_DOMAIN}:${WORK_TYPE}:requested:${REQUESTED_WORK_ID}:issue:${ISSUE_NUMBER:-0}"
 
 hash_args=( "$HASH_IMPL" signal-id --run-marker "$WORK_ID" --output-key "$output_key" )
 for p in "${PARENTS[@]}"; do
@@ -145,7 +154,7 @@ if [[ -n "${ISSUE_NUMBER:-}" ]]; then
 fi
 
 signal_type="phosphene.request.${REQUESTING_DOMAIN}.${TARGET_DOMAIN}.${WORK_TYPE}.v1"
-line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"${signal_type}\",\"work_id\":\"${WORK_ID}\",\"domain\":\"${REQUESTING_DOMAIN}\",\"target_domain\":\"${TARGET_DOMAIN}\"${issue_fragment},\"lane\":\"${LANE}\",\"parents\":${parents_json},\"run_marker\":\"${WORK_ID}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"${signal_type}\",\"work_id\":\"${WORK_ID}\",\"requested_work_id\":\"${REQUESTED_WORK_ID}\",\"domain\":\"${REQUESTING_DOMAIN}\",\"target_domain\":\"${TARGET_DOMAIN}\"${issue_fragment},\"lane\":\"${LANE}\",\"parents\":${parents_json},\"run_marker\":\"${WORK_ID}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
 
 bash "$BUS_IMPL" append --bus "$BUS" --line "$line"
 echo "OK: appended request signal: $signal_id" >&2

@@ -1,6 +1,11 @@
 name: "gantry.condenser.product-architecture"
 
 on:
+  pull_request:
+    types: [closed]
+    paths:
+      - "phosphene/signals/bus.jsonl"
+      - "phosphene/domains/product-architecture/**"
   check_suite:
     types: [completed]
   workflow_dispatch:
@@ -19,6 +24,96 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  emit_merge_complete_on_merge:
+    if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main (post-merge)
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Emit merge_complete signal (product-architecture) to main bus
+        shell: bash
+        env:
+          PHOSPHENE_HUMAN_TOKEN: ${{ secrets.PHOSPHENE_HUMAN_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          export PHOSPHENE_GANTRY_WRITE_ALLOWLIST=$'phosphene/signals/**\nphosphene/signals/indexes/**'
+          bash phosphene/phosphene-core/bin/gantry_write_allowlist_guard.sh check
+
+          if [[ -z "${PHOSPHENE_HUMAN_TOKEN:-}" ]]; then
+            echo "PHOSPHENE: missing PHOSPHENE_HUMAN_TOKEN; refusing to push bus changes."
+            exit 1
+          fi
+
+          domain="product-architecture"
+          lane="cerulean"
+          bus="phosphene/signals/bus.jsonl"
+          pr_number="${{ github.event.pull_request.number }}"
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          merge_sha="${{ github.event.pull_request.merge_commit_sha }}"
+          [[ -n "${pr_number:-}" ]] || { echo "Missing PR number"; exit 2; }
+          [[ -n "${base_sha:-}" ]] || { echo "Missing base sha"; exit 2; }
+          [[ -n "${merge_sha:-}" ]] || { echo "Missing merge sha"; exit 2; }
+
+          git fetch origin "$merge_sha" --force >/dev/null 2>&1 || true
+
+          git diff --unified=0 "$base_sha" "$merge_sha" -- "$bus" \
+            | grep -E '^\+' \
+            | grep -vE '^\+\+\+' \
+            | sed -E 's/^\+//' \
+            | grep -E '^\{' \
+            > /tmp/merge_new_lines.txt || true
+
+          approve_line="$(node -e '
+            const fs=require("fs");
+            const raw=fs.existsSync("/tmp/merge_new_lines.txt")?fs.readFileSync("/tmp/merge_new_lines.txt","utf8"):"";
+            const lines=raw.split(/\n/).map(l=>l.trim()).filter(Boolean);
+            for (const line of lines) {
+              try {
+                const j=JSON.parse(line);
+                if (j.signal_type==="phosphene.detector.product-architecture.approve.v1") { process.stdout.write(line); process.exit(0); }
+              } catch {}
+            }
+            process.exit(1);
+          ' && true || true)"
+
+          if [[ -z "${approve_line:-}" ]]; then
+            echo "PHOSPHENE: no detector approve signal found in merge diff; skip merge_complete."
+            exit 0
+          fi
+
+          work_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.work_id||""));' "$approve_line")"
+          issue_number="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.issue_number||"0"));' "$approve_line")"
+          approve_signal_id="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.signal_id||""));' "$approve_line")"
+          lane_in="$(node -e 'const j=JSON.parse(process.argv[1]); process.stdout.write(String(j.lane||""));' "$approve_line")"
+          if [[ -n "${lane_in:-}" ]]; then lane="$lane_in"; fi
+
+          [[ -n "${work_id:-}" ]] || { echo "Missing work_id in approve signal"; exit 1; }
+          [[ -n "${approve_signal_id:-}" ]] || { echo "Missing approve signal_id"; exit 1; }
+
+          output_key="merge_complete:${domain}:pr:${pr_number}"
+          signal_id="$(bash phosphene/phosphene-core/bin/signal_hash.sh signal-id --run-marker "$work_id" --output-key "$output_key" --parent "$approve_signal_id")"
+          if grep -qF "\"signal_id\":\"${signal_id}\"" "$bus"; then
+            echo "PHOSPHENE: merge_complete already present (idempotent): $signal_id"
+            exit 0
+          fi
+
+          created_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.merge_complete.${domain}.v1\",\"work_id\":\"${work_id}\",\"domain\":\"${domain}\",\"issue_number\":${issue_number},\"pr_number\":${pr_number},\"lane\":\"${lane}\",\"parents\":[\"${approve_signal_id}\"],\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
+          bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git add "$bus"
+          git commit -m "PHOSPHENE: emit merge_complete ${domain} (PR #${pr_number})" || exit 0
+          git push origin HEAD:main
+
   approve_on_check_suite:
     if: github.event_name == 'check_suite' && github.event.check_suite.conclusion == 'success'
     runs-on: ubuntu-latest

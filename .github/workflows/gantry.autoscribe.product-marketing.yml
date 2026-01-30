@@ -341,7 +341,8 @@ jobs:
                   continue;
                 }
 
-                if (String(j.signal_type || "") !== "phosphene.merge.research.v1") continue;
+                const st = String(j.signal_type || "");
+                if (st !== "phosphene.merge_complete.research.v1" && st !== "phosphene.merge.research.v1") continue;
                 const work_id = String(j.work_id || "").trim();
                 if (!work_id) continue;
                 const parent_signal_id = String(j.signal_id || "").trim();

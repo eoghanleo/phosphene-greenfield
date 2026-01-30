@@ -2,4 +2,4 @@
 # Format: key: value (flat, no nesting)
 ideation.done_score_min: 10
 research.done_score_min: 10
-requests.allow:
+requests.allow: ideation->research,research->ideation

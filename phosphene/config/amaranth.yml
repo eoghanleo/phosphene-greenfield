@@ -1,2 +1,4 @@
 # Amaranth config (scrum-management)
 # Format: key: value (flat, no nesting)
+scrum-management.done_score_min: 10
+requests.allow: scrum-management->product-management,scrum-management->feature-management
