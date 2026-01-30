@@ -99,6 +99,47 @@ done
 [[ -d "$BUNDLE_DIR/70-feature-catalogue" ]] || fail "Missing required directory: 70-feature-catalogue/"
 [[ -d "$BUNDLE_DIR/180-appendix" ]] || fail "Missing required directory: 180-appendix/"
 
+require_heading() {
+  local file="$1"
+  local pattern="$2"
+  local label="$3"
+  if ! grep -qE "$pattern" "$file"; then
+    fail "Pane readiness missing heading (${label}) in $(basename "$file")"
+  fi
+}
+
+# Pane readiness gates: presence + linkability (minimal, file/heading based).
+require_heading "$BUNDLE_DIR/00-coversheet.md" '^## Links$' "Links"
+require_heading "$BUNDLE_DIR/80-architecture.md" '^## 8[.]1 Architecture overview$' "Architecture overview"
+require_heading "$BUNDLE_DIR/100-data-integrations.md" '^## 10[.]1 Data model overview$' "Data model overview"
+require_heading "$BUNDLE_DIR/50-success-metrics.md" '^## 5[.]3 KPI definitions$' "KPI definitions"
+require_heading "$BUNDLE_DIR/110-security-compliance.md" '^## 11[.]1 Data classification and handling$' "Security classification"
+require_heading "$BUNDLE_DIR/140-testing-quality.md" '^## 14[.]1 Test pyramid and scope$' "Testing scope"
+require_heading "$BUNDLE_DIR/130-delivery-roadmap.md" '^## 13[.]1 Program structure$' "Delivery plan"
+require_heading "$BUNDLE_DIR/170-release-readiness.md" '^## 17[.]1 Launch strategy$' "Release readiness"
+require_heading "$BUNDLE_DIR/150-operations-support.md" '^## 15[.]1 Operational posture$' "Operations posture"
+
+# Pane readiness: glossary must include at least one non-placeholder term/definition.
+glossary_file="$BUNDLE_DIR/180-appendix/glossary.md"
+if [[ -f "$glossary_file" ]]; then
+  term_line="$(awk -F'|' '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    NR<=2 { next }
+    /^\|/{
+      t=trim($2); d=trim($3);
+      if (t=="" || d=="") next;
+      if (t ~ /^\[.*\]$/ || d ~ /^\[.*\]$/) next;
+      if (t ~ /^<.*>$/ || d ~ /^<.*>$/) next;
+      if (tolower(t)=="tbd" || tolower(d)=="tbd") next;
+      print t "|" d;
+      exit;
+    }
+  ' "$glossary_file")"
+  if [[ -z "${term_line:-}" ]]; then
+    fail "Glossary must include at least one defined term (non-placeholder)"
+  fi
+fi
+
 ID_LINE="$(grep -E '^ID:[[:space:]]*PRD-[0-9]{3}[[:space:]]*$' "$BUNDLE_DIR/00-coversheet.md" || true)"
 [[ -n "$ID_LINE" ]] || fail "00-coversheet.md missing 'ID: PRD-###' line"
 PRD_ID="$(echo "$ID_LINE" | sed -E 's/^ID:[[:space:]]*//; s/[[:space:]]*$//')"

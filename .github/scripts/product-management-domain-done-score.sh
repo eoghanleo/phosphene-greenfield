@@ -788,7 +788,54 @@ score_div="$(echo "$scores" | awk -F'\t' '{print $3}')"
 score_depth="$(echo "$scores" | awk -F'\t' '{print $4}')"
 score_conn="$(echo "$scores" | awk -F'\t' '{print $5}')"
 
-result="$(awk -v s="$overall" -v m="$MIN_SCORE" 'BEGIN{ if (s+0 >= m+0) print "PASS"; else print "FAIL" }')"
+# Pane readiness gates (presence + linkability + no undefined terms).
+pane_ready=1
+pane_notes=()
+check_pane_heading() {
+  local file="$1"
+  local pattern="$2"
+  local label="$3"
+  if ! grep -qE "$pattern" "$file"; then
+    pane_ready=0
+    pane_notes+=("missing:${label}")
+  fi
+}
+
+check_pane_heading "$BUNDLE_DIR/00-coversheet.md" '^## Links$' "links"
+check_pane_heading "$BUNDLE_DIR/80-architecture.md" '^## 8[.]1 Architecture overview$' "architecture"
+check_pane_heading "$BUNDLE_DIR/100-data-integrations.md" '^## 10[.]1 Data model overview$' "data-model"
+check_pane_heading "$BUNDLE_DIR/50-success-metrics.md" '^## 5[.]3 KPI definitions$' "telemetry"
+check_pane_heading "$BUNDLE_DIR/110-security-compliance.md" '^## 11[.]1 Data classification and handling$' "security"
+check_pane_heading "$BUNDLE_DIR/140-testing-quality.md" '^## 14[.]1 Test pyramid and scope$' "test-harness"
+check_pane_heading "$BUNDLE_DIR/130-delivery-roadmap.md" '^## 13[.]1 Program structure$' "delivery"
+check_pane_heading "$BUNDLE_DIR/170-release-readiness.md" '^## 17[.]1 Launch strategy$' "release"
+check_pane_heading "$BUNDLE_DIR/150-operations-support.md" '^## 15[.]1 Operational posture$' "ops"
+
+glossary_file="$BUNDLE_DIR/180-appendix/glossary.md"
+if [[ -f "$glossary_file" ]]; then
+  term_line="$(awk -F'|' '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    NR<=2 { next }
+    /^\|/{
+      t=trim($2); d=trim($3);
+      if (t=="" || d=="") next;
+      if (t ~ /^\[.*\]$/ || d ~ /^\[.*\]$/) next;
+      if (t ~ /^<.*>$/ || d ~ /^<.*>$/) next;
+      if (tolower(t)=="tbd" || tolower(d)=="tbd") next;
+      print t "|" d;
+      exit;
+    }
+  ' "$glossary_file")"
+  if [[ -z "${term_line:-}" ]]; then
+    pane_ready=0
+    pane_notes+=("glossary:undefined_terms")
+  fi
+fi
+
+result="$(awk -v s="$overall" -v m="$MIN_SCORE" -v p="$pane_ready" 'BEGIN{
+  if (p+0 < 1) { print "FAIL"; exit }
+  if (s+0 >= m+0) print "PASS"; else print "FAIL";
+}')"
 
 if [[ "$QUIET" -ne 1 ]]; then
   echo "PHOSPHENE — Done Score  <product-management>"
@@ -814,6 +861,13 @@ if [[ "$QUIET" -ne 1 ]]; then
   printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sentence_ratio=%.4f, req_fill=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$frag_ge2_ratio" "$req_fill_ratio"
   printf "  - %-12s %6.2f  (dens_input=%.4f, dens_req_link=%.4f, dens_feat_req=%.4f, internal_cov=%.4f)\n" "connectivity" "$score_conn" "$dens_input" "$dens_req_link" "$dens_feat_req" "$prd_internal_cov"
   echo ""
+  echo "Pane readiness:"
+  if [[ "$pane_ready" -eq 1 ]]; then
+    echo "  - OK"
+  else
+    echo "  - FAIL: ${pane_notes[*]}"
+  fi
+  echo ""
   echo "Key counters (scaled targets):"
   printf "  - functional requirement rows: %d (target=%d)\n" "$func_req_rows" "$target_req_rows"
   printf "  - traceability matrix rows:    %d (target=%d)\n" "$trace_rows" "$target_trace_rows"
@@ -831,5 +885,8 @@ if [[ "$QUIET" -ne 1 ]]; then
   '
 fi
 
-awk -v s="$overall" -v m="$MIN_SCORE" 'BEGIN{ exit (s+0 >= m+0) ? 0 : 1 }'
+awk -v s="$overall" -v m="$MIN_SCORE" -v p="$pane_ready" 'BEGIN{
+  if (p+0 < 1) exit 1;
+  exit (s+0 >= m+0) ? 0 : 1;
+}'
 
