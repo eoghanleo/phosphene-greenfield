@@ -54,7 +54,7 @@ validate_file() {
   fi
 
   for h in "## Bet framing" "## Trajectory lattice (2–4 trajectories)" "## Decision triggers / gates" "## Constraints" "## Dependencies"; do
-    if ! grep -qE "^${h}$" "$file"; then
+    if ! grep -Fqx "$h" "$file"; then
       fail "Missing required heading (${h}) in $file"
     fi
   done
