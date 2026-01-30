@@ -54,7 +54,7 @@ validate_file() {
   fi
 
   for h in "## Domain model and state" "## Interface contracts" "## Telemetry + security scaffolding"; do
-    if ! grep -qE "^${h}$" "$file"; then
+    if ! grep -Fqx "$h" "$file"; then
       fail "Missing required heading (${h}) in $file"
     fi
   done
