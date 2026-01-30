@@ -9,17 +9,19 @@ fail() { echo "PHOSPHENE: $*" >&2; exit 2; }
 usage() {
   cat <<'EOF'
 Usage:
-  ./.codex/skills/phosphene/amaranth/scrum-management/modulator/scripts/scrum-management_emit_done_receipt.sh --issue-number <N> --work-id <ISSUE-###>
+  ./.codex/skills/phosphene/amaranth/scrum-management/modulator/scripts/scrum-management_emit_done_receipt.sh --issue-number <N> --work-id <ISSUE-###> [--bus <path>]
 EOF
 }
 
 ISSUE_NUMBER=""
 WORK_ID=""
+BUS="phosphene/signals/bus.jsonl"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --issue-number) ISSUE_NUMBER="${2:-}"; shift 2 ;;
     --work-id) WORK_ID="${2:-}"; shift 2 ;;
+    --bus) BUS="${2:-}"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "unknown arg: $1" ;;
   esac
@@ -28,7 +30,6 @@ done
 [[ -n "${ISSUE_NUMBER:-}" ]] || fail "missing --issue-number"
 [[ -n "${WORK_ID:-}" ]] || fail "missing --work-id"
 
-BUS="phosphene/signals/bus.jsonl"
 [[ -f "$BUS" ]] || fail "missing bus file: $BUS"
 
 HASH_IMPL="phosphene/phosphene-core/bin/signal_hash.sh"

@@ -1,4 +1,4 @@
-name: "gantry.autoscribe.product-management"
+name: "gantry.autoscribe.research"
 
 on:
   push:
@@ -7,27 +7,21 @@ on:
       - "phosphene/signals/bus.jsonl"
   workflow_dispatch:
     inputs:
-      upstream_work_id:
-        description: "Optional upstream work_id (for issue context only)"
-        required: false
-        type: string
-        default: ""
       work_id:
-        description: "Work ID (optional; if empty, allocate next PRD-###)"
+        description: "Work ID (e.g., RA-001)"
         required: false
         type: string
-        default: ""
       lane:
         description: "Lane"
         required: false
         type: choice
-        options: ["cerulean"]
-        default: "cerulean"
+        options: ["viridian"]
+        default: "viridian"
       intent:
         description: "Intent string for the work"
         required: false
         type: string
-        default: "prd-development"
+        default: "research-assessment"
       parent_signal_id:
         description: "Parent signal_id from bus.jsonl (optional)"
         required: false
@@ -45,11 +39,11 @@ env:
     phosphene/signals/indexes/**
 
 concurrency:
-  group: instrument-autoscribe-product-management-${{ github.sha || github.run_id }}
+  group: instrument-autoscribe-research-${{ github.sha || github.run_id }}
   cancel-in-progress: false
 
 jobs:
-  autoscribe_product_management_from_product_marketing_merge:
+  autoscribe_research_from_request_signals:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
@@ -65,8 +59,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color cerulean --key product-management.done_score_min --default 80)"
-          [[ -n "${done_score_min:-}" ]] || done_score_min="80"
+          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color viridian --key research.done_score_min --default 10)"
+          [[ -n "${done_score_min:-}" ]] || done_score_min="10"
           echo "done_score_min=$done_score_min" >> "$GITHUB_OUTPUT"
           echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
 
@@ -103,7 +97,7 @@ jobs:
             bash phosphene/phosphene-core/bin/signal_bus.sh validate --bus phosphene/signals/bus.jsonl
           fi
 
-      - name: Create product-management issue(s) from upstream signal(s)
+      - name: Create research issue(s) from request signal(s)
         id: autoscribe
         uses: actions/github-script@v7
         env:
@@ -146,16 +140,13 @@ jobs:
             if (!fs.existsSync(templatePath)) throw new Error(`Missing template file: ${templatePath}`);
             const template = fs.readFileSync(templatePath, "utf8");
 
-            const busLines = fs.existsSync(busPath)
-              ? fs.readFileSync(busPath, "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
-              : [];
-
             const busHasIssueCreatedForParent = (parent_signal_id) => {
-              if (!parent_signal_id) return false;
-              for (let i = busLines.length - 1; i >= 0; i--) {
+              if (!parent_signal_id || !fs.existsSync(busPath)) return false;
+              const lines = fs.readFileSync(busPath, "utf8").split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+              for (let i = lines.length - 1; i >= 0; i--) {
                 try {
-                  const j = JSON.parse(busLines[i]);
-                  if (j?.signal_type !== "phosphene.autoscribe.product-management.issue_created.v1") continue;
+                  const j = JSON.parse(lines[i]);
+                  if (j?.signal_type !== "phosphene.autoscribe.research.issue_created.v1") continue;
                   const parents = Array.isArray(j.parents) ? j.parents : [];
                   if (parents.includes(parent_signal_id)) return true;
                 } catch {}
@@ -169,36 +160,14 @@ jobs:
               return { requestingDomain: m[1], targetDomain: m[2], workType: m[3] };
             };
 
-            const allocatePrdId = () => {
-              // Allocate PRD-### safely without writing phosphene/id_index.tsv.
-              // Prefer scanning existing PRD bundle directories.
-              const prdsRoot = "phosphene/domains/product-management/output/prds";
-              let max = 0;
-              try {
-                if (fs.existsSync(prdsRoot)) {
-                  const entries = fs.readdirSync(prdsRoot, { withFileTypes: true });
-                  for (const e of entries) {
-                    if (!e.isDirectory()) continue;
-                    const m = String(e.name || "").match(/^PRD-(\d{3})-/);
-                    if (!m) continue;
-                    const n = Number(m[1] || 0);
-                    if (Number.isFinite(n) && n > max) max = n;
-                  }
-                }
-              } catch {}
-              const next = max + 1;
-              return `PRD-${String(next).padStart(3, "0")}`;
-            };
-
-            const createPmIssueAndEmit = async ({ upstream_work_id, work_id, lane, intent, parent_signal_id, upstream_domain, pointers }) => {
-              const resolvedLane = String(lane || "cerulean").trim().toLowerCase();
-              const resolvedIntent = String(intent || "prd-development").trim();
+            const createIssueAndEmit = async ({ work_id, lane, intent, parent_signal_id, upstream_domain, pointers, upstream_work_id }) => {
+              const resolvedWorkId = String(work_id || "").trim();
               const resolvedParentSignalId = String(parent_signal_id || "").trim();
-              const resolvedUpstreamWorkId = String(upstream_work_id || "").trim();
-              const resolvedWorkId = String(work_id || "").trim() || allocatePrdId();
-              const resolvedUpstreamDomain = String(upstream_domain || "product-marketing").trim() || "product-marketing";
+              const resolvedLane = String(lane || "viridian").trim().toLowerCase();
+              const resolvedIntent = String(intent || "research-assessment").trim();
+              const resolvedUpstreamDomain = String(upstream_domain || "unknown").trim() || "unknown";
+              const resolvedUpstreamWorkId = String(upstream_work_id || "").trim() || resolvedWorkId;
 
-              if (resolvedLane !== "cerulean") throw new Error(`product-management lane must be cerulean (got: ${resolvedLane})`);
               if (!resolvedWorkId) return null;
 
               if (resolvedParentSignalId && busHasIssueCreatedForParent(resolvedParentSignalId)) {
@@ -208,7 +177,7 @@ jobs:
 
               const dedupeMarker = resolvedParentSignalId
                 ? `phosphene-signal-id:${resolvedParentSignalId}`
-                : `phosphene-autoscribe:product-management:work_id:${resolvedWorkId}`;
+                : `phosphene-autoscribe:research:work_id:${resolvedWorkId}`;
 
               const search = await github.rest.search.issuesAndPullRequests({
                 q: `repo:${owner}/${repo} "${dedupeMarker}" in:body type:issue`,
@@ -219,24 +188,21 @@ jobs:
                 return null;
               }
 
-              const domainTag = "<product-management>";
+              const domainTag = "<research>";
               const upstreamDomainTag = `<${resolvedUpstreamDomain}>`;
-              const domainSkillPath = ".codex/skills/phosphene/cerulean/product-management/modulator/SKILL.md";
-              const domainScriptsPath = ".codex/skills/phosphene/cerulean/product-management/modulator/scripts/";
-              const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
-              const domainDoneScoreCmd = `./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score ${doneScoreMin}`;
+              const domainSkillPath = ".codex/skills/phosphene/viridian/research/modulator/SKILL.md";
+              const domainScriptsPath = ".codex/skills/phosphene/viridian/research/modulator/scripts/";
+              const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "10").trim();
+              const domainDoneScoreCmd = `./.github/scripts/research-domain-done-score.sh --min-score ${doneScoreMin}`;
 
               const pointerLines = Array.isArray(pointers) && pointers.length
                 ? pointers
-                : [
-                    "- Use `phosphene/id_index.tsv` to locate upstream artifacts by ID.",
-                    resolvedUpstreamWorkId ? `- Upstream work_id: \`${resolvedUpstreamWorkId}\`` : "- Upstream work_id: (unknown; see upstream merge_complete signal)",
-                  ];
+                : [`- Upstream signal: ${resolvedParentSignalId || "(none)"}`];
 
               const phospheneBlock = [
                 "[PHOSPHENE]",
                 `lane: ${resolvedLane}`,
-                "work_type: product-management",
+                "work_type: research",
                 `work_id: ${resolvedWorkId}`,
                 `intent: ${resolvedIntent}`,
                 "depends_on:",
@@ -245,17 +211,13 @@ jobs:
                 "[/PHOSPHENE]",
               ].join("\n");
 
-              const titleUpstream = (resolvedUpstreamWorkId && resolvedUpstreamWorkId !== resolvedWorkId)
-                ? ` (${resolvedUpstreamWorkId})`
-                : "";
-              const issueTitle = `PHOSPHENE: <product-management> PRD development for ${resolvedWorkId}${titleUpstream}`;
-
+              const issueTitle = `PHOSPHENE: <research> Research assessment for ${resolvedWorkId}`;
               const body = [
                 phospheneBlock,
                 "",
                 template
                   .replaceAll("{{UPSTREAM_PR_NUMBER}}", "N/A")
-                  .replaceAll("{{UPSTREAM_PR_TITLE}}", "(merge-signal triggered; no PR context)")
+                  .replaceAll("{{UPSTREAM_PR_TITLE}}", "(request-signal triggered; no PR context)")
                   .replaceAll("{{UPSTREAM_PR_URL}}", "(n/a)")
                   .replaceAll("{{UPSTREAM_WORK_ID}}", resolvedUpstreamWorkId || "(unknown)")
                   .replaceAll("{{SIGNAL_PATH}}", resolvedParentSignalId ? `phosphene/signals/bus.jsonl#${resolvedParentSignalId}` : "phosphene/signals/bus.jsonl")
@@ -274,16 +236,16 @@ jobs:
 
               const labels = [
                 "phosphene",
-                "phosphene:domain:product-management",
+                "phosphene:domain:research",
                 "phosphene:ready",
                 `phosphene:lane:${resolvedLane}`,
               ];
 
               const issue = await createIssue({ title: issueTitle, body, labels });
-              core.notice(`PHOSPHENE: created product-management issue #${issue.number}: ${issue.html_url}`);
+              core.notice(`PHOSPHENE: created research issue #${issue.number}: ${issue.html_url}`);
 
               const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
-              const output_key = `autoscribe:issue-created:product-management:issue:${issue.number}`;
+              const output_key = `autoscribe:issue-created:research:issue:${issue.number}`;
               const hashArgs = [
                 "phosphene/phosphene-core/bin/signal_hash.sh",
                 "signal-id",
@@ -298,9 +260,9 @@ jobs:
               const sig = {
                 signal_version: 1,
                 signal_id,
-                signal_type: "phosphene.autoscribe.product-management.issue_created.v1",
+                signal_type: "phosphene.autoscribe.research.issue_created.v1",
                 work_id: resolvedWorkId,
-                domain: "product-management",
+                domain: "research",
                 issue_number: issue.number,
                 lane: resolvedLane,
                 intent: resolvedIntent,
@@ -325,12 +287,16 @@ jobs:
 
             const created = [];
             if (context.eventName === "workflow_dispatch") {
-              const upstream_work_id = String(core.getInput("upstream_work_id") || "").trim();
-              const work_id = String(core.getInput("work_id") || "").trim();
-              const lane = String(core.getInput("lane") || "cerulean").trim().toLowerCase();
-              const intent = String(core.getInput("intent") || "prd-development").trim();
-              const parent_signal_id = String(core.getInput("parent_signal_id") || "").trim();
-              const out = await createPmIssueAndEmit({ upstream_work_id, work_id, lane, intent, parent_signal_id });
+              const workIdInput = String(core.getInput("work_id") || "").trim();
+              const laneInput = String(core.getInput("lane") || "").trim().toLowerCase();
+              const intentInput = String(core.getInput("intent") || "").trim();
+              const parentSignalId = String(core.getInput("parent_signal_id") || "").trim();
+              const out = await createIssueAndEmit({
+                work_id: workIdInput,
+                lane: laneInput || "viridian",
+                intent: intentInput || "research-assessment",
+                parent_signal_id: parentSignalId,
+              });
               if (out) created.push(out);
             } else if (context.eventName === "push") {
               const raw = fs.existsSync("/tmp/new_lines.txt") ? fs.readFileSync("/tmp/new_lines.txt", "utf8") : "";
@@ -339,40 +305,26 @@ jobs:
                 let j;
                 try { j = JSON.parse(line); } catch { continue; }
                 const req = parseRequestSignal(j.signal_type);
-                if (req && req.targetDomain === "product-management") {
-                  const work_id = String(j.work_id || "").trim();
-                  if (!work_id) continue;
-                  const parent_signal_id = String(j.signal_id || "").trim();
-                  const upstream_domain = String(j.domain || req.requestingDomain || "").trim();
-                  const issue_number = Number(j.issue_number || 0);
-                  const intent = req.workType ? req.workType : "prd-development";
-                  const pointers = [
-                    upstream_domain ? `- Requesting domain: <${upstream_domain}>` : "- Requesting domain: (unknown)",
-                    issue_number ? `- Requesting issue: #${issue_number}` : "- Requesting issue: (n/a)",
-                    `- Requested work_id: \`${work_id}\``,
-                  ];
-                  const out = await createPmIssueAndEmit({
-                    upstream_work_id: work_id,
-                    work_id,
-                    lane: "cerulean",
-                    intent,
-                    parent_signal_id,
-                    upstream_domain,
-                    pointers,
-                  });
-                  if (out) created.push(out);
-                  continue;
-                }
-
-                if (String(j.signal_type || "") !== "phosphene.merge_complete.product-marketing.v1") continue;
+                if (!req || req.targetDomain !== "research") continue;
+                const work_id = String(j.work_id || "").trim();
+                if (!work_id) continue;
                 const parent_signal_id = String(j.signal_id || "").trim();
-                const upstream_work_id = String(j.work_id || "").trim();
-                const out = await createPmIssueAndEmit({
-                  upstream_work_id,
-                  work_id: "",
-                  lane: "cerulean",
-                  intent: "prd-development",
+                const upstream_domain = String(j.domain || req.requestingDomain || "").trim();
+                const issue_number = Number(j.issue_number || 0);
+                const intent = req.workType ? req.workType : "research-assessment";
+                const pointers = [
+                  upstream_domain ? `- Requesting domain: <${upstream_domain}>` : "- Requesting domain: (unknown)",
+                  issue_number ? `- Requesting issue: #${issue_number}` : "- Requesting issue: (n/a)",
+                  `- Requested work_id: \`${work_id}\``,
+                ];
+                const out = await createIssueAndEmit({
+                  work_id,
+                  lane: "viridian",
+                  intent,
                   parent_signal_id,
+                  upstream_domain,
+                  pointers,
+                  upstream_work_id: work_id,
                 });
                 if (out) created.push(out);
               }
@@ -407,12 +359,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
+          # If bus wasn't modified (shouldn't happen), exit gracefully.
           if git diff --quiet -- "phosphene/signals/bus.jsonl"; then
             echo "PHOSPHENE: bus.jsonl unchanged; nothing to commit."
             exit 0
           fi
 
           git add "phosphene/signals/bus.jsonl"
-          git commit -m "PHOSPHENE: autoscribe product-management issue_created for issue(s) ${{ steps.autoscribe.outputs.issues }}"
+          git commit -m "PHOSPHENE: autoscribe research issue_created for issue(s) ${{ steps.autoscribe.outputs.issues }}"
           git push origin HEAD:main
-
