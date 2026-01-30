@@ -163,6 +163,12 @@ jobs:
               return false;
             };
 
+            const parseRequestSignal = (signalType) => {
+              const m = String(signalType || "").match(/^phosphene\.request\.([^.]+)\.([^.]+)\.([^.]+)\.v1$/);
+              if (!m) return null;
+              return { requestingDomain: m[1], targetDomain: m[2], workType: m[3] };
+            };
+
             const allocatePrdId = () => {
               // Allocate PRD-### safely without writing phosphene/id_index.tsv.
               // Prefer scanning existing PRD bundle directories.
@@ -184,12 +190,13 @@ jobs:
               return `PRD-${String(next).padStart(3, "0")}`;
             };
 
-            const createPmIssueAndEmit = async ({ upstream_work_id, work_id, lane, intent, parent_signal_id }) => {
+            const createPmIssueAndEmit = async ({ upstream_work_id, work_id, lane, intent, parent_signal_id, upstream_domain, pointers }) => {
               const resolvedLane = String(lane || "cerulean").trim().toLowerCase();
               const resolvedIntent = String(intent || "prd-development").trim();
               const resolvedParentSignalId = String(parent_signal_id || "").trim();
               const resolvedUpstreamWorkId = String(upstream_work_id || "").trim();
               const resolvedWorkId = String(work_id || "").trim() || allocatePrdId();
+              const resolvedUpstreamDomain = String(upstream_domain || "product-marketing").trim() || "product-marketing";
 
               if (resolvedLane !== "cerulean") throw new Error(`product-management lane must be cerulean (got: ${resolvedLane})`);
               if (!resolvedWorkId) return null;
@@ -213,11 +220,18 @@ jobs:
               }
 
               const domainTag = "<product-management>";
-              const upstreamDomainTag = "<product-marketing>";
+              const upstreamDomainTag = `<${resolvedUpstreamDomain}>`;
               const domainSkillPath = ".codex/skills/phosphene/cerulean/product-management/modulator/SKILL.md";
               const domainScriptsPath = ".codex/skills/phosphene/cerulean/product-management/modulator/scripts/";
-            const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
-            const domainDoneScoreCmd = `./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score ${doneScoreMin}`;
+              const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
+              const domainDoneScoreCmd = `./.github/scripts/product-management-domain-done-score.sh <bundle_dir> --min-score ${doneScoreMin}`;
+
+              const pointerLines = Array.isArray(pointers) && pointers.length
+                ? pointers
+                : [
+                    "- Use `phosphene/id_index.tsv` to locate upstream artifacts by ID.",
+                    resolvedUpstreamWorkId ? `- Upstream work_id: \`${resolvedUpstreamWorkId}\`` : "- Upstream work_id: (unknown; see upstream merge_complete signal)",
+                  ];
 
               const phospheneBlock = [
                 "[PHOSPHENE]",
@@ -231,7 +245,9 @@ jobs:
                 "[/PHOSPHENE]",
               ].join("\n");
 
-              const titleUpstream = resolvedUpstreamWorkId ? ` (${resolvedUpstreamWorkId})` : "";
+              const titleUpstream = (resolvedUpstreamWorkId && resolvedUpstreamWorkId !== resolvedWorkId)
+                ? ` (${resolvedUpstreamWorkId})`
+                : "";
               const issueTitle = `PHOSPHENE: <product-management> PRD development for ${resolvedWorkId}${titleUpstream}`;
 
               const body = [
@@ -251,10 +267,7 @@ jobs:
                   .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
                   .replaceAll("{{INTENT}}", resolvedIntent)
-                  .replaceAll("{{POINTERS_BULLETS}}", [
-                    "- Use `phosphene/id_index.tsv` to locate upstream artifacts by ID.",
-                    resolvedUpstreamWorkId ? `- Upstream work_id: \`${resolvedUpstreamWorkId}\`` : "- Upstream work_id: (unknown; see upstream merge_complete signal)",
-                  ].join("\n"))
+                  .replaceAll("{{POINTERS_BULLETS}}", pointerLines.join("\n"))
                   .replaceAll("{{NOTES_BLOCK}}", "")
                   .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
               ].join("\n");
@@ -325,6 +338,32 @@ jobs:
               for (const line of lines) {
                 let j;
                 try { j = JSON.parse(line); } catch { continue; }
+                const req = parseRequestSignal(j.signal_type);
+                if (req && req.targetDomain === "product-management") {
+                  const work_id = String(j.work_id || "").trim();
+                  if (!work_id) continue;
+                  const parent_signal_id = String(j.signal_id || "").trim();
+                  const upstream_domain = String(j.domain || req.requestingDomain || "").trim();
+                  const issue_number = Number(j.issue_number || 0);
+                  const intent = req.workType ? req.workType : "prd-development";
+                  const pointers = [
+                    upstream_domain ? `- Requesting domain: <${upstream_domain}>` : "- Requesting domain: (unknown)",
+                    issue_number ? `- Requesting issue: #${issue_number}` : "- Requesting issue: (n/a)",
+                    `- Requested work_id: \`${work_id}\``,
+                  ];
+                  const out = await createPmIssueAndEmit({
+                    upstream_work_id: work_id,
+                    work_id,
+                    lane: "cerulean",
+                    intent,
+                    parent_signal_id,
+                    upstream_domain,
+                    pointers,
+                  });
+                  if (out) created.push(out);
+                  continue;
+                }
+
                 if (String(j.signal_type || "") !== "phosphene.merge_complete.product-marketing.v1") continue;
                 const parent_signal_id = String(j.signal_id || "").trim();
                 const upstream_work_id = String(j.work_id || "").trim();

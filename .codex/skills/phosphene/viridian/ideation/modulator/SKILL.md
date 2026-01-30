@@ -11,7 +11,7 @@ Primary domain: `<ideation>`
 
 ## Status
 
-TODO (not in development). Do not run this domain in live flows.
+Active (bus + emit receipts). Ideation is now in development.
 
 ## What you produce
 
@@ -23,6 +23,7 @@ TODO (not in development). Do not run this domain in live flows.
 - Create artifacts directly under `phosphene/domains/ideation/output/ideas/` (templates are intentionally not used).
 - Keep the artifact short: problem/opportunity framing, target user hypotheses, and what to research next.
 - Avoid over-committing to product definitions; treat as hypotheses for `<research>`.
+- Manual edits are allowed for these single-file artifacts; keep headings stable.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -31,8 +32,22 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet.
+- `create_idea.sh`: Create a new IDEA artifact (allocates IDEA-####).
+- `validate_idea.sh`: Validate IDEA headers/sections and ID conventions.
+- `ideation_emit_done_receipt.sh`: Emit DONE receipt to the signal bus.
+- `ideation-domain-done-score.sh`: Compute a minimal domain done score (programmatic).
 
 ## DONE signal
 
-Not active. DONE receipt scripts are not implemented for this domain yet.
+Emit a DONE receipt to the signal bus (append-only JSONL):
+
+```bash
+./.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_emit_done_receipt.sh --issue-number <N> --work-id <IDEA-####>
+```
+
+## Validation (recommended)
+
+- Validate all ideation artifacts:
+  - `./.github/scripts/validate_idea.sh --all`
+- Domain done score:
+  - `./.github/scripts/ideation-domain-done-score.sh --min-score <PROMPT:done_score_min>`

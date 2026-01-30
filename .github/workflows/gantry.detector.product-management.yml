@@ -125,10 +125,27 @@ jobs:
           [[ -n "${rel_path:-}" ]] || { echo "Cannot resolve PRD in id registry: $work_id"; exit 1; }
           bundle_dir="$(cd "$(dirname "$rel_path")" && pwd)"
 
-          bash .github/scripts/validate_prd_bundle.sh --strict "$bundle_dir"
-          bash .github/scripts/product-management-domain-done-score.sh "$bundle_dir" --min-score "${PHOSPHENE_DONE_SCORE_MIN:-80}"
+          validation_log="/tmp/pm_validate.log"
+          : > "$validation_log"
+          ok=1
+          if ! bash .github/scripts/validate_prd_bundle.sh --strict "$bundle_dir" >"$validation_log" 2>&1; then
+            ok=0
+          fi
 
+          if [[ "$ok" -eq 1 ]]; then
+            if ! bash .github/scripts/product-management-domain-done-score.sh "$bundle_dir" --min-score "${PHOSPHENE_DONE_SCORE_MIN:-80}" >>"$validation_log" 2>&1; then
+              ok=0
+            fi
+          fi
+
+          missing_upstream_ids="$(grep -oE '(RA|VPD|ROADMAP)-[0-9]{3}' "$validation_log" | sort -u | tr '\n' ',' | sed -E 's/,+$//')"
+          echo "missing_upstream_ids=$missing_upstream_ids" >> "$GITHUB_OUTPUT"
           echo "bundle_dir=$bundle_dir" >> "$GITHUB_OUTPUT"
+
+          cat "$validation_log"
+          if [[ "$ok" -ne 1 ]]; then
+            exit 1
+          fi
 
       - name: Emit approve signal to PR bus
         if: steps.done.outputs.has_done == '1' && steps.validate.outcome == 'success'
@@ -196,6 +213,30 @@ jobs:
 
           line="{\"signal_version\":1,\"signal_id\":\"${signal_id}\",\"signal_type\":\"phosphene.detector.product-management.trap.v1\",\"work_id\":\"${work_id}\",\"domain\":\"product-management\",\"issue_number\":${issue_number},\"lane\":\"cerulean\",\"parents\":[\"${parent_signal_id}\"],\"reason\":\"verification_failed\",\"run_marker\":\"${work_id}\",\"output_key\":\"${output_key}\",\"created_utc\":\"${created_utc}\"}"
           bash phosphene/phosphene-core/bin/signal_bus.sh append --bus "$bus" --line "$line"
+
+          missing_ids="${{ steps.validate.outputs.missing_upstream_ids }}"
+          if [[ -n "${missing_ids:-}" ]]; then
+            IFS=',' read -ra ids <<< "$missing_ids"
+            for rid in "${ids[@]}"; do
+              rid="$(echo "$rid" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
+              [[ -n "${rid:-}" ]] || continue
+              target=""
+              case "$rid" in
+                RA-*) target="research" ;;
+                VPD-*) target="product-marketing" ;;
+                ROADMAP-*) target="product-strategy" ;;
+                *) target="" ;;
+              esac
+              [[ -n "${target:-}" ]] || continue
+              bash phosphene/phosphene-core/bin/request_signal.sh \
+                --requesting-domain product-management \
+                --target-domain "$target" \
+                --work-type constraints \
+                --work-id "$work_id" \
+                --issue-number "$issue_number" \
+                --parent "$parent_signal_id"
+            done
+          fi
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

@@ -9,6 +9,13 @@ set -euo pipefail
 #   bash tests/run.sh --e2e
 #   bash tests/run.sh --product-marketing
 #   bash tests/run.sh --product-management
+#   bash tests/run.sh --product-vision
+#   bash tests/run.sh --product-strategy
+#   bash tests/run.sh --product-architecture
+#   bash tests/run.sh --product-evaluation
+#   bash tests/run.sh --feature-management
+#   bash tests/run.sh --test-management
+#   bash tests/run.sh --scrum-management
 #   bash tests/run.sh --coverage
 #
 # Notes:
@@ -23,7 +30,7 @@ source "$SCRIPT_DIR/lib/test_helpers.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  bash tests/run.sh [--all|--e2e|--product-marketing|--product-management] [--coverage]
+  bash tests/run.sh [--all|--e2e|--ideation|--research|--product-vision|--product-strategy|--product-architecture|--product-evaluation|--feature-management|--test-management|--scrum-management|--product-marketing|--product-management] [--coverage]
 EOF
 }
 
@@ -33,6 +40,15 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --all) MODE="all"; shift ;;
     --e2e) MODE="e2e"; shift ;;
+    --ideation) MODE="ideation"; shift ;;
+    --research) MODE="research"; shift ;;
+    --product-vision) MODE="product-vision"; shift ;;
+    --product-strategy) MODE="product-strategy"; shift ;;
+    --product-architecture) MODE="product-architecture"; shift ;;
+    --product-evaluation) MODE="product-evaluation"; shift ;;
+    --feature-management) MODE="feature-management"; shift ;;
+    --test-management) MODE="test-management"; shift ;;
+    --scrum-management) MODE="scrum-management"; shift ;;
     --product-marketing) MODE="product-marketing"; shift ;;
     --product-management) MODE="product-management"; shift ;;
     --coverage) ENABLE_COVERAGE=1; shift ;;
@@ -61,10 +77,50 @@ fi
 roots=()
 case "$MODE" in
   all)
-    roots+=("$SCRIPT_DIR/e2e" "$SCRIPT_DIR/product-marketing" "$SCRIPT_DIR/product-management")
+    roots+=(
+      "$SCRIPT_DIR/e2e"
+      "$SCRIPT_DIR/ideation"
+      "$SCRIPT_DIR/research"
+      "$SCRIPT_DIR/product-vision"
+      "$SCRIPT_DIR/product-strategy"
+      "$SCRIPT_DIR/product-architecture"
+      "$SCRIPT_DIR/product-evaluation"
+      "$SCRIPT_DIR/feature-management"
+      "$SCRIPT_DIR/test-management"
+      "$SCRIPT_DIR/scrum-management"
+      "$SCRIPT_DIR/product-marketing"
+      "$SCRIPT_DIR/product-management"
+    )
     ;;
   e2e)
     roots+=("$SCRIPT_DIR/e2e")
+    ;;
+  ideation)
+    roots+=("$SCRIPT_DIR/ideation")
+    ;;
+  research)
+    roots+=("$SCRIPT_DIR/research")
+    ;;
+  product-vision)
+    roots+=("$SCRIPT_DIR/product-vision")
+    ;;
+  product-strategy)
+    roots+=("$SCRIPT_DIR/product-strategy")
+    ;;
+  product-architecture)
+    roots+=("$SCRIPT_DIR/product-architecture")
+    ;;
+  product-evaluation)
+    roots+=("$SCRIPT_DIR/product-evaluation")
+    ;;
+  feature-management)
+    roots+=("$SCRIPT_DIR/feature-management")
+    ;;
+  test-management)
+    roots+=("$SCRIPT_DIR/test-management")
+    ;;
+  scrum-management)
+    roots+=("$SCRIPT_DIR/scrum-management")
     ;;
   product-marketing)
     roots+=("$SCRIPT_DIR/product-marketing")

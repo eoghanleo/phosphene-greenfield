@@ -420,7 +420,7 @@ write_with_id "$BUNDLE_DIR/180-appendix/glossary.md" <<'EOF'
 
 | Term | Definition |
 |---|---|
-| [term] | [definition] |
+| Example term | Example definition |
 EOF
 
 write_with_id "$BUNDLE_DIR/180-appendix/decision-log.md" <<'EOF'

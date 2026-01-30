@@ -11,7 +11,7 @@ Primary domain: `<product-strategy>`
 
 ## Status
 
-TODO (not in development). Do not run this domain in live flows.
+Active (bus + emit receipts). Product-strategy is now in development.
 
 ## What you produce
 
@@ -23,6 +23,7 @@ TODO (not in development). Do not run this domain in live flows.
 - Incorporate `<product-marketing>` constraints (ICP, messaging constraints, objections).
 - Create artifacts directly under `phosphene/domains/product-strategy/output/product-roadmaps/` (templates are intentionally not used).
 - Keep bets explicit, with assumptions, risks, and “we lose when…” constraints.
+- Manual edits are allowed for these single-file artifacts; keep headings stable.
 
 ## In-doc script hints (`[V-SCRIPT]`)
 
@@ -31,11 +32,25 @@ Search for `[V-SCRIPT]` when scanning an artifact to discover relevant control s
 
 ## Scripts (entrypoints and purpose)
 
-No domain scripts yet.
+- `create_product_roadmap.sh`: Create a new ROADMAP doc (allocates ROADMAP-###).
+- `validate_product_roadmap.sh`: Validate ROADMAP headers/sections and ID conventions.
+- `product-strategy_emit_done_receipt.sh`: Emit DONE receipt to the signal bus.
+- `product-strategy-domain-done-score.sh`: Compute a minimal domain done score (programmatic).
 
 ## DONE signal
 
-Not active. DONE receipt scripts are not implemented for this domain yet.
+Emit a DONE receipt to the signal bus (append-only JSONL):
+
+```bash
+./.codex/skills/phosphene/beryl/product-strategy/modulator/scripts/product-strategy_emit_done_receipt.sh --issue-number <N> --work-id <ROADMAP-###>
+```
+
+## Validation (recommended)
+
+- Validate all roadmaps:
+  - `./.github/scripts/validate_product_roadmap.sh --all`
+- Domain done score:
+  - `./.github/scripts/product-strategy-domain-done-score.sh --min-score <PROMPT:done_score_min>`
 
 Include (minimum) listing:
 

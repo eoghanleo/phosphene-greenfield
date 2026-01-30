@@ -163,11 +163,19 @@ jobs:
               return false;
             };
 
-            const createPmIssueAndEmit = async ({ work_id, lane, intent, parent_signal_id }) => {
+            const parseRequestSignal = (signalType) => {
+              const m = String(signalType || "").match(/^phosphene\.request\.([^.]+)\.([^.]+)\.([^.]+)\.v1$/);
+              if (!m) return null;
+              return { requestingDomain: m[1], targetDomain: m[2], workType: m[3] };
+            };
+
+            const createPmIssueAndEmit = async ({ work_id, lane, intent, parent_signal_id, upstream_domain, pointers, upstream_work_id }) => {
               const resolvedWorkId = String(work_id || "").trim();
               const resolvedParentSignalId = String(parent_signal_id || "").trim();
               const resolvedLane = String(lane || "beryl").trim().toLowerCase();
               const resolvedIntent = String(intent || "proposition-development").trim();
+              const resolvedUpstreamDomain = String(upstream_domain || "research").trim() || "research";
+              const resolvedUpstreamWorkId = String(upstream_work_id || "").trim() || resolvedWorkId;
 
               if (!resolvedWorkId) return null;
 
@@ -190,11 +198,15 @@ jobs:
               }
 
               const domainTag = "<product-marketing>";
-              const upstreamDomainTag = "<research>";
+              const upstreamDomainTag = `<${resolvedUpstreamDomain}>`;
               const domainSkillPath = ".codex/skills/phosphene/beryl/product-marketing/modulator/SKILL.md";
               const domainScriptsPath = ".codex/skills/phosphene/beryl/product-marketing/modulator/scripts/";
-            const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
-            const domainDoneScoreCmd = `./.github/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
+              const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "80").trim();
+              const domainDoneScoreCmd = `./.github/scripts/product-marketing-domain-done-score.sh --min-score ${doneScoreMin}`;
+
+              const pointerLines = Array.isArray(pointers) && pointers.length
+                ? pointers
+                : [`- (see upstream ${resolvedUpstreamDomain} work in repo for ${resolvedUpstreamWorkId})`];
 
               const phospheneBlock = [
                 "[PHOSPHENE]",
@@ -216,7 +228,7 @@ jobs:
                   .replaceAll("{{UPSTREAM_PR_NUMBER}}", "N/A")
                   .replaceAll("{{UPSTREAM_PR_TITLE}}", "(merge-signal triggered; no PR context)")
                   .replaceAll("{{UPSTREAM_PR_URL}}", "(n/a)")
-                  .replaceAll("{{UPSTREAM_WORK_ID}}", resolvedWorkId)
+                  .replaceAll("{{UPSTREAM_WORK_ID}}", resolvedUpstreamWorkId)
                   .replaceAll("{{SIGNAL_PATH}}", resolvedParentSignalId ? `phosphene/signals/bus.jsonl#${resolvedParentSignalId}` : "phosphene/signals/bus.jsonl")
                   .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
                   .replaceAll("{{DOMAIN_TAG}}", domainTag)
@@ -226,7 +238,7 @@ jobs:
                   .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
                   .replaceAll("{{INTENT}}", resolvedIntent)
-                  .replaceAll("{{POINTERS_BULLETS}}", `- (see upstream research work in repo for ${resolvedWorkId})`)
+                  .replaceAll("{{POINTERS_BULLETS}}", pointerLines.join("\n"))
                   .replaceAll("{{NOTES_BLOCK}}", "")
                   .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
               ].join("\n");
@@ -303,6 +315,32 @@ jobs:
               for (const line of lines) {
                 let j;
                 try { j = JSON.parse(line); } catch { continue; }
+                const req = parseRequestSignal(j.signal_type);
+                if (req && req.targetDomain === "product-marketing") {
+                  const work_id = String(j.work_id || "").trim();
+                  if (!work_id) continue;
+                  const parent_signal_id = String(j.signal_id || "").trim();
+                  const upstream_domain = String(j.domain || req.requestingDomain || "").trim();
+                  const issue_number = Number(j.issue_number || 0);
+                  const intent = req.workType ? req.workType : "proposition-development";
+                  const pointers = [
+                    upstream_domain ? `- Requesting domain: <${upstream_domain}>` : "- Requesting domain: (unknown)",
+                    issue_number ? `- Requesting issue: #${issue_number}` : "- Requesting issue: (n/a)",
+                    `- Requested work_id: \`${work_id}\``,
+                  ];
+                  const out = await createPmIssueAndEmit({
+                    work_id,
+                    lane: "beryl",
+                    intent,
+                    parent_signal_id,
+                    upstream_domain,
+                    pointers,
+                    upstream_work_id: work_id,
+                  });
+                  if (out) created.push(out);
+                  continue;
+                }
+
                 if (String(j.signal_type || "") !== "phosphene.merge.research.v1") continue;
                 const work_id = String(j.work_id || "").trim();
                 if (!work_id) continue;
