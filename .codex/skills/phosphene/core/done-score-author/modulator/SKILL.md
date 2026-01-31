@@ -1,0 +1,46 @@
+---
+name: done-score-author
+description: Author deterministic PHOSPHENE domain done-score scripts and evaluators (bash-only), including metric selection, normalization, weighting, gates, and reporting. Use when creating or updating `.github/scripts/*-domain-done-score.sh` or designing new deterministic evaluation rubrics.
+---
+
+# Goal
+Create deterministic done-score scripts that resist gaming and reward substantive work.
+
+## Quick start
+1. Identify domain outputs and upstream inputs (IDs, bundles, artifacts).
+2. Choose evaluation objectives and target behaviors.
+3. Select dimension categories from `references/done-score-design.md`.
+4. Pick metrics, normalization bounds, and weights.
+5. Implement deterministic extractor, scorer, and reporter in bash.
+
+## Determinism contract
+- Force `LC_ALL=C`, `LANG=C`, `TZ=UTC`.
+- Sort all file discovery and ID lists.
+- Avoid non-deterministic sources (time, randomness, unsorted globs).
+- Use stable printing (fixed decimals, stable ordering).
+
+## Script composition modules
+- Discovery: locate docs roots and input roots; validate existence.
+- Extraction: parse sections and tables; emit canonical TSVs.
+- Cleaning/hardening: remove IDs, code blocks, tables, placeholders; detect token dumps.
+- Metrics: compute counts, ratios, graph stats, and corpus stats.
+- Normalization: map raw metrics to 0..100 via fixed or input-scaled bounds.
+- Scoring: weight categories; prefer earn-only monotonic scores.
+- Gates: hard-fail on missing artifacts or required sections.
+- Reporting: print overall score, subscores, and advice; return exit code.
+
+## Anti-gaming hardening
+- Exclude IDs, URLs, script names, and `[V-SCRIPT]` from corpus metrics.
+- Strip placeholders (`[...]`, `<...>`, `TBD`).
+- Drop likely token dumps (high comma density, no spaces, huge lists).
+- Tie metrics to upstream inputs (output/input ratios, coverage).
+
+## Weighting and tuning
+- Default to equal category weights; adjust per desired behavior.
+- Use hard gates for non-negotiables; otherwise earn-only scaling.
+- Prefer linear ramps with saturation; avoid sharp cliffs unless gating.
+- See `references/done-score-design.md` for weighting strategies.
+
+## Outputs and exit codes
+- Print PASS/FAIL, overall score, subscores, and a metric box.
+- Exit `0` when score >= min and gates pass; `1` otherwise; `2` for usage/config errors.
