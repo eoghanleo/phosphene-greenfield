@@ -49,7 +49,7 @@ Notes:
 Score box (0–100):
   - volume (25):    output_words / input_words (full points at --vol-full-ratio; default 1.00)
   - diversity (25): entropy_norm + unique_words_ratio (stopword-filtered)
-  - depth (25):     fragment_avg_words + two_sentence_ratio + requirements_fill_ratio
+  - depth (25):     fragment_avg_words + two_sentence_ratio + requirements_fill_ratio + AC/telemetry fill
   - connectivity (25):
       - input linkage (PER/PROP refs to upstream set)
       - requirement linkage (REQ↔PER/PROP density + multi-target requirements)
@@ -116,6 +116,10 @@ REQ_PER_EDGES="$tmp/req_per_edges.tsv"          # req_id<TAB>per_id
 REQ_PROP_EDGES="$tmp/req_prop_edges.tsv"        # req_id<TAB>prop_id
 FEAT_REQ_EDGES="$tmp/feat_req_edges.tsv"        # feat_id<TAB>req_id
 
+TRACE_PROP_IDS_TXT="$tmp/trace_prop_ids.txt"
+TRACE_FEAT_IDS_TXT="$tmp/trace_feat_ids.txt"
+TRACE_REQ_IDS_TXT="$tmp/trace_req_ids.txt"
+
 INPUT_VPD_IDS_TXT="$tmp/input_vpd_ids.txt"
 INPUT_PER_IDS_TXT="$tmp/input_per_ids.txt"
 INPUT_PROP_IDS_TXT="$tmp/input_prop_ids.txt"
@@ -131,6 +135,9 @@ INPUT_PM_CLEAN_TXT="$tmp/input_pm_clean.txt"
 : > "$REQ_PER_EDGES"
 : > "$REQ_PROP_EDGES"
 : > "$FEAT_REQ_EDGES"
+: > "$TRACE_PROP_IDS_TXT"
+: > "$TRACE_FEAT_IDS_TXT"
+: > "$TRACE_REQ_IDS_TXT"
 : > "$INPUT_VPD_IDS_TXT"
 : > "$INPUT_PER_IDS_TXT"
 : > "$INPUT_PROP_IDS_TXT"
@@ -240,7 +247,10 @@ clean_prd_corpus() {
 extract_input_vpds() {
   # Primary source: Dependencies header in coversheet.
   local deps
-  deps="$(read_header_value "$BUNDLE_DIR/00-coversheet.md" "Dependencies" || true)"
+  deps=""
+  if [[ -f "$BUNDLE_DIR/00-coversheet.md" ]]; then
+    deps="$(read_header_value "$BUNDLE_DIR/00-coversheet.md" "Dependencies" || true)"
+  fi
   if [[ -n "${deps:-}" ]]; then
     echo "$deps" | tr ',' '\n' | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' | grep -E '^VPD-[0-9]{3}$' | sort -u > "$INPUT_VPD_IDS_TXT" || true
     return 0
@@ -317,6 +327,10 @@ append_prd_freeform_fragments() {
       if (line ~ /^\[[^]]+\]$/ && line !~ /\]\(/) return 1;
       if (line ~ /^\[\.\.\.\]$/) return 1;
       if (line ~ /^<\.\.\.>$/) return 1;
+      # Drop inline placeholder tokens (common in templates): [...], <...>, TBD
+      if (line ~ /\[\.\.\.\]/) return 1;
+      if (line ~ /<\.\.\.>/) return 1;
+      if (tolower(line) == "tbd") return 1;
       return 0;
     }
     BEGIN{ fence=0; }
@@ -343,7 +357,19 @@ append_prd_table_fragments() {
   if [[ -f "$FUNC_REQ_FILE" ]]; then
     awk -F'|' '
       function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-      function add(x){ x=trim(x); if (x=="" || x=="[...]" || x=="<...>") return; print x; }
+      function is_cell_placeholder(x){
+        x=trim(x);
+        if (x=="") return 1;
+        if (x=="[...]" || x=="<...>") return 1;
+        # Any single bracket/angle placeholder token like [events], [KPI], <thing>
+        if (x ~ /^\[[^][]+\]$/) return 1;
+        if (x ~ /^<[^<>]+>$/) return 1;
+        if (tolower(x)=="tbd") return 1;
+        # Template-specific placeholders that should not earn points
+        if (x=="Given/When/Then") return 1;
+        return 0;
+      }
+      function add(x){ if (is_cell_placeholder(x)) return; print trim(x); }
       BEGIN{ req=0; i_req=0; i_stmt=0; i_per=0; i_prop=0; i_ac=0; i_tel=0; i_notes=0; }
       /^\|[[:space:]]*Req ID[[:space:]]*\|/{
         for (i=2;i<=NF;i++){
@@ -377,7 +403,16 @@ append_prd_table_fragments() {
   if [[ -f "$nfr" ]]; then
     awk -F'|' '
       function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-      function add(x){ x=trim(x); if (x=="" || x=="[...]" || x=="<...>") return; print x; }
+      function is_cell_placeholder(x){
+        x=trim(x);
+        if (x=="") return 1;
+        if (x=="[...]" || x=="<...>") return 1;
+        if (x ~ /^\[[^][]+\]$/) return 1;
+        if (x ~ /^<[^<>]+>$/) return 1;
+        if (tolower(x)=="tbd") return 1;
+        return 0;
+      }
+      function add(x){ if (is_cell_placeholder(x)) return; print trim(x); }
       /^\|/{
         if ($0 ~ /^[[:space:]]*\|[[:space:]]*[-:]+[[:space:]]*\|/) next
         if ($0 ~ /^[[:space:]]*\|[[:space:]]*NFR ID[[:space:]]*\|/) next
@@ -413,9 +448,27 @@ extract_req_edges_and_ids() {
   # Outputs:
   # - $REQ_IDS_TXT (unique req IDs)
   # - $REQ_PER_EDGES / $REQ_PROP_EDGES (unique)
-  # - multi-target requirement counts via stdout as: total_rows<TAB>multi_rows
+  # - requirement counts via stdout as:
+  #     total_rows<TAB>multi_rows<TAB>ac_filled_rows<TAB>tel_filled_rows<TAB>gwt_rows
   awk -F'|' '
     function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    function is_cell_placeholder(x){
+      x=trim(x);
+      if (x=="") return 1;
+      if (x=="[...]" || x=="<...>") return 1;
+      if (x ~ /^\[[^][]+\]$/) return 1;
+      if (x ~ /^<[^<>]+>$/) return 1;
+      if (tolower(x)=="tbd") return 1;
+      if (x=="Given/When/Then") return 1;
+      return 0;
+    }
+    function is_stmt_placeholder(x){
+      x=trim(x);
+      if (is_cell_placeholder(x)) return 1;
+      # Template row uses: "The system shall…" (unicode ellipsis) or "The system shall..."
+      if (x ~ /^The system shall/ && (x ~ /…/ || x ~ /\.\.\.$/)) return 1;
+      return 0;
+    }
     function split_ids(cell, re, out,    n,i,x,c){
       gsub(/[,;]/, " ", cell);
       n=split(cell, a, /[[:space:]]+/);
@@ -429,21 +482,26 @@ extract_req_edges_and_ids() {
       }
       return c;
     }
-    BEGIN{ i_req=0; i_per=0; i_prop=0; total=0; multi=0; }
+    BEGIN{ i_req=0; i_stmt=0; i_per=0; i_prop=0; i_ac=0; i_tel=0; total=0; multi=0; ac_ok=0; tel_ok=0; gwt=0; }
     /^\|[[:space:]]*Req ID[[:space:]]*\|/{
       for (i=2;i<=NF;i++){
         h=trim($i);
         if (h=="Req ID") i_req=i;
+        else if (h=="Statement") i_stmt=i;
         else if (h ~ /^Persona/) i_per=i;
         else if (h ~ /^Proposition/) i_prop=i;
+        else if (h ~ /^Acceptance/) i_ac=i;
+        else if (h=="Telemetry") i_tel=i;
       }
       next
     }
     /^\|/{
       if ($0 ~ /^[[:space:]]*\|[[:space:]]*[-:]+[[:space:]]*\|/) next
-      if (i_req==0) next
+      if (i_req==0 || i_stmt==0) next
       rid=trim($(i_req));
       if (rid=="" || rid=="Req ID") next
+      stmt=trim($(i_stmt));
+      if (is_stmt_placeholder(stmt)) next
       total++
       req[rid]=1
       per_count=0; prop_count=0
@@ -453,10 +511,23 @@ extract_req_edges_and_ids() {
       for (p in per) print rid "\t" p > "'"$REQ_PER_EDGES"'"
       for (q in prop) print rid "\t" q > "'"$REQ_PROP_EDGES"'"
       if (per_count>=2 || prop_count>=2) multi++
+
+      # Fill quality (earn-only): acceptance criteria and telemetry must be non-placeholder.
+      if (i_ac>0 && !is_cell_placeholder($(i_ac))) ac_ok++
+      if (i_tel>0 && !is_cell_placeholder($(i_tel))) tel_ok++
+
+      # Testability proxy: AC contains at least one Given/When/Then token (case-insensitive).
+      if (i_ac>0) {
+        ac=trim($(i_ac));
+        if (!is_cell_placeholder(ac)) {
+          low=tolower(ac);
+          if (low ~ /(^|[^a-z])(given|when|then)($|[^a-z])/) gwt++
+        }
+      }
     }
     END{
       for (r in req) print r > "'"$REQ_IDS_TXT"'"
-      print total+0 "\t" multi+0
+      print total+0 "\t" multi+0 "\t" ac_ok+0 "\t" tel_ok+0 "\t" gwt+0
     }
   ' "$FUNC_REQ_FILE"
   sort -u "$REQ_IDS_TXT" -o "$REQ_IDS_TXT" || true
@@ -473,52 +544,76 @@ extract_feature_ids() {
 }
 
 extract_feature_req_edges() {
-  # Co-occurrence: if a feature file mentions both feature IDs and requirement IDs, treat as linked.
-  if [[ -d "$FEATURE_DIR" ]]; then
-    while IFS= read -r file; do
-      [[ -n "${file:-}" ]] || continue
-      fids="$(grep -hoE 'F-[A-Z]+-[0-9]{2}' "$file" 2>/dev/null | sort -u || true)"
-      rids="$(grep -hoE 'R-[A-Z]+-[0-9]{3}' "$file" 2>/dev/null | sort -u || true)"
-      [[ -n "${fids:-}" && -n "${rids:-}" ]] || continue
-      while IFS= read -r f; do
-        [[ -n "${f:-}" ]] || continue
-        while IFS= read -r r; do
-          [[ -n "${r:-}" ]] || continue
-          printf "%s\t%s\n" "$f" "$r" >> "$FEAT_REQ_EDGES"
-        done <<< "$rids"
-      done <<< "$fids"
-    done < <(find "$FEATURE_DIR" -type f -name "*.md" 2>/dev/null | sort)
+  # Traceability matrix is the authoritative feature↔requirement mapping.
+  # We intentionally DO NOT infer edges from raw co-occurrence in feature markdowns,
+  # because template/example rows (and bulk ID lists) are easy to game.
+  #
+  # Side effects:
+  # - append unique feat_id<tab>req_id edges to $FEAT_REQ_EDGES
+  # - append unique IDs to $TRACE_*_IDS_TXT
+  # - print substantive trace row count to stdout
+  if [[ ! -f "$TRACE_MATRIX_FILE" ]]; then
+    echo "0"
+    return 0
   fi
 
-  # Also parse traceability matrix for feature↔requirement pairings.
-  if [[ -f "$TRACE_MATRIX_FILE" ]]; then
-    awk -F'|' '
-      function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-      function emit_pairs(fcell, rcell,    n,i,m,j,f,r){
-        gsub(/[,;]/, " ", fcell);
-        gsub(/[,;]/, " ", rcell);
-        n=split(fcell, fa, /[[:space:]]+/);
-        m=split(rcell, ra, /[[:space:]]+/);
-        for (i=1;i<=n;i++){
-          f=trim(fa[i]);
-          if (f ~ /^F-[A-Z]+-[0-9]{2}$/) {
-            for (j=1;j<=m;j++){
-              r=trim(ra[j]);
-              if (r ~ /^R-[A-Z]+-[0-9]{3}$/) print f "\t" r;
-            }
+  awk -F'|' '
+    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+    function is_cell_placeholder(x){
+      x=trim(x);
+      if (x=="") return 1;
+      if (x=="[...]" || x=="<...>") return 1;
+      if (x ~ /^\[[^][]+\]$/) return 1;
+      if (x ~ /^<[^<>]+>$/) return 1;
+      if (tolower(x)=="tbd") return 1;
+      return 0;
+    }
+    function emit_ids(cell, re, out_file,    n,i,x){
+      gsub(/[,;]/, " ", cell);
+      n=split(cell, a, /[[:space:]]+/);
+      for (i=1;i<=n;i++){
+        x=trim(a[i]);
+        if (x ~ re) print x >> out_file;
+      }
+    }
+    function emit_pairs(fcell, rcell,    n,i,m,j,f,r){
+      gsub(/[,;]/, " ", fcell);
+      gsub(/[,;]/, " ", rcell);
+      n=split(fcell, fa, /[[:space:]]+/);
+      m=split(rcell, ra, /[[:space:]]+/);
+      for (i=1;i<=n;i++){
+        f=trim(fa[i]);
+        if (f ~ /^F-[A-Z]+-[0-9]{2}$/) {
+          for (j=1;j<=m;j++){
+            r=trim(ra[j]);
+            if (r ~ /^R-[A-Z]+-[0-9]{3}$/) print f "\t" r >> "'"$FEAT_REQ_EDGES"'";
           }
         }
       }
-      /^\|/{
-        if ($0 ~ /^[[:space:]]*\|[[:space:]]*[-:]+[[:space:]]*\|/) next
-        if ($0 ~ /^[[:space:]]*\|[[:space:]]*Proposition ID[[:space:]]*\|/) next
-        fcell=trim($4); rcell=trim($5);
-        if (fcell!="" && rcell!="") emit_pairs(fcell, rcell);
-      }
-    ' "$TRACE_MATRIX_FILE" >> "$FEAT_REQ_EDGES"
-  fi
+    }
+    BEGIN{ rows=0; }
+    /^\|/{
+      if ($0 ~ /^[[:space:]]*\|[[:space:]]*[-:]+[[:space:]]*\|/) next
+      if ($0 ~ /^[[:space:]]*\|[[:space:]]*Proposition ID[[:space:]]*\|/) next
+      cap=trim($3);
+      if (is_cell_placeholder(cap)) next
+      rows++
+
+      prop=trim($2);
+      if (prop ~ /^PROP-[0-9]{4}$/) print prop >> "'"$TRACE_PROP_IDS_TXT"'";
+
+      fcell=trim($4); rcell=trim($5);
+      if (fcell!="") emit_ids(fcell, /^F-[A-Z]+-[0-9]{2}$/, "'"$TRACE_FEAT_IDS_TXT"'");
+      if (rcell!="") emit_ids(rcell, /^R-[A-Z]+-[0-9]{3}$/, "'"$TRACE_REQ_IDS_TXT"'");
+      if (fcell!="" && rcell!="") emit_pairs(fcell, rcell);
+    }
+    END{ print rows+0; }
+  ' "$TRACE_MATRIX_FILE"
 
   sort -u "$FEAT_REQ_EDGES" -o "$FEAT_REQ_EDGES" || true
+  sort -u "$TRACE_PROP_IDS_TXT" -o "$TRACE_PROP_IDS_TXT" || true
+  sort -u "$TRACE_FEAT_IDS_TXT" -o "$TRACE_FEAT_IDS_TXT" || true
+  sort -u "$TRACE_REQ_IDS_TXT" -o "$TRACE_REQ_IDS_TXT" || true
 }
 
 extract_prd_refs() {
@@ -629,27 +724,29 @@ gwt_count="$(cat "$CORPUS_TXT" 2>/dev/null | awk '
 # ----------------------------
 # Structural counts (scaled; not "one row")
 # ----------------------------
-func_req_rows=0
-if [[ -f "$FUNC_REQ_FILE" ]]; then
-  func_req_rows="$(compute_table_rows "$FUNC_REQ_FILE" '^[[:space:]]*[|][[:space:]]*Req ID[[:space:]]*[|]')"
-fi
-
-trace_rows=0
-if [[ -f "$TRACE_MATRIX_FILE" ]]; then
-  trace_rows="$(compute_table_rows "$TRACE_MATRIX_FILE" '^[[:space:]]*[|][[:space:]]*Proposition ID[[:space:]]*[|]')"
-fi
-
 multi_req_rows=0
 edge_meta="$(extract_req_edges_and_ids)"
+if [[ -z "${edge_meta:-}" ]]; then
+  edge_meta=$'0\t0\t0\t0\t0'
+fi
 req_total_rows="$(echo "$edge_meta" | awk -F'\t' '{print $1}')"
 multi_req_rows="$(echo "$edge_meta" | awk -F'\t' '{print $2}')"
+ac_filled_rows="$(echo "$edge_meta" | awk -F'\t' '{print $3}')"
+tel_filled_rows="$(echo "$edge_meta" | awk -F'\t' '{print $4}')"
+gwt_rows="$(echo "$edge_meta" | awk -F'\t' '{print $5}')"
+
+# For scoring, we count only *substantive* requirement rows (template placeholder rows do not count).
+func_req_rows="$req_total_rows"
 
 extract_feature_ids
-extract_feature_req_edges
-extract_prd_refs
+trace_rows="$(extract_feature_req_edges)"
 
 n_req="$(wc -l < "$REQ_IDS_TXT" | awk '{print $1}')"
 n_feat="$(wc -l < "$FEATURE_IDS_TXT" | awk '{print $1}')"
+
+ac_fill_ratio="$(awk -v a="$ac_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+tel_fill_ratio="$(awk -v a="$tel_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+gwt_row_ratio="$(awk -v a="$gwt_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
 
 # Targets derived from input magnitude (avoid "one row is enough").
 target_req_rows="$(awk -v p="$input_props" -v per="$input_personas" 'BEGIN{
@@ -669,15 +766,17 @@ target_trace_rows="$(awk -v p="$input_props" -v r="$n_req" 'BEGIN{
   print t+0;
 }')"
 
-req_fill_ratio="$(awk -v n="$func_req_rows" -v t="$target_req_rows" 'BEGIN{ if (t<=0) print 0; x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
-trace_fill_ratio="$(awk -v n="$trace_rows" -v t="$target_trace_rows" 'BEGIN{ if (t<=0) print 0; x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
+req_fill_ratio="$(awk -v n="$func_req_rows" -v t="$target_req_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
+trace_fill_ratio="$(awk -v n="$trace_rows" -v t="$target_trace_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
 
 # ----------------------------
 # Connectivity metrics
 # ----------------------------
-# Input linkage: how many upstream PER/PROP IDs are referenced by the PRD, scaled to the upstream pool.
-ref_input_per="$(comm -12 <(sort -u "$INPUT_PER_IDS_TXT") <(sort -u "$PRD_PER_REFS_TXT") | wc -l | awk '{print $1}')"
-ref_input_prop="$(comm -12 <(sort -u "$INPUT_PROP_IDS_TXT") <(sort -u "$PRD_PROP_REFS_TXT") | wc -l | awk '{print $1}')"
+# Input linkage: how many upstream PER/PROP IDs are *actually used in requirements*,
+# scaled to the upstream pool.
+# This avoids giving free credit for template/example rows that happen to match real IDs.
+ref_input_per="$(comm -12 <(sort -u "$INPUT_PER_IDS_TXT") <(cut -f2 "$REQ_PER_EDGES" 2>/dev/null | sort -u) | wc -l | awk '{print $1}')"
+ref_input_prop="$(comm -12 <(sort -u "$INPUT_PROP_IDS_TXT") <(cut -f2 "$REQ_PROP_EDGES" 2>/dev/null | sort -u) | wc -l | awk '{print $1}')"
 dens_input="$(awk -v a="$ref_input_per" -v b="$ref_input_prop" -v n="$input_personas" -v m="$input_props" 'BEGIN{
   d=n+m;
   if (d<=0) { print 0; exit }
@@ -700,27 +799,20 @@ multi_req_ratio="$(awk -v m="$multi_req_rows" -v t="$req_total_rows" 'BEGIN{ if 
 # Traceability coverage: how much of the PRD's own IDs appear in the traceability matrix.
 trace_req_cov=0
 trace_feat_cov=0
-if [[ -f "$TRACE_MATRIX_FILE" ]]; then
-  trace_req_ids="$(grep -hoE 'R-[A-Z]+-[0-9]{3}' "$TRACE_MATRIX_FILE" 2>/dev/null | sort -u | wc -l | awk '{print $1}')"
-  trace_feat_ids="$(grep -hoE 'F-[A-Z]+-[0-9]{2}' "$TRACE_MATRIX_FILE" 2>/dev/null | sort -u | wc -l | awk '{print $1}')"
-  trace_req_cov="$(awk -v a="$trace_req_ids" -v t="$n_req" 'BEGIN{ if (t<=0) print 0; x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
-  trace_feat_cov="$(awk -v a="$trace_feat_ids" -v t="$n_feat" 'BEGIN{ if (t<=0) print 0; x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
-fi
+trace_req_ids="$(wc -l < "$TRACE_REQ_IDS_TXT" | awk '{print $1}')"
+trace_feat_ids="$(wc -l < "$TRACE_FEAT_IDS_TXT" | awk '{print $1}')"
+trace_req_cov="$(awk -v a="$trace_req_ids" -v t="$n_req" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+trace_feat_cov="$(awk -v a="$trace_feat_ids" -v t="$n_feat" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
 
-req_in_features_cov=0
-if [[ -d "$FEATURE_DIR" && -s "$REQ_IDS_TXT" ]]; then
-  req_in_features_ids="$(grep -hoE 'R-[A-Z]+-[0-9]{3}' "$FEATURE_DIR"/*.md 2>/dev/null | sort -u | wc -l | awk '{print $1}')"
-  req_in_features_cov="$(awk -v a="$req_in_features_ids" -v t="$n_req" 'BEGIN{ if (t<=0) print 0; x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
-fi
-
-prd_internal_cov="$(awk -v a="$trace_req_cov" -v b="$trace_feat_cov" -v c="$req_in_features_cov" 'BEGIN{ printf "%.4f\n", ((a+b+c)/3) }')"
+# Internal coverage rewards: trace matrix ID coverage + row fill (substantive rows only).
+prd_internal_cov="$(awk -v a="$trace_req_cov" -v b="$trace_feat_cov" -v c="$trace_fill_ratio" 'BEGIN{ printf "%.4f\n", ((a+b+c)/3) }')"
 
 # ----------------------------
 # Scoring (earn-only; 25 pts per category)
 # ----------------------------
 scores="$(awk -v out_words="$output_words" -v in_words="$input_words" -v vol_full="$VOL_FULL_RATIO" \
   -v ent="$entropy" -v uniq_words="$unique_words" -v corpus_words="$output_words" \
-  -v favg="$frag_avg_words" -v two_sent="$frag_ge2_ratio" -v req_fill="$req_fill_ratio" \
+  -v favg="$frag_avg_words" -v two_sent="$frag_ge2_ratio" -v req_fill="$req_fill_ratio" -v ac_fill="$ac_fill_ratio" -v tel_fill="$tel_fill_ratio" -v gwt_fill="$gwt_row_ratio" \
   -v dens_in="$dens_input" -v dens_req="$dens_req_link" -v dens_fr="$dens_feat_req" \
   -v cov_internal="$prd_internal_cov" -v mult_req="$multi_req_ratio" -v trace_fill="$trace_fill_ratio" '
 
@@ -736,9 +828,12 @@ BEGIN {
   MAX_DIV_ENT   = 12.5;
   MAX_DIV_UNIQ  = 12.5;
 
-  MAX_DEP_FAVG  = 10;
-  MAX_DEP_2S    = 10;
-  MAX_DEP_REQF  = 5;
+  MAX_DEP_FAVG  = 9;
+  MAX_DEP_2S    = 9;
+  MAX_DEP_REQF  = 3;
+  MAX_DEP_ACF   = 2;
+  MAX_DEP_TELF  = 1;
+  MAX_DEP_GWT   = 1;
 
   MAX_CON_IN    = 7.5;
   MAX_CON_REQ   = 7.5;
@@ -759,6 +854,9 @@ BEGIN {
   s_favg = score_linear(favg, 10, 34);
   s_2s   = score_linear(two_sent, 0.20, 0.75);
   s_reqf = score_linear(req_fill, 0.10, 1.00);
+  s_acf  = score_linear(ac_fill, 0.20, 0.85);
+  s_telf = score_linear(tel_fill, 0.10, 0.75);
+  s_gwt  = score_linear(gwt_fill, 0.10, 0.60);
 
   s_in   = score_linear(dens_in, 0.10, 0.80);
   s_req  = score_linear(dens_req, 0.05, 0.40);
@@ -769,7 +867,7 @@ BEGIN {
   # Points (earn-only)
   p_vol = (s_vol/100.0) * MAX_VOL_WORDS;
   p_div = (s_ent/100.0) * MAX_DIV_ENT + (s_uniq/100.0) * MAX_DIV_UNIQ;
-  p_dep = (s_favg/100.0) * MAX_DEP_FAVG + (s_2s/100.0) * MAX_DEP_2S + (s_reqf/100.0) * MAX_DEP_REQF;
+  p_dep = (s_favg/100.0) * MAX_DEP_FAVG + (s_2s/100.0) * MAX_DEP_2S + (s_reqf/100.0) * MAX_DEP_REQF + (s_acf/100.0) * MAX_DEP_ACF + (s_telf/100.0) * MAX_DEP_TELF + (s_gwt/100.0) * MAX_DEP_GWT;
   p_con = (s_in/100.0) * MAX_CON_IN + (s_req/100.0) * MAX_CON_REQ + (s_fr/100.0) * MAX_CON_FR + (s_int/100.0) * MAX_CON_INT + (s_mult/100.0) * MAX_CON_MULT;
 
   overall = clamp(((p_vol + p_div + p_dep + p_con) / MAX_ALL) * 100.0, 0, 100);
@@ -795,6 +893,11 @@ check_pane_heading() {
   local file="$1"
   local pattern="$2"
   local label="$3"
+  if [[ ! -f "$file" ]]; then
+    pane_ready=0
+    pane_notes+=("missing:${label}")
+    return 0
+  fi
   if ! grep -qE "$pattern" "$file"; then
     pane_ready=0
     pane_notes+=("missing:${label}")
@@ -858,7 +961,7 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "Subscores (0–100):"
   printf "  - %-12s %6.2f\n" "volume" "$score_vol"
   printf "  - %-12s %6.2f  (entropy=%.4f bits/token, unique_words=%d)\n" "diversity" "$score_div" "$entropy" "$unique_words"
-  printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sentence_ratio=%.4f, req_fill=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$frag_ge2_ratio" "$req_fill_ratio"
+  printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sentence_ratio=%.4f, req_fill=%.4f, ac_fill=%.4f, tel_fill=%.4f, gwt_row=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$frag_ge2_ratio" "$req_fill_ratio" "$ac_fill_ratio" "$tel_fill_ratio" "$gwt_row_ratio"
   printf "  - %-12s %6.2f  (dens_input=%.4f, dens_req_link=%.4f, dens_feat_req=%.4f, internal_cov=%.4f)\n" "connectivity" "$score_conn" "$dens_input" "$dens_req_link" "$dens_feat_req" "$prd_internal_cov"
   echo ""
   echo "Pane readiness:"
@@ -870,6 +973,9 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo ""
   echo "Key counters (scaled targets):"
   printf "  - functional requirement rows: %d (target=%d)\n" "$func_req_rows" "$target_req_rows"
+  printf "    - AC filled rows:           %d/%d (%.4f)\n" "$ac_filled_rows" "$req_total_rows" "$ac_fill_ratio"
+  printf "    - telemetry filled rows:    %d/%d (%.4f)\n" "$tel_filled_rows" "$req_total_rows" "$tel_fill_ratio"
+  printf "    - rows with Given/When/Then:%d/%d (%.4f)\n" "$gwt_rows" "$req_total_rows" "$gwt_row_ratio"
   printf "  - traceability matrix rows:    %d (target=%d)\n" "$trace_rows" "$target_trace_rows"
   printf "  - G/W/T tokens (bundle):       %d\n" "$gwt_count"
   printf "  - multi-target requirements:   %d/%d (%.4f)\n" "$multi_req_rows" "$req_total_rows" "$multi_req_ratio"
@@ -879,7 +985,7 @@ if [[ "$QUIET" -ne 1 ]]; then
     BEGIN{
       if (v+0 < 90)  print "  - volume: increase PRD substance relative to the incoming VPD corpus (target >= 1.0× input words by default).";
       if (d+0 < 90)  print "  - diversity: reduce templated phrasing and add more distinct, specific language grounded in the upstream personas/propositions.";
-      if (dep+0 < 90) print "  - depth: expand fragments into 2–3 sentence mini-arguments (context + why + tradeoff/edge-case) and increase the number of filled requirement rows.";
+      if (dep+0 < 90) print "  - depth: expand fragments into 2–3 sentence mini-arguments (context + why + tradeoff/edge-case), increase the number of substantive requirement rows, and replace placeholders with real acceptance criteria + telemetry.";
       if (c+0 < 90)  print "  - connectivity: link requirements to PER/PROP IDs, link features to requirements, and ensure the traceability matrix references the same IDs.";
     }
   '
