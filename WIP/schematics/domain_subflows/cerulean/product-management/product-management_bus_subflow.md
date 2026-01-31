@@ -181,7 +181,7 @@ Everything is activated by **bus pushes** and **PR events**.
 
 #### Condenser approval (PR review)
 
-- **Purpose**: confirm checks are green and approve the PR (no bus signal emitted).
+- **Purpose**: when checks are green, emit `phosphene.condenser.product-management.approve.v1` (parented to the detector APPROVE signal) and approve the PR via review (no auto-open, no auto-merge).
 - **Gate**: approval only occurs if an APPROVE signal exists in the PR diff and checks are green.
 
 ---
