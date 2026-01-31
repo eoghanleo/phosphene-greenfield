@@ -39,7 +39,8 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Viridian** — the colour of new ideas and fertile beginnings
 
-- **Domains**: Ideation; Research; Moonshot (to be developed)
+- **Domains (active)**: Ideation; Research
+- **Domains (planned)**: Moonshot (to be developed)
 - **Takes as inputs**:
   - Raw sparks (notes, user pain, customer quotes, founder intuition)
   - Constraints (time, budget, technical realities, market context)
@@ -54,7 +55,7 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Beryl** — creative clarity, the emergence of structure
 
-- **Domains**: Product-marketing; Product-strategy
+- **Domains (active)**: Product-marketing; Product-vision; Product-strategy
 - **Canonical lane note**: `<product-marketing>` work is always `beryl` (do not associate it with other lanes).
 - **Takes as inputs**:
   - A Viridian idea that’s “real enough” to shape
@@ -71,7 +72,7 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Cerulean** — going deep, diving into detail
 
-- **Domains**: Product-management; Feature-management
+- **Domains (active)**: Product-management; Feature-management; Product-architecture
 - **Takes as inputs**:
   - Beryl outputs (positioning, roadmap intent, proposition constraints)
   - Operational constraints (scope, sequencing, dependencies)
@@ -87,7 +88,7 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Amaranth** — new stars formed, new elements made manifest
 
-- **Domains**: Scrum-management
+- **Domains (active)**: Scrum-management; User-interface; Thematic-design; API-design; Database-design; Backend-development; Code-development; Infrastructure-operations; Observability-telemetry
 - **Takes as inputs**:
   - Cerulean features/specs + priority decisions
   - Team reality (capacity, risks, sequencing)
@@ -102,7 +103,7 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Cadmium** — reactions and fiery testing, tempering to strength
 
-- **Domains**: Test-management
+- **Domains (active)**: Test-management; Product-evaluation
 - **Takes as inputs**:
   - Amaranth execution artifacts (issues, acceptance criteria) and the current build state
   - Risk areas and “what must not break”
@@ -117,7 +118,8 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Chartreuse** — continuous ingenuity, surprising distillations
 
-- **Domains**: Retrospective; Ontology (to be developed)
+- **Domains (active)**: Retrospective
+- **Domains (planned)**: Ontology (to be developed)
 - **Takes as inputs**:
   - Outcomes (what shipped), evidence (what happened), and friction (what hurt)
   - Cadmium findings and constraints discovered under real pressure

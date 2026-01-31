@@ -267,8 +267,11 @@ jobs:
 
             const laneFromLabels = (labels) => {
               const set = new Set((labels || []).map((s) => String(s).toLowerCase()));
-              if (set.has("phosphene:lane:beryl")) return "beryl";
-              if (set.has("phosphene:lane:cerulean")) return "cerulean";
+              if (set.has("phosphene:amaranth")) return "amaranth";
+              if (set.has("phosphene:beryl")) return "beryl";
+              if (set.has("phosphene:cadmium")) return "cadmium";
+              if (set.has("phosphene:cerulean")) return "cerulean";
+              if (set.has("phosphene:viridian")) return "viridian";
               return "";
             };
 

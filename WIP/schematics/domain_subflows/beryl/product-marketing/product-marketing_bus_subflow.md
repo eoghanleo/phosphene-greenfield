@@ -200,7 +200,7 @@ Labels must include:
 
 - `phosphene`
 - `phosphene:domain:product-marketing`
-- `phosphene:lane:beryl`
+- `phosphene:beryl`
 - `phosphene:ready` (and must *not* include blocked/hold labels)
 
 ---

@@ -193,6 +193,7 @@ jobs:
                 "",
                 `- **Issue**: #${issue_number}`,
                 `- **Trigger**: \`phosphene.autoscribe.feature-management.issue_created.v1\``,
+                `- **Instrument**: \`phosphene:instrument:hopper\``,
                 `- **Domain label present**: ${labelSet.has("phosphene:domain:feature-management") ? "YES" : "NO"}`,
                 `- **Ready label present**: ${labelSet.has("phosphene:ready") ? "YES" : "NO"}`,
                 `- **Blocked/Hold**: ${(labelSet.has("phosphene:blocked") || labelSet.has("phosphene:hold")) ? "YES" : "NO"}`,

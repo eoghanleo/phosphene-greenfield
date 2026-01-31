@@ -236,9 +236,10 @@ jobs:
 
               const labels = [
                 "phosphene",
+                `phosphene:${resolvedLane}`,
                 "phosphene:domain:research",
+                "phosphene:instrument:autoscribe",
                 "phosphene:ready",
-                `phosphene:lane:${resolvedLane}`,
               ];
 
               const issue = await createIssue({ title: issueTitle, body, labels });

@@ -25,9 +25,32 @@
 - MUST create issues with canonical title/body/labels/assignees/state.
 - MUST embed a strict `[PHOSPHENE]` block with required keys and order:
   - `lane`, `work_type`, `work_id`, `intent`, `depends_on`, `sequence`, `upstream_signal_id`.
-- MUST apply labels: `phosphene`, `phosphene:domain:<domain>`, `phosphene:lane:<lane>`, `phosphene:ready`.
+- MUST apply labels: `phosphene`, `phosphene:<color>`, `phosphene:domain:<domain>`, `phosphene:instrument:autoscribe`, `phosphene:ready`.
 - MUST emit `phosphene.autoscribe.<domain>.issue_created.v1` to the bus.
 - MUST inject done-score thresholds into the issue prompt.
+
+### Label taxonomy (issue-facing)
+
+Issue labels are intended to be intersected for quick provenance checks:
+
+- Core: `phosphene`
+- Color: `phosphene:<color>` (e.g., `phosphene:beryl`)
+- Domain: `phosphene:domain:<domain>`
+- Instrument: `phosphene:instrument:<instrument>`
+- Readiness: `phosphene:ready`
+
+Valid instrument label values:
+
+- `phosphene:instrument:autoscribe`
+- `phosphene:instrument:collector`
+- `phosphene:instrument:condenser`
+- `phosphene:instrument:detector`
+- `phosphene:instrument:hopper`
+- `phosphene:instrument:modulator`
+- `phosphene:instrument:prism`
+- `phosphene:instrument:trap`
+- `phosphene:instrument:test-emitter`
+- `phosphene:instrument:test-listener`
 
 ### Inputs (expected)
 

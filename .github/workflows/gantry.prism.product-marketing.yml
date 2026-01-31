@@ -227,6 +227,7 @@ jobs:
                   "",
                   "PHOSPHENE PRISM: branch beam invoked; begin work now.",
                   "",
+                  "- **Instrument**: `phosphene:instrument:prism`",
                   `- **work_id**: \`${workId}\``,
                   `- **phos_id**: \`${phos_id}\``,
                   `- **intent**: ${it}`,

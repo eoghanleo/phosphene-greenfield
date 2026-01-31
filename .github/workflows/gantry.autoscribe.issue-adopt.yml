@@ -12,7 +12,7 @@ on:
         options: ["help", "tidy", "adopt"]
         default: "tidy"
       domain:
-        description: "Target domain to enforce (sets lane + work_type + labels)"
+        description: "Target domain to enforce (sets color label + work_type + labels)"
         required: true
         type: choice
         options:
@@ -416,11 +416,12 @@ jobs:
             const rest = block ? (body.slice(0, block.openIdx) + body.slice(block.endIdx)).trim() : body.trim();
             const updatedBody = [strictBlock, "", rest].join("\n").trim() + "\n";
 
-            // Labels: always add domain + lane; add ready only in adopt mode.
+            // Labels: always add phosphene + color + domain + instrument; add ready only in adopt mode.
             const want = new Set(existingLabels);
             want.add("phosphene");
             want.add(`phosphene:domain:${domain}`);
-            want.add(`phosphene:lane:${dm.lane}`);
+            want.add(`phosphene:${dm.lane}`);
+            want.add("phosphene:instrument:autoscribe");
             if (mode === "adopt") want.add("phosphene:ready");
 
             // Apply issue updates.

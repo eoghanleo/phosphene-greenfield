@@ -10,7 +10,8 @@ Create deterministic done-score scripts that resist gaming and reward substantiv
 1. Identify domain outputs and upstream inputs (IDs, bundles, artifacts).
 2. Choose evaluation objectives and target behaviors.
 3. Select dimension categories from `references/done-score-design.md`.
-4. Pick metrics, normalization bounds, and weights.
+4. Pick metrics, definitions, and wiring examples from the metric catalog.
+5. Pick normalization bounds and weights (prefer input-scaled denominators).
 5. Implement deterministic extractor, scorer, and reporter in bash.
 
 ## Determinism contract
@@ -28,6 +29,17 @@ Create deterministic done-score scripts that resist gaming and reward substantiv
 - Scoring: weight categories; prefer earn-only monotonic scores.
 - Gates: hard-fail on missing artifacts or required sections.
 - Reporting: print overall score, subscores, and advice; return exit code.
+
+## Input-anchored metrics (default)
+- Prefer output/input ratios over absolute thresholds.
+- Use input-derived targets: `target = k * input_count` (e.g., `0.6 * input_words`).
+- When input is zero or missing, fall back to minimal gates and clamp ratios to 0.
+- Cap ratios to avoid runaway: `ratio = min(output/input, cap)`.
+- If direct input anchoring is weak or missing, anchor to upstream inputs (inputs to the input).
+- When using upstream anchors, update the related apparatus skill so it knows to review those upstream documents.
+
+## Metric catalog and wiring examples
+- Use the metric catalog and wiring examples in `references/done-score-design.md` to select concrete metrics and define input/output parameters.
 
 ## Anti-gaming hardening
 - Exclude IDs, URLs, script names, and `[V-SCRIPT]` from corpus metrics.
