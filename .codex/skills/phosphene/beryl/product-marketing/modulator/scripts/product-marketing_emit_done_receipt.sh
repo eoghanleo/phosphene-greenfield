@@ -18,10 +18,11 @@ fail() { echo "PHOSPHENE: $*" >&2; exit 2; }
 usage() {
   cat <<'EOF'
 Usage:
-  ./phosphene/domains/product-marketing/scripts/product-marketing_emit_done_receipt.sh --issue-number <N> --work-id <RA-001>
+  ./.codex/skills/phosphene/beryl/product-marketing/modulator/scripts/product-marketing_emit_done_receipt.sh --issue-number <N> --work-id <WORK_ID>
 
 Notes:
   - This writes to: phosphene/signals/bus.jsonl (append-only)
+  - <WORK_ID> MUST match the prism comment's `work_id` for this issue/run.
   - The emitted line will have:
       signal_type = phosphene.done.product-marketing.receipt.v1
     and parents = [<prism_branch_invoked_signal_id>]

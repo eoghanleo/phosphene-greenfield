@@ -73,17 +73,17 @@ Mermaid sketch (high-level):
 ```mermaid
 sequenceDiagram
   autonumber
-  participant BUS as bus_jsonl
-  participant DetPM as detector_product_management
-  participant AS_T as autoscribe_target_domain
-  participant HopT as hopper_target_domain
-  participant PrismT as prism_target_domain
-  participant ModT as modulator_target_domain
+  participant BUS as "bus.jsonl"
+  participant DetPM as "detector_product_management"
+  participant AST as "autoscribe_target_domain"
+  participant HopT as "hopper_target_domain"
+  participant PrismT as "prism_target_domain"
+  participant ModT as "modulator_target_domain"
 
   DetPM->>BUS: trap(product-management,reason=missing_upstream)
   DetPM->>BUS: request(product-management->target_domain)
-  BUS-->>AS_T: push_trigger(request)
-  AS_T->>BUS: issue_created(target_domain)
+  BUS-->>AST: push_trigger(request)
+  AST->>BUS: issue_created(target_domain)
   BUS-->>HopT: push_trigger(issue_created)
   HopT->>BUS: start(target_domain)
   BUS-->>PrismT: push_trigger(start)

@@ -14,7 +14,7 @@ These are **memory anchors** for near-term follow-ups. They are *not* an executi
     - **Detector responsibilities**: validation-only vs routing (and how routing is achieved purely via bus emissions)
   - **Output**: a single canonical spec doc + updated scripts/validators aligned to it.
 
-- [ ] **3) Done-score: add a deterministic “Novelty” component (LexNov\(_n\))**
+- [ ] **3) Done-score: add a deterministic “Novelty” component (\(\mathrm{LexNov}_n\))**
   - **Idea**: compute **novel \(n\)-grams** in a candidate artifact/bundle relative to a **reference corpus \(R\)** (e.g., “all other outputs under the same context/beam”).
   - **Constraint**: keep it **completely deterministic + bash-only** by making \(R\) an explicit, stable, repo-derived set (sorted file discovery; pinned cleaning rules; no embeddings).
   - **Implementation note**: consider **\(n>1\)** (bigrams/trigrams) to catch **templated phrasing** that can slip past unigram-only diversity.

@@ -97,7 +97,6 @@ jobs:
             const { owner, repo } = context.repo;
 
             const humanToken = String(process.env.PHOSPHENE_HUMAN_TOKEN || "").trim();
-            const createBranch = String(process.env.PHOSPHENE_PRISM_CREATE_BRANCH || "false").trim().toLowerCase() === "true";
             const apiBase = String(process.env.GITHUB_API_URL || "https://api.github.com").replace(/\/+$/, "");
             const apiHeaders = (token) => ({
               accept: "application/vnd.github+json",
@@ -216,19 +215,7 @@ jobs:
                 JSON.stringify(signal),
               ], { stdio: "inherit" });
 
-              const branchLine = createBranch
-                ? `- **branch**: \`${branchName}\``
-                : `- **branch (suggested)**: \`${branchName}\``;
-              const branchPolicy = createBranch
-                ? [
-                    "- Create the branch before work (from `origin/main` if needed).",
-                    "- Commit + push the branch to `origin` when finished (the remote branch must exist).",
-                  ]
-                : [
-                    "- Do NOT pre-create or assume an existing branch.",
-                    "- Let the agent create a fresh branch from `main` when it commits.",
-                    "- Use the suggested branch name if possible, then push to `origin`.",
-                  ];
+              const branchLine = `- **branch name (suggested)**: \`${branchName}\``;
 
               await postComment({
                 issue_number: issueNum,
@@ -242,13 +229,14 @@ jobs:
                   `- **intent**: ${it}`,
                   branchLine,
                   "",
-                  "Constraints:",
+                  "TO AGENT (from prism):",
                   "- Read `phosphene/AGENTS.md`",
                   "- Read `.codex/skills/phosphene/viridian/research/modulator/SKILL.md`",
                   "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
                   "",
-                  "**CRITICAL**",
-                  ...branchPolicy,
+                  "**CRITICAL (TO AGENT)**",
+                  "- If you create a branch, use the suggested branch name (or a close stable variant) for naming consistency.",
+                  "- When ready, push your branch to `origin` (so a human can open the PR).",
                   "- Do NOT open or submit PRs manually (a human opens the PR; condenser approves after checks).",
                   "- When complete, emit a DONE receipt signal (JSONL line) by running:",
                   `  - \`./.codex/skills/phosphene/viridian/research/modulator/scripts/research_emit_done_receipt.sh --issue-number ${issueNum} --work-id ${workId}\``,
