@@ -50,10 +50,22 @@ Use any mix of these dimensions. Favor monotonic, earn-only signals unless gatin
 
 ### Diversity and novelty (textual)
 - Unique word ratio (TTR, Guiraud R).
+- Hapax ratio (share of one-off word types).
+- Concentration / repetitiveness (Simpson concentration; higher means more repetition).
 - Shannon entropy (normalized).
 - Unique bigram ratio (simple n-gram diversity).
+- Segmental diversity (MSTTR over fixed windows; reduces length bias).
 - Template similarity (Jaccard overlap with template text).
 - Stopword ratio (proxy for content density).
+
+### Readability and difficulty (list-free)
+- Mean sentence length (words/sentence).
+- Average token length (characters/token).
+- Long-word proportion (>=7 letters) and unique-long-word breadth.
+- LIX (length-only readability proxy; no syllables needed).
+
+### Cohesion and coherence (overlap-based)
+- Adjacent sentence overlap (Jaccard similarity of word-type sets).
 
 ### Depth and reasoning
 - Avg words per fragment (table rows, bullets, sections).
@@ -94,6 +106,7 @@ Use any mix of these dimensions. Favor monotonic, earn-only signals unless gatin
 - Duplicate content ratio (hash-based).
 - Near-duplicate ideas ratio (token similarity).
 - Duplicate item ratio (normalized items).
+- Compressibility / compression ratio (gzip proxy for within-document redundancy).
 
 ### Format and style constraints
 - Item count vs target (list/bullets/JSON length).
@@ -153,6 +166,34 @@ Use these metrics as concrete building blocks. Variables are explicit and reusab
 - **Shannon entropy**: `H = -sum(p_i * log2(p_i))` over word types.
 - **Entropy normalized**: `ent_norm = H / log2(unique_words)`.
 - **Unique bigram ratio**: `uniq_bi / total_bi` (optional if you compute bigrams).
+- **Hapax ratio**: `hapax_ratio = hapax_types / max(1, out_words)` where `hapax_types = count(word_types with freq==1)`.
+- **Simpson concentration (repetition)**: `simpson_D = (sum_i n_i*(n_i-1)) / (out_words*(out_words-1))` (define `0` when `out_words<2`).
+- **Simpson diversity**: `simpson_div = 1 - simpson_D` (higher is more diverse).
+
+### Segment-based diversity metrics (optional)
+- **Mean Segmental TTR (MSTTR)**: `msttr = avg_j( V_j / m )` over `K=floor(out_words/m)` non-overlapping segments of size `m` tokens.
+  - Deterministic defaults: `m=100`, ignore the final partial segment (if any).
+
+### Readability and difficulty metrics (list-free)
+All below are intended as **domain-agnostic surface proxies**. They are not “quality” by themselves; use with appropriate weights and with anti-gaming / redundancy checks.
+
+- **Sentence count**: `Ns = sentence_count` (deterministic splitter; be consistent).
+- **Mean sentence length**: `msl = out_words / max(1, Ns)`.
+- **Average token length**: `awl = token_chars / max(1, out_words)` where `token_chars = sum(length(token))` for normalized tokens (exclude whitespace).
+- **Long-word proportion (>=7 letters)**: `hard7 = long_words_7plus / max(1, out_words)`.
+- **Unique long-word count (>=7 letters)**: `uniq_hard7 = |{ w : len(w) >= 7 }|` (use normalized tokens).
+- **LIX**: `lix = (out_words / max(1, Ns)) + 100*(long_words_7plus / max(1, out_words))`.
+- **Numeric token ratio**: `num_ratio = numeric_tokens / max(1, out_words)` (tokens that are purely numeric after normalization).
+
+### Cohesion metrics (overlap-based)
+- **Adjacent sentence overlap (Jaccard)**: `overlap_adj = avg_s( |W_s ∩ W_{s+1}| / |W_s ∪ W_{s+1}| )` for `s=1..Ns-1`.
+  - Notes: Compute on word *types* (sets). If stopwords dominate, compute both “all tokens” and “content-only” overlap (if you already maintain a stopword list).
+
+### Compression and information-theoretic metrics (optional)
+Use these as **redundancy / structure proxies** (often correlated with entropy and duplicate-content metrics).
+
+- **Compression ratio (gzip, deterministic)**: `cr = bytes(gzip -n -c text) / max(1, bytes(text))`.
+- **Compressibility score**: `comp = clamp(1 - cr, 0, 1)` (higher means more compressible / more redundant).
 
 ### Depth metrics
 - **Fragment avg words**: `frag_avg_words = total_words / fragment_count`.

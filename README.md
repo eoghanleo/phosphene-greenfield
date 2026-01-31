@@ -33,14 +33,18 @@ In practice, each colour is a **lens** with a simple contract:
 - **Inputs**: artifacts and signals produced by whichever colours came before (or by humans).
 - **Outputs**: new artifacts (and sometimes new signals) that make the *next* colour easier, faster, and more deterministic.
 
+Status note: when this section says *(active / in development / todo / planned)* it refers to whether the domain is currently wired into the repo with receipt/verification loops (see `AGENTS.md` for the authoritative status list).
+
 ---
 
 ![FLORA-VIRIDIAN Design-340e14c5](https://github.com/user-attachments/assets/1b281dde-45b6-4022-ac52-4439878c46c0)
 
 ## **Viridian** — the colour of new ideas and fertile beginnings
 
-- **Domains (active)**: Ideation; Research
-- **Domains (planned)**: Moonshot (to be developed)
+- **Domains**:
+  - `<ideation>` *(todo)*: Generate `IDEA-*` seed concepts (hypotheses, angle, “why now”, and handoff-ready prompts).
+  - `<research>` *(in development)*: Produce `RA-*` research assessments (evidence, claims, pitches/segments, candidate personas) and emit downstream-ready constraints.
+  - `<moonshot>` *(planned)*: High-variance exploration and weird prototypes; formalize learnings into Viridian-compatible idea/research artifacts.
 - **Takes as inputs**:
   - Raw sparks (notes, user pain, customer quotes, founder intuition)
   - Constraints (time, budget, technical realities, market context)
@@ -55,7 +59,10 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Beryl** — creative clarity, the emergence of structure
 
-- **Domains (active)**: Product-marketing; Product-vision; Product-strategy
+- **Domains**:
+  - `<product-marketing>` *(active)*: Convert Viridian inputs into market-shaping artifacts (`PER-*` personas, `PROP-*` propositions/positioning) and emit “make this executable” signals.
+  - `<product-vision>` *(todo)*: Establish the bet (`VISION-*`), non-negotiables, and falsifiers (“what must be true” / “what would change our mind”).
+  - `<product-strategy>` *(todo)*: Turn the bet into sequencing (`ROADMAP-*`), tradeoffs, and constraints that downstream specs can actually honor.
 - **Canonical lane note**: `<product-marketing>` work is always `beryl` (do not associate it with other lanes).
 - **Takes as inputs**:
   - A Viridian idea that’s “real enough” to shape
@@ -72,7 +79,10 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Cerulean** — going deep, diving into detail
 
-- **Domains (active)**: Product-management; Feature-management; Product-architecture
+- **Domains**:
+  - `<product-management>` *(active)*: Translate vision/strategy into requirements (`PRD-*`) with scope, acceptance criteria, and validation plan.
+  - `<feature-management>` *(todo)*: Maintain executable feature dossiers (`FR-*`) with status/deps; shape backlog-ready units without losing traceability.
+  - `<product-architecture>` *(todo)*: Define product shape (`ARCH-*`): domain models, contracts, telemetry scaffolding, and security constraints.
 - **Takes as inputs**:
   - Beryl outputs (positioning, roadmap intent, proposition constraints)
   - Operational constraints (scope, sequencing, dependencies)
@@ -88,7 +98,16 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Amaranth** — new stars formed, new elements made manifest
 
-- **Domains (active)**: Scrum-management; User-interface; Thematic-design; API-design; Database-design; Backend-development; Code-development; Infrastructure-operations; Observability-telemetry
+- **Domains**:
+  - `<scrum-management>` *(todo)*: Mirror work into portable execution artifacts (issues/rhythm/status) so downstream verification has something stable to point at.
+  - `<user-interface>` *(scaffolded)*: Produce UI specs (screens, flows, interaction contracts) and implementation-ready interface constraints.
+  - `<thematic-design>` *(scaffolded)*: Define theme tokens and theming constraints so UI work stays coherent across surfaces.
+  - `<api-design>` *(scaffolded)*: Specify API contracts (endpoints/events/payloads/errors) as an execution-grade interface between systems.
+  - `<database-design>` *(scaffolded)*: Specify schemas, migrations, and data contracts that match the product/architecture intent.
+  - `<backend-development>` *(scaffolded)*: Implement backend changes according to specs/contracts; produce build-ready runtime deltas.
+  - `<code-development>` *(scaffolded)*: Implement application code changes; wire features into the repo as reproducible diffs.
+  - `<infrastructure-operations>` *(scaffolded)*: Define deploy/runtime/runbook truth so “shipping” is operationally real.
+  - `<observability-telemetry>` *(scaffolded)*: Define instrumentation and ops truth signals (what to measure, how to alert, how to audit behavior).
 - **Takes as inputs**:
   - Cerulean features/specs + priority decisions
   - Team reality (capacity, risks, sequencing)
@@ -103,7 +122,9 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Cadmium** — reactions and fiery testing, tempering to strength
 
-- **Domains (active)**: Test-management; Product-evaluation
+- **Domains**:
+  - `<test-management>` *(todo)*: Produce verification strategy and test plans (`TP-*`) aligned to acceptance criteria and risk.
+  - `<product-evaluation>` *(scaffolded)*: Define readiness rubrics and eval harness gates (`EVAL-*`) so “done” is measurable, not vibes.
 - **Takes as inputs**:
   - Amaranth execution artifacts (issues, acceptance criteria) and the current build state
   - Risk areas and “what must not break”
@@ -118,8 +139,9 @@ In practice, each colour is a **lens** with a simple contract:
 
 ## **Chartreuse** — continuous ingenuity, surprising distillations
 
-- **Domains (active)**: Retrospective
-- **Domains (planned)**: Ontology (to be developed)
+- **Domains**:
+  - `<retrospective>` *(todo)*: Produce retrospectives/playbooks that capture root causes, guardrails, and “do this next time” operational memory.
+  - `<ontology>` *(planned)*: Evolve shared language and taxonomy so every other lane can name concepts consistently and reduce rework.
 - **Takes as inputs**:
   - Outcomes (what shipped), evidence (what happened), and friction (what hurt)
   - Cadmium findings and constraints discovered under real pressure
