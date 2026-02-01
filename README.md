@@ -2,7 +2,7 @@
 ![FLORA-Text Modification Request-52d07bab](https://github.com/user-attachments/assets/4a988c21-d2d3-4cc2-ab9f-67a7679b2ec5)
 
 
-## PHOSPHENE
+## PHOSPHENE --
 
 PHOSPHENE is a **git-native multi-agent harness for continuous autonomous product development**: a way to keep ideas, decisions, artifacts, documents, code, memory, learnings and handoffs legible over time—without needing a heavyweight platform.
 
