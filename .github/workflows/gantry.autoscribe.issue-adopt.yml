@@ -329,6 +329,7 @@ jobs:
             };
 
             const collapseToSingleLine = (text) => String(text || "").replace(/\s+/g, " ").trim();
+            const PRIMARY_OBJECTIVE_HEADING = "Primary objective of the ideation task:";
             const extractSection = (text, heading) => {
               const lines = String(text || "").split(/\r?\n/);
               let start = -1;
@@ -342,6 +343,35 @@ jobs:
                 if (/^##\s+/.test(lines[i]) || /^###\s+/.test(lines[i])) { end = i; break; }
               }
               return lines.slice(start, end).join("\n").trim();
+            };
+            const extractPrimaryObjectiveBlock = (text) => {
+              const lines = String(text || "").split(/\r?\n/);
+              let start = -1;
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim() === PRIMARY_OBJECTIVE_HEADING) { start = i + 1; break; }
+              }
+              if (start === -1) return "";
+              while (start < lines.length && !lines[start].trim()) start++;
+              let end = lines.length;
+              for (let i = start; i < lines.length; i++) {
+                if (/^##\s+/.test(lines[i]) || /^###\s+/.test(lines[i])) { end = i; break; }
+              }
+              return lines.slice(start, end).join("\n").trim();
+            };
+            const stripPrimaryObjectiveBlock = (text) => {
+              const lines = String(text || "").split(/\r?\n/);
+              const out = [];
+              for (let i = 0; i < lines.length; i++) {
+                if (lines[i].trim() === PRIMARY_OBJECTIVE_HEADING) {
+                  i++;
+                  while (i < lines.length && !lines[i].trim()) i++;
+                  while (i < lines.length && !/^##\s+/.test(lines[i]) && !/^###\s+/.test(lines[i])) i++;
+                  i -= 1;
+                  continue;
+                }
+                out.push(lines[i]);
+              }
+              return out.join("\n").trim();
             };
 
             const canonicalStrictBlock = ({ lane, work_type, work_id, intent, depends_on, sequence, upstream_signal_id, manifold_probe_count, primary_objective }) => {
@@ -444,6 +474,9 @@ jobs:
 
             // Compose updated issue body: replace existing [PHOSPHENE] block if present, else prepend.
             const rest = block ? (body.slice(0, block.openIdx) + body.slice(block.endIdx)).trim() : body.trim();
+            const hasTemplateMarker = rest.includes("PHOSPHENE — Domain Delegation Prompt (parameterized)")
+              || rest.includes("SYSTEM: You are a Codex agent operating inside a PHOSPHENE harness repo.");
+            const restSansPrimary = stripPrimaryObjectiveBlock(rest);
 
             const strictBlock = canonicalStrictBlock({
               lane: dm.lane,
@@ -454,27 +487,29 @@ jobs:
               sequence: "",
               upstream_signal_id,
               manifold_probe_count,
-              primary_objective: (domain === "ideation") ? extractSection(rest, "### Original issue content") || rest : "",
+              primary_objective: (domain === "ideation")
+                ? (extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
+                : "",
             });
 
-            const primaryObjectiveRaw = (domain === "ideation") ? (extractSection(rest, "### Original issue content") || rest) : "";
+            const primaryObjectiveRaw = (domain === "ideation")
+              ? (extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
+              : "";
             const primaryObjectiveText = String(primaryObjectiveRaw || "").trim();
             const primaryObjectiveBlock = primaryObjectiveText
-              ? ["Primary objective of the ideation task:", "", primaryObjectiveText].join("\n")
+              ? [PRIMARY_OBJECTIVE_HEADING, "", primaryObjectiveText].join("\n")
               : "";
-            const hasPrimaryObjective = rest.includes("Primary objective of the ideation task:");
+            const hasPrimaryObjective = Boolean(extractPrimaryObjectiveBlock(rest));
             const headerParts = [strictBlock];
             if (!hasPrimaryObjective && primaryObjectiveBlock) {
               headerParts.push("", primaryObjectiveBlock);
             }
-            let updatedBody = headerParts.join("\n").trim() + "\n\n" + rest;
+            let updatedBody = headerParts.join("\n").trim() + "\n\n" + restSansPrimary;
             updatedBody = updatedBody.trim() + "\n";
 
             // For ideation, hydrate the canonical prompt template so the issue matches autoscribe output.
             const templatePath = ".github/prompts/domain_delegation_prompt.md";
             const canHydrate = (domain === "ideation") && fs.existsSync(templatePath);
-            const hasTemplateMarker = rest.includes("PHOSPHENE — Domain Delegation Prompt (parameterized)")
-              || rest.includes("SYSTEM: You are a Codex agent operating inside a PHOSPHENE harness repo.");
             if (canHydrate && !hasTemplateMarker) {
               const upstreamDomainTag = "<manual>";
               const domainTag = `<${domain}>`;
