@@ -419,7 +419,9 @@ jobs:
             // For ideation, hydrate the canonical prompt template so the issue matches autoscribe output.
             const templatePath = ".github/prompts/domain_delegation_prompt.md";
             const canHydrate = (domain === "ideation") && fs.existsSync(templatePath);
-            if (canHydrate) {
+            const hasTemplateMarker = rest.includes("PHOSPHENE — Domain Delegation Prompt (parameterized)")
+              || rest.includes("SYSTEM: You are a Codex agent operating inside a PHOSPHENE harness repo.");
+            if (canHydrate && !hasTemplateMarker) {
               const upstreamDomainTag = "<manual>";
               const domainTag = `<${domain}>`;
               const domainSkillPath = ".codex/skills/phosphene/viridian/ideation/modulator/SKILL.md";
@@ -469,6 +471,9 @@ jobs:
                 .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", `phosphene-autoscribe:manual-issue:${issue_number}`);
 
               updatedBody = [strictBlock, "", hydrated].join("\n").trim() + "\n";
+            } else if (canHydrate && hasTemplateMarker) {
+              // Already hydrated: avoid re-embedding the template or duplicating sections.
+              updatedBody = [strictBlock, "", rest].join("\n").trim() + "\n";
             }
 
             // Labels: always add phosphene + color + domain + instrument; add ready only in adopt mode.
