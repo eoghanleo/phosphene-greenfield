@@ -3,6 +3,7 @@
 Scope: **only** the `<ideation>` orchestration subflow, driven by **bus commits + PR events**:
 
 - Autoscribe → Hopper → Prism → `@codex` summon
+- Hopper materializes a **SPARK** input snapshot (signals-only)
 - Codex emits a **DONE receipt signal** (bus line) after work completes
 - Human opens a PR from the Codex branch to `main` (PR contains the DONE receipt)
 - Detector verifies the PR receipt and emits **APPROVE** or **TRAP**
@@ -33,6 +34,7 @@ sequenceDiagram
   participant D as gantry.detector.ideation
   participant K as gantry.condenser.ideation
   participant T as gantry.trap.ideation
+  participant SP as sparkFile
   participant I as GitHub Issue
   participant PR as GitHub PR
   participant CX as Codex
@@ -41,6 +43,8 @@ sequenceDiagram
   AS->>I: create issue ([PHOSPHENE] block)
   AS->>BUS: append issue_created
   BUS-->>H: push trigger (issue_created)
+  H->>SP: write SPARK-000123.md
+  H->>BUS: append spark_created
   H->>BUS: append start
   BUS-->>P: push trigger (start)
   P->>BUS: append branch_invoked + @codex summon
@@ -72,6 +76,11 @@ Everything is activated by **bus pushes** and **PR events**.
 #### `phosphene.hopper.ideation.start.v1`
 
 - **Must include**: `work_id`, `issue_number`, `lane:"viridian"`, `parents:[<issue_created_signal_id>]`
+- **Should include**: `spark_id`, `spark_path`
+
+#### `phosphene.hopper.ideation.spark_created.v1`
+
+- **Must include**: `work_id`, `issue_number`, `lane:"viridian"`, `spark_id`, `spark_path`, `parents:[<issue_created_signal_id>]`
 
 #### `phosphene.prism.ideation.branch_invoked.v1`
 
@@ -100,3 +109,14 @@ The issue must contain a **FORMAL** `[PHOSPHENE]` block with:
 - `work_id: IDEA-####`
 - `intent: ...`
 - `upstream_signal_id: <signal_id>`
+
+### Optional inputs override
+
+Issues may include an additional block to specify repo inputs for ideation anchoring:
+
+```text
+[PHOSPHENE_INPUTS]
+- RA-001
+- VPD-002
+[/PHOSPHENE_INPUTS]
+```

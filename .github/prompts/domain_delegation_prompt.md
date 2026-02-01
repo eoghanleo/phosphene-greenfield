@@ -20,6 +20,8 @@ PHOSPHENE handoff detected: **`{{UPSTREAM_DOMAIN_TAG}}` → `{{DOMAIN_TAG}}`**
 - **Upstream work_id**: {{UPSTREAM_WORK_ID}}
 - **Signal path**: `{{SIGNAL_PATH}}`
 
+## Domain behavior and success criteria
+
 {{NOTES_BLOCK}}
 
 ## Inputs (mandatory; treat as constraints)
@@ -71,6 +73,7 @@ You are DONE only when all of the following are true:
 4) Done-score gate (if applicable):
    - You ran `{{DOMAIN_DONE_SCORE_CMD}}`
    - If it FAILs, you must iterate until it PASSes before writing your DONE signal.
+  - This is ALWAYS part of the definition of done for this domain (threshold: {{DONE_SCORE_MIN}}).
 5) Your changes are committed and pushed to `origin` on your issue-named branch (a human opens the PR).
 6) You wrote a DONE receipt signal (mandatory) to the JSONL bus:
    - `phosphene/signals/bus.jsonl` (append-only line)

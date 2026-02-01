@@ -67,6 +67,14 @@ jobs:
             create_branch="false"
           fi
           echo "PHOSPHENE_PRISM_CREATE_BRANCH=$create_branch" >> "$GITHUB_ENV"
+      - name: Load ideation done score config
+        id: config
+        shell: bash
+        run: |
+          set -euo pipefail
+          done_score_min="$(bash phosphene/phosphene-core/bin/phosphene_config.sh get --color viridian --key ideation.done_score_min --default 10)"
+          [[ -n "${done_score_min:-}" ]] || done_score_min="10"
+          echo "PHOSPHENE_DONE_SCORE_MIN=$done_score_min" >> "$GITHUB_ENV"
 
       - name: Extract newly added bus lines
         id: diff
@@ -174,7 +182,11 @@ jobs:
               const branchName = (slug ? `issue-${issueNum}-${slug}` : `issue-${issueNum}`);
 
               const seed = `${issueNum}:${parent}:${it}`;
+              const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "10").trim();
+              const doneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --min-score ${doneScoreMin}`;
               const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
+              const spark_id = `SPARK-${String(issueNum).padStart(6, "0")}`;
+              const spark_path = `phosphene/signals/sparks/${spark_id}.md`;
               const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
               const output_key = `prism:branch-invoked:ideation:issue:${issueNum}:phos:${phos_id}`;
 
@@ -228,12 +240,18 @@ jobs:
                   `- **work_id**: \`${workId}\``,
                   `- **phos_id**: \`${phos_id}\``,
                   `- **intent**: ${it}`,
+                  `- **SPARK**: \`${spark_id}\``,
+                  `- **SPARK path**: \`${spark_path}\``,
+                  `- **done-score (required)**: \`${doneScoreCmd}\``,
+                  `- **done-score threshold**: \`${doneScoreMin}\``,
                   branchLine,
                   "",
                   "TO AGENT (from prism):",
                   "- Read `phosphene/AGENTS.md`",
                   "- Read `.codex/skills/phosphene/viridian/ideation/modulator/SKILL.md`",
+                  `- Use the SPARK snapshot at \`${spark_path}\` as the authoritative input`,
                   "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
+                  `- Definition of done: run \`${doneScoreCmd}\` and PASS before writing DONE receipt`,
                   "",
                   "**CRITICAL (TO AGENT)**",
                   "- If you create a branch, use the suggested branch name (or a close stable variant) for naming consistency.",

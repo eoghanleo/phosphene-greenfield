@@ -414,7 +414,62 @@ jobs:
 
             // Compose updated issue body: replace existing [PHOSPHENE] block if present, else prepend.
             const rest = block ? (body.slice(0, block.openIdx) + body.slice(block.endIdx)).trim() : body.trim();
-            const updatedBody = [strictBlock, "", rest].join("\n").trim() + "\n";
+            let updatedBody = [strictBlock, "", rest].join("\n").trim() + "\n";
+
+            // For ideation, hydrate the canonical prompt template so the issue matches autoscribe output.
+            const templatePath = ".github/prompts/domain_delegation_prompt.md";
+            const canHydrate = (domain === "ideation") && fs.existsSync(templatePath);
+            if (canHydrate) {
+              const upstreamDomainTag = "<manual>";
+              const domainTag = `<${domain}>`;
+              const domainSkillPath = ".codex/skills/phosphene/viridian/ideation/modulator/SKILL.md";
+              const domainScriptsPath = ".codex/skills/phosphene/viridian/ideation/modulator/scripts/";
+              let doneScoreMin = "10";
+              try {
+                doneScoreMin = String(execFileSync("bash", [
+                  "phosphene/phosphene-core/bin/phosphene_config.sh",
+                  "get",
+                  "--color",
+                  dm.lane,
+                  "--key",
+                  `${domain}.done_score_min`,
+                  "--default",
+                  "10",
+                ], { encoding: "utf8" }) || "10").trim();
+              } catch {}
+              if (!doneScoreMin) doneScoreMin = "10";
+              const domainDoneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --min-score ${doneScoreMin}`;
+
+              const pointerLines = [
+                `- Manual issue: #${issue_number}`,
+                work_id ? `- work_id: \`${work_id}\`` : "- work_id: (missing)",
+              ];
+
+              const notesBlock = rest
+                ? ["### Original issue content", "", rest].join("\n")
+                : "";
+
+              const template = fs.readFileSync(templatePath, "utf8");
+              const hydrated = template
+                .replaceAll("{{UPSTREAM_PR_NUMBER}}", "N/A")
+                .replaceAll("{{UPSTREAM_PR_TITLE}}", "(manual autoscribe adopt)")
+                .replaceAll("{{UPSTREAM_PR_URL}}", "(n/a)")
+                .replaceAll("{{UPSTREAM_WORK_ID}}", work_id || "(unknown)")
+                .replaceAll("{{SIGNAL_PATH}}", "phosphene/signals/bus.jsonl")
+                .replaceAll("{{UPSTREAM_DOMAIN_TAG}}", upstreamDomainTag)
+                .replaceAll("{{DOMAIN_TAG}}", domainTag)
+                .replaceAll("{{DOMAIN_SKILL_PATH}}", domainSkillPath)
+                .replaceAll("{{DOMAIN_SCRIPTS_PATH}}", domainScriptsPath)
+                .replaceAll("{{DOMAIN_DONE_SIGNAL_PATH}}", "phosphene/signals/bus.jsonl (DONE receipt line)")
+                .replaceAll("{{DONE_SCORE_MIN}}", doneScoreMin)
+                .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
+                .replaceAll("{{INTENT}}", intent || dm.default_intent)
+                .replaceAll("{{POINTERS_BULLETS}}", pointerLines.join("\n"))
+                .replaceAll("{{NOTES_BLOCK}}", notesBlock)
+                .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", `phosphene-autoscribe:manual-issue:${issue_number}`);
+
+              updatedBody = [strictBlock, "", hydrated].join("\n").trim() + "\n";
+            }
 
             // Labels: always add phosphene + color + domain + instrument; add ready only in adopt mode.
             const want = new Set(existingLabels);

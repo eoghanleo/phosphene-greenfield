@@ -199,6 +199,29 @@ jobs:
                 ? pointers
                 : [`- Upstream signal: ${resolvedParentSignalId || "(none)"}`];
 
+              const notesBlock = [
+                "### Intended behavior",
+                "- Produce a single IDEA artifact with two required enumerations:",
+                "  - Divergence enumeration (pure): >= 12 candidates across rings + axes.",
+                "  - Stress-test enumeration (all candidates): FailureMode, ValueCore, Differentiator for each CandID.",
+                "- Use the SPARK snapshot as the authoritative input corpus.",
+                "",
+                "### Interpreting success",
+                "- Success means the divergence table is complete, ring/axis coverage is real, and every candidate has a stress-test trace.",
+                "- Done-score will fail if: SPARK missing, <12 candidates, CandID mismatch, or empty stress-test fields.",
+                "",
+                "### Input notes",
+                "- Hopper will create a SPARK snapshot from this issue after eligibility.",
+                "- SPARK path: `phosphene/signals/sparks/SPARK-<issue_number>.md` (issue-number derived)",
+                "- Optional: include extra repo inputs using the block below.",
+                "",
+                "[PHOSPHENE_INPUTS]",
+                "- RA-001",
+                "- VPD-002",
+                "[/PHOSPHENE_INPUTS]",
+                "",
+              ].join(\"\\n\");
+
               const phospheneBlock = [
                 "[PHOSPHENE]",
                 `lane: ${resolvedLane}`,
@@ -230,7 +253,7 @@ jobs:
                   .replaceAll("{{DOMAIN_DONE_SCORE_CMD}}", domainDoneScoreCmd)
                   .replaceAll("{{INTENT}}", resolvedIntent)
                   .replaceAll("{{POINTERS_BULLETS}}", pointerLines.join("\n"))
-                  .replaceAll("{{NOTES_BLOCK}}", "")
+                  .replaceAll("{{NOTES_BLOCK}}", notesBlock)
                   .replaceAll("{{PHOSPHENE_DEDUPE_MARKER}}", dedupeMarker),
               ].join("\n");
 

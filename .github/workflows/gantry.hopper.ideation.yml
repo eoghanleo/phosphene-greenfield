@@ -89,6 +89,7 @@ jobs:
 
             const MARKER_STARTED = "PHOSPHENE-HOPPER-IDEATION:START-SIGNAL-EMITTED";
             const MARKER_REPORT = "PHOSPHENE-HOPPER-IDEATION:REPORT";
+            const SPARK_DIR = "phosphene/signals/sparks";
 
             const PH_OPEN = "[PHOSPHENE]";
             const PH_CLOSE = "[/PHOSPHENE]";
@@ -142,6 +143,25 @@ jobs:
             };
             const isInformalBlock = (rawBlock) => /(^|\n)\s*informal\s*(\n|$)/i.test(String(rawBlock || ""));
 
+            const extractInputsBlock = (text) => {
+              const open = "[PHOSPHENE_INPUTS]";
+              const close = "[/PHOSPHENE_INPUTS]";
+              const idx = text.indexOf(open);
+              if (idx === -1) return [];
+              const end = text.indexOf(close, idx + open.length);
+              if (end === -1) return [];
+              const body = text.slice(idx + open.length, end);
+              const tokens = [];
+              for (const rawLine of body.split(/\r?\n/)) {
+                const line = rawLine.replace(/^\s*-\s*/, "").trim();
+                if (!line) continue;
+                for (const t of line.split(/[,\s]+/)) {
+                  if (/^[A-Z]{2,}-[0-9]{3,4}$/.test(t)) tokens.push(t);
+                }
+              }
+              return Array.from(new Set(tokens));
+            };
+
             const busLines = fs.existsSync(busPath)
               ? fs.readFileSync(busPath, "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
               : [];
@@ -151,6 +171,18 @@ jobs:
                 try {
                   const j = JSON.parse(busLines[i]);
                   if (j?.signal_type === "phosphene.hopper.ideation.start.v1" && Number(j.issue_number || 0) === Number(issue_number)) {
+                    return true;
+                  }
+                } catch {}
+              }
+              return false;
+            };
+
+            const busHasSparkForIssue = (issue_number) => {
+              for (let i = busLines.length - 1; i >= 0; i--) {
+                try {
+                  const j = JSON.parse(busLines[i]);
+                  if (j?.signal_type === "phosphene.hopper.ideation.spark_created.v1" && Number(j.issue_number || 0) === Number(issue_number)) {
                     return true;
                   }
                 } catch {}
@@ -268,6 +300,30 @@ jobs:
                 continue;
               }
 
+              const sparkId = `SPARK-${String(issue_number).padStart(6, "0")}`;
+              const sparkPath = `${SPARK_DIR}/${sparkId}.md`;
+              const inputWorkIds = extractInputsBlock(body);
+
+              if (!fs.existsSync(SPARK_DIR)) {
+                fs.mkdirSync(SPARK_DIR, { recursive: true });
+              }
+              if (!fs.existsSync(sparkPath)) {
+                const created_utc_spark = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+                const sparkHeader = [
+                  `ID: ${sparkId}`,
+                  `IssueNumber: ${issue_number}`,
+                  `WorkID: ${work_id}`,
+                  `Lane: ${lane}`,
+                  `UpstreamSignalID: ${parent_signal_id || ""}`,
+                  `InputWorkIDs: ${inputWorkIds.join(",")}`,
+                  `CreatedUTC: ${created_utc_spark}`,
+                  "",
+                  "## Issue snapshot",
+                  "",
+                ].join("\n");
+                fs.writeFileSync(sparkPath, `${sparkHeader}${body || ""}\n`, "utf8");
+              }
+
               const created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
               const output_key = `hopper:start:ideation:issue:${issue_number}`;
 
@@ -282,6 +338,44 @@ jobs:
               if (parent_signal_id) hashArgs.push("--parent", parent_signal_id);
               const signal_id = String(execFileSync("bash", hashArgs, { encoding: "utf8" })).trim();
 
+              if (!busHasSparkForIssue(issue_number)) {
+                const spark_created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+                const spark_output_key = `hopper:spark-created:ideation:issue:${issue_number}`;
+                const spark_hash_args = [
+                  "phosphene/phosphene-core/bin/signal_hash.sh",
+                  "signal-id",
+                  "--run-marker",
+                  work_id,
+                  "--output-key",
+                  spark_output_key,
+                ];
+                if (parent_signal_id) spark_hash_args.push("--parent", parent_signal_id);
+                const spark_signal_id = String(execFileSync("bash", spark_hash_args, { encoding: "utf8" })).trim();
+                const spark_signal = {
+                  signal_version: 1,
+                  signal_id: spark_signal_id,
+                  signal_type: "phosphene.hopper.ideation.spark_created.v1",
+                  work_id,
+                  domain: "ideation",
+                  issue_number,
+                  lane,
+                  spark_id: sparkId,
+                  spark_path: sparkPath,
+                  parents: parent_signal_id ? [parent_signal_id] : [],
+                  run_marker: work_id,
+                  output_key: spark_output_key,
+                  created_utc: spark_created_utc,
+                };
+                execFileSync("bash", [
+                  "phosphene/phosphene-core/bin/signal_bus.sh",
+                  "append",
+                  "--bus",
+                  busPath,
+                  "--line",
+                  JSON.stringify(spark_signal),
+                ], { stdio: "inherit" });
+              }
+
               const signal = {
                 signal_version: 1,
                 signal_id,
@@ -291,6 +385,8 @@ jobs:
                 issue_number,
                 lane,
                 intent,
+                spark_id: sparkId,
+                spark_path: sparkPath,
                 phos_id: "",
                 parents: parent_signal_id ? [parent_signal_id] : [],
                 run_marker: work_id,
@@ -311,6 +407,8 @@ jobs:
               appendedIssues.push(String(issue_number));
               reportLines.push(`- **Eligible**: YES`);
               reportLines.push(`- **Emitted**: \`phosphene.hopper.ideation.start.v1\``);
+              reportLines.push(`- **SPARK**: \`${sparkId}\``);
+              reportLines.push(`- **SPARK path**: \`${sparkPath}\``);
               await github.rest.issues.createComment({ owner, repo, issue_number, body: [MARKER_STARTED, "", ...reportLines].join("\n") });
             }
 
@@ -337,5 +435,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git remote set-url origin "https://x-access-token:${PHOSPHENE_HUMAN_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git add "phosphene/signals/bus.jsonl"
+          git add "phosphene/signals/sparks"
           git commit -m "PHOSPHENE: hopper ideation start for issue(s) ${{ steps.decide.outputs.issues }}"
           git push origin HEAD:main

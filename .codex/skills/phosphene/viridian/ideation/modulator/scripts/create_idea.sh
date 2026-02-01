@@ -70,6 +70,7 @@ DATE="$(date -u +"%Y-%m-%d")"
 
 cat > "$DOC_PATH" <<EOF
 ID: ${ID}
+IssueNumber: 
 Title: ${TITLE}
 Status: ${STATUS}
 Updated: ${DATE}
@@ -91,6 +92,27 @@ create_idea.sh
 ## Next research questions
 
 - <What must we validate in <research>?>
+
+## Divergence enumeration (pure)
+
+| CandID | Ring | Axes | OneLiner |
+| --- | --- | --- | --- |
+| CAND-01 | adjacent | mechanism,channel | <One-line candidate summary> |
+| CAND-02 | orthogonal | business_model,user | <One-line candidate summary> |
+| CAND-03 | extrapolatory | constraint,modality | <One-line candidate summary> |
+
+## Stress-test enumeration (all candidates)
+
+| CandID | FailureMode | ValueCore | Differentiator |
+| --- | --- | --- | --- |
+| CAND-01 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
+| CAND-02 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
+| CAND-03 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
+
+## Revision passes
+
+- Builder: <coherence pass notes>
+- Critic: <gaps/contradictions found and fixed>
 
 ## Notes
 
