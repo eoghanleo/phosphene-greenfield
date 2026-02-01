@@ -70,7 +70,7 @@ validate_file() {
     fail "Filename does not start with ID ($id): $base"
   fi
 
-  for h in "## Problem / opportunity" "## Target user hypotheses" "## Next research questions" "## Creative exploration matrix" "## Revision passes"; do
+  for h in "## Problem / opportunity" "## Target user hypotheses" "## Next research questions" "## Storm table" "## Revision passes"; do
     if ! awk -v h="$h" '$0==h { found=1 } END{ exit found?0:1 }' "$file"; then
       fail "Missing required heading (${h}) in $file"
     fi
@@ -81,8 +81,8 @@ validate_file() {
   spark_path="$ROOT/phosphene/signals/sparks/${spark_id}.md"
   [[ -f "$spark_path" ]] || fail "Missing SPARK snapshot for issue ${issue_number} (${spark_id}.md) for $file"
 
-  local axis_ids_raw
-  axis_ids_raw="$(awk -v key="ExplorationAxisIDs" '
+  local probe_count_raw seed_sha256
+  probe_count_raw="$(awk -v key="ManifoldProbeCount" '
     BEGIN{ found=0; }
     NF==0 { exit }
     $0 ~ ("^" key ":") {
@@ -93,48 +93,37 @@ validate_file() {
     }
     END{ if (found==0) exit 1 }
   ' "$spark_path" 2>/dev/null || true)"
-  [[ -n "${axis_ids_raw:-}" ]] || fail "Missing ExplorationAxisIDs in SPARK header: $spark_path (required for matrix validation)"
+  [[ -n "${probe_count_raw:-}" ]] || fail "Missing ManifoldProbeCount in SPARK header: $spark_path"
 
-  axis_ids_raw="$(printf "%s" "$axis_ids_raw" | tr -d '\r')"
-  axis_ids_clean="$(printf "%s" "$axis_ids_raw" | tr -d '[:space:]')"
-  axis_count="$(printf "%s" "$axis_ids_clean" | tr ',' '\n' | awk 'NF{c++} END{print c+0}')"
-  if [[ "$axis_count" -ne 10 ]]; then
-    fail "ExplorationAxisIDs must contain exactly 10 AX-### IDs (found ${axis_count}) in $spark_path"
+  probe_count_raw="$(printf "%s" "$probe_count_raw" | tr -d '\r' | tr -d '[:space:]')"
+  if ! [[ "$probe_count_raw" =~ ^[0-9]+$ ]]; then
+    fail "ManifoldProbeCount must be numeric in SPARK header: $spark_path"
   fi
-  axis_unique_count="$(printf "%s" "$axis_ids_clean" | tr ',' '\n' | sort -u | awk 'NF{c++} END{print c+0}')"
-  if [[ "$axis_unique_count" -ne 10 ]]; then
-    fail "ExplorationAxisIDs must contain 10 unique AX-### IDs (found ${axis_unique_count} unique) in $spark_path"
+  probe_count="$probe_count_raw"
+  if [[ "$probe_count" -lt 2 ]]; then
+    fail "ManifoldProbeCount must be >= 2 in SPARK header: $spark_path"
   fi
 
-  tmp_dir="$(mktemp -d)"
-  trap 'rm -rf "$tmp_dir"' RETURN
-  expected="$tmp_dir/expected.tsv"
-  found="$tmp_dir/found.tsv"
-  : > "$expected"
-  : > "$found"
+  seed_sha256="$(awk -v key="SeedSHA256" '
+    BEGIN{ found=0; }
+    NF==0 { exit }
+    $0 ~ ("^" key ":") {
+      sub("^" key ":[[:space:]]*", "", $0);
+      print $0;
+      found=1;
+      exit
+    }
+    END{ if (found==0) exit 1 }
+  ' "$spark_path" 2>/dev/null || true)"
+  seed_sha256="$(printf "%s" "${seed_sha256:-}" | tr -d '\r' | tr -d '[:space:]')"
+  [[ -n "${seed_sha256:-}" ]] || fail "Missing SeedSHA256 in SPARK header: $spark_path"
+  if ! [[ "$seed_sha256" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    fail "SeedSHA256 must be sha256:<hex> in SPARK header: $spark_path"
+  fi
 
-  axis_index=0
-  while IFS= read -r axis_id; do
-    axis_id="$(printf "%s" "$axis_id" | sed -E 's/^[[:space:]]+|[[:space:]]+$//g')"
-    [[ -n "${axis_id:-}" ]] || continue
-    if ! [[ "$axis_id" =~ ^AX-[0-9]{3}$ ]]; then
-      fail "Invalid axis id in ExplorationAxisIDs: $axis_id (expected AX-###) in $spark_path"
-    fi
-    axis_index=$((axis_index + 1))
-    for ring in adjacent orthogonal extrapolatory; do
-      ring_index=0
-      case "$ring" in
-        adjacent) ring_index=1 ;;
-        orthogonal) ring_index=2 ;;
-        extrapolatory) ring_index=3 ;;
-      esac
-      n=$(( (axis_index - 1) * 3 + ring_index ))
-      cand_id="$(printf "CAND-%02d" "$n")"
-      printf "%s\t%s\t%s\n" "$cand_id" "$ring" "$axis_id" >> "$expected"
-    done
-  done < <(printf "%s\n" "$axis_ids_raw" | tr ',' '\n')
+  expected_rows=$(( probe_count * (probe_count - 1) / 2 * 3 ))
 
-  awk -F'|' -v start="## Creative exploration matrix" -v out="$found" '
+  storm_count="$(awk -F'|' -v start="## Storm table" -v expected="$expected_rows" '
     function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
     function sent_count(s){
       c=0;
@@ -151,30 +140,66 @@ validate_file() {
     $0 !~ /^\|/ { next }
     {
       n=split($0, a, /\|/);
-      if (n != 10) { print "Invalid matrix row (unexpected pipe count; avoid | in cells)" > "/dev/stderr"; exit 2 }
-      id=trim(a[2]); ring=tolower(trim(a[3])); axis_id=trim(a[4]); axis=trim(a[5]);
-      failm=trim(a[6]); core=trim(a[7]); diff=trim(a[8]); idea=trim(a[9]);
-      if (id=="" || id=="CandID" || id ~ /^-+$/) next;
-      if (id !~ /^CAND-[0-9]{2}$/) { print "Invalid CandID in matrix table: " id > "/dev/stderr"; exit 2 }
-      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid Ring in matrix table: " ring " for " id > "/dev/stderr"; exit 2 }
-      if (axis_id !~ /^AX-[0-9]{3}$/) { print "Invalid AxisID in matrix table: " axis_id " for " id > "/dev/stderr"; exit 2 }
-      if (axis=="" || axis ~ /^<.*>$/) { print "Missing Axis cell for " id > "/dev/stderr"; exit 2 }
-      if (failm=="" || failm ~ /^<.*>$/) { print "Missing FailureMode for " id > "/dev/stderr"; exit 2 }
-      if (core=="" || core ~ /^<.*>$/) { print "Missing ValueCore for " id > "/dev/stderr"; exit 2 }
-      if (diff=="" || diff ~ /^<.*>$/) { print "Missing Differentiator for " id > "/dev/stderr"; exit 2 }
-      if (idea=="" || idea ~ /^<.*>$/) { print "Missing Idea paragraph for " id > "/dev/stderr"; exit 2 }
-      sc=sent_count(idea);
-      if (sc < 3) { print "Idea paragraph must be >= 3 sentences for " id " (found " sc ")" > "/dev/stderr"; exit 2 }
-      printf "%s\t%s\t%s\n", id, ring, axis_id >> out;
+      if (n != 7) { print "Invalid storm row (unexpected pipe count; avoid | in cells)" > "/dev/stderr"; exit 2 }
+      id=trim(a[2]); p1=trim(a[3]); p2=trim(a[4]); ring=tolower(trim(a[5])); desc=trim(a[6]);
+      if (id=="" || id=="STORM-ID" || id ~ /^-+$/) next;
+      if (id !~ /^STORM-[0-9]{4,}$/) { print "Invalid STORM-ID in storm table: " id > "/dev/stderr"; exit 2 }
+      if (p1=="" || p1 ~ /^<.*>$/) { print "Missing PROBE_1 for " id > "/dev/stderr"; exit 2 }
+      if (p2=="" || p2 ~ /^<.*>$/) { print "Missing PROBE_2 for " id > "/dev/stderr"; exit 2 }
+      if (p1 !~ /^CM-[0-9]{6}:[A-Z0-9_]+$/) { print "Invalid PROBE_1 format for " id ": " p1 > "/dev/stderr"; exit 2 }
+      if (p2 !~ /^CM-[0-9]{6}:[A-Z0-9_]+$/) { print "Invalid PROBE_2 format for " id ": " p2 > "/dev/stderr"; exit 2 }
+      if (p1 == p2) { print "Probe pair must be unique for " id > "/dev/stderr"; exit 2 }
+      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid RING in storm table: " ring " for " id > "/dev/stderr"; exit 2 }
+      if (desc=="" || desc ~ /^<.*>$/) { print "Missing DESCRIPTION for " id > "/dev/stderr"; exit 2 }
+      sc=sent_count(desc);
+      if (sc < 3) { print "DESCRIPTION must be >= 3 sentences for " id " (found " sc ")" > "/dev/stderr"; exit 2 }
+      k1=p1; k2=p2;
+      if (k2 < k1) { tmp=k1; k1=k2; k2=tmp; }
+      key=k1 "\t" k2 "\t" ring;
+      if (seen[key]++) { print "Duplicate probe pair + ring in storm table: " key > "/dev/stderr"; exit 2 }
       count++;
     }
     END{
-      if (count != 30) { print "Matrix must contain exactly 30 rows; found " count > "/dev/stderr"; exit 2 }
+      if (count != expected) { print "Storm table must contain exactly " expected " rows; found " count > "/dev/stderr"; exit 2 }
+      print count;
     }
-  ' "$file" || fail "Creative exploration matrix invalid in $file"
+  ' "$file")" || fail "Storm table invalid in $file"
 
-  if ! diff -u <(sort "$expected") <(sort "$found") >/dev/null 2>&1; then
-    fail "Creative exploration matrix does not match required axes×rings combinations for issue ${issue_number} (SPARK: ${spark_id}) in $file"
+  footer_meta="$(awk -v open="\\[PHOSPHENE_MANIFOLD_PROBES\\]" -v close="\\[/PHOSPHENE_MANIFOLD_PROBES\\]" '
+    BEGIN{ in=0; seed=""; count=""; probes=0; found=0; }
+    $0 ~ open { in=1; found=1; next }
+    in && $0 ~ close { in=0; exit }
+    in {
+      if ($0 ~ /^seed_sha256:/) { sub(/^seed_sha256:[[:space:]]*/, "", $0); seed=$0; next }
+      if ($0 ~ /^manifold_probe_count:/) { sub(/^manifold_probe_count:[[:space:]]*/, "", $0); count=$0; next }
+      if ($0 ~ /^-[[:space:]]+/) { probes++; }
+    }
+    END{
+      if (found==0) exit 2;
+      print seed "\t" count "\t" probes;
+    }
+  ' "$file")" || fail "Missing [PHOSPHENE_MANIFOLD_PROBES] block in $file"
+
+  footer_seed="$(printf "%s" "$footer_meta" | awk -F'\t' '{print $1}')"
+  footer_count="$(printf "%s" "$footer_meta" | awk -F'\t' '{print $2}')"
+  footer_probe_lines="$(printf "%s" "$footer_meta" | awk -F'\t' '{print $3}')"
+
+  [[ -n "${footer_seed:-}" ]] || fail "Missing seed_sha256 in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
+  [[ -n "${footer_count:-}" ]] || fail "Missing manifold_probe_count in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
+  if ! [[ "$footer_seed" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+    fail "Invalid seed_sha256 in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
+  fi
+  if ! [[ "$footer_count" =~ ^[0-9]+$ ]]; then
+    fail "Invalid manifold_probe_count in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
+  fi
+  if [[ "$footer_seed" != "$seed_sha256" ]]; then
+    fail "seed_sha256 in footer does not match SPARK header for $file"
+  fi
+  if [[ "$footer_count" -ne "$probe_count" ]]; then
+    fail "manifold_probe_count in footer does not match SPARK header for $file"
+  fi
+  if [[ "$footer_probe_lines" -ne "$probe_count" ]]; then
+    fail "Probe footer must list ${probe_count} probes (found ${footer_probe_lines}) in $file"
   fi
 
   rev_count="$(awk -v start="## Revision passes" '

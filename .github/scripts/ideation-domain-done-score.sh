@@ -140,7 +140,7 @@ trap 'rm -rf "$tmp"' EXIT
 CORPUS_TXT="$tmp/corpus_fragments.txt"
 CORPUS_CLEAN_TXT="$tmp/corpus_clean.txt"
 RINGS_TXT="$tmp/rings.txt"
-AXES_TXT="$tmp/axes.txt"
+PROBES_TXT="$tmp/probes.txt"
 INPUT_IDS_TXT="$tmp/input_ids.txt"
 SECONDARY_PREFIXES_TXT="$tmp/secondary_prefixes.txt"
 SECONDARY_IDS_TXT="$tmp/secondary_ids.txt"
@@ -149,7 +149,7 @@ IDEA_RAW_TXT="$tmp/idea_raw.txt"
 : > "$CORPUS_TXT"
 : > "$CORPUS_CLEAN_TXT"
 : > "$RINGS_TXT"
-: > "$AXES_TXT"
+: > "$PROBES_TXT"
 : > "$INPUT_IDS_TXT"
 : > "$SECONDARY_PREFIXES_TXT"
 : > "$SECONDARY_IDS_TXT"
@@ -159,12 +159,13 @@ gate_ok=1
 gate_notes=()
 
 div_total=0
-stress_total=0
+desc_total=0
 nrq_total=0
 spark_count=0
 in_words_primary=0
 in_words_secondary=0
 expected_total_rows=0
+probe_target_max=0
 
 read_header_value() {
   local file="$1"
@@ -241,55 +242,37 @@ for f in "${OUTPUT_FILES[@]}"; do
   ' "$f")"
   nrq_total=$((nrq_total + nrq_count))
 
-  axes_list_local="$tmp/axes_${issue_number}.txt"
-  expected_local="$tmp/matrix_expected_${issue_number}.tsv"
-  found_local="$tmp/matrix_found_$(basename "$f").tsv"
-  : > "$axes_list_local"
-  : > "$expected_local"
-  : > "$found_local"
-
-  axis_ids_raw=""
+  probe_count_local=""
+  seed_sha256_local=""
   if [[ -f "$spark_path" ]]; then
-    axis_ids_raw="$(read_header_value "$spark_path" "ExplorationAxisIDs" || true)"
+    probe_count_local="$(read_header_value "$spark_path" "ManifoldProbeCount" || true)"
+    seed_sha256_local="$(read_header_value "$spark_path" "SeedSHA256" || true)"
   fi
-  if [[ -z "${axis_ids_raw:-}" ]]; then
+  probe_count_local="$(printf "%s" "${probe_count_local:-}" | tr -d '\r' | tr -d '[:space:]')"
+  seed_sha256_local="$(printf "%s" "${seed_sha256_local:-}" | tr -d '\r' | tr -d '[:space:]')"
+  expected_rows_local=0
+  if [[ -z "${probe_count_local:-}" ]]; then
     gate_ok=0
-    gate_notes+=("Missing ExplorationAxisIDs in SPARK header for issue ${issue_number} (${spark_id}.md)")
+    gate_notes+=("Missing ManifoldProbeCount in SPARK header for issue ${issue_number} (${spark_id}.md)")
+  elif ! [[ "$probe_count_local" =~ ^[0-9]+$ ]]; then
+    gate_ok=0
+    gate_notes+=("Invalid ManifoldProbeCount in SPARK header for issue ${issue_number} (${spark_id}.md)")
+  elif [[ "$probe_count_local" -lt 2 ]]; then
+    gate_ok=0
+    gate_notes+=("ManifoldProbeCount must be >= 2 for issue ${issue_number} (${spark_id}.md)")
   else
-    printf "%s\n" "$axis_ids_raw" \
-      | tr ',' '\n' \
-      | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' \
-      | grep -E '^AX-[0-9]{3}$' \
-      > "$axes_list_local" || true
-
-    axis_count_local="$(wc -l < "$axes_list_local" | awk '{print $1}')"
-    axis_uniq_local="$(sort -u "$axes_list_local" | wc -l | awk '{print $1}')"
-    if [[ "$axis_count_local" -ne 10 || "$axis_uniq_local" -ne 10 ]]; then
-      gate_ok=0
-      gate_notes+=("ExplorationAxisIDs must contain 10 unique AX-### IDs for issue ${issue_number} (found ${axis_uniq_local} unique / ${axis_count_local} parsed)")
-    else
-      axis_index=0
-      while IFS= read -r axis_id; do
-        [[ -n "${axis_id:-}" ]] || continue
-        axis_index=$((axis_index + 1))
-        for ring in adjacent orthogonal extrapolatory; do
-          ring_index=0
-          case "$ring" in
-            adjacent) ring_index=1 ;;
-            orthogonal) ring_index=2 ;;
-            extrapolatory) ring_index=3 ;;
-          esac
-          n=$(( (axis_index - 1) * 3 + ring_index ))
-          cand_id="$(printf "CAND-%02d" "$n")"
-          printf "%s\t%s\t%s\n" "$cand_id" "$ring" "$axis_id" >> "$expected_local"
-        done
-      done < "$axes_list_local"
-      expected_rows_local="$(wc -l < "$expected_local" | awk '{print $1}')"
-      expected_total_rows=$((expected_total_rows + expected_rows_local))
+    expected_rows_local=$(( probe_count_local * (probe_count_local - 1) / 2 * 3 ))
+    expected_total_rows=$((expected_total_rows + expected_rows_local))
+    if [[ "$probe_count_local" -gt "$probe_target_max" ]]; then
+      probe_target_max="$probe_count_local"
     fi
   fi
+  if [[ -z "${seed_sha256_local:-}" ]]; then
+    gate_ok=0
+    gate_notes+=("Missing SeedSHA256 in SPARK header for issue ${issue_number} (${spark_id}.md)")
+  fi
 
-  matrix_count="$(awk -F'|' -v start="## Creative exploration matrix" -v out="$found_local" -v rings="$RINGS_TXT" -v axes="$AXES_TXT" -v corpus="$CORPUS_TXT" '
+  storm_count="$(awk -F'|' -v start="## Storm table" -v rings="$RINGS_TXT" -v probes="$PROBES_TXT" -v corpus="$CORPUS_TXT" '
     function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
     function sent_count(s){
       c=0;
@@ -306,52 +289,42 @@ for f in "${OUTPUT_FILES[@]}"; do
     $0 !~ /^[|]/ { next }
     {
       n=split($0, a, /[|]/);
-      if (n != 10) { print "Invalid matrix row (unexpected pipe count; avoid | in cells)" > "/dev/stderr"; exit 2 }
-      id=trim(a[2]); ring=tolower(trim(a[3])); axis_id=trim(a[4]); axis=trim(a[5]);
-      failm=trim(a[6]); core=trim(a[7]); diff=trim(a[8]); idea=trim(a[9]);
-      if (id=="" || id=="CandID" || id ~ /^-+$/) next;
-      if (id !~ /^CAND-[0-9]{2}$/) { print "Invalid CandID in matrix table: " id > "/dev/stderr"; exit 2 }
-      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid Ring in matrix table: " ring " for " id > "/dev/stderr"; exit 2 }
-      if (axis_id !~ /^AX-[0-9]{3}$/) { print "Invalid AxisID in matrix table: " axis_id " for " id > "/dev/stderr"; exit 2 }
-      if (axis=="" || axis ~ /^<.*>$/) { print "Missing Axis cell for " id > "/dev/stderr"; exit 2 }
-      if (failm=="" || failm ~ /^<.*>$/) { print "Missing FailureMode for " id > "/dev/stderr"; exit 2 }
-      if (core=="" || core ~ /^<.*>$/) { print "Missing ValueCore for " id > "/dev/stderr"; exit 2 }
-      if (diff=="" || diff ~ /^<.*>$/) { print "Missing Differentiator for " id > "/dev/stderr"; exit 2 }
-      if (idea=="" || idea ~ /^<.*>$/) { print "Missing Idea paragraph for " id > "/dev/stderr"; exit 2 }
-      sc=sent_count(idea);
-      if (sc < 3) { print "Idea paragraph must be >= 3 sentences for " id " (found " sc ")" > "/dev/stderr"; exit 2 }
+      if (n != 7) { print "Invalid storm row (unexpected pipe count; avoid | in cells)" > "/dev/stderr"; exit 2 }
+      id=trim(a[2]); p1=trim(a[3]); p2=trim(a[4]); ring=tolower(trim(a[5])); desc=trim(a[6]);
+      if (id=="" || id=="STORM-ID" || id ~ /^-+$/) next;
+      if (id !~ /^STORM-[0-9]{4,}$/) { print "Invalid STORM-ID in storm table: " id > "/dev/stderr"; exit 2 }
+      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid RING in storm table: " ring " for " id > "/dev/stderr"; exit 2 }
+      if (p1=="" || p1 ~ /^<.*>$/) { print "Missing PROBE_1 for " id > "/dev/stderr"; exit 2 }
+      if (p2=="" || p2 ~ /^<.*>$/) { print "Missing PROBE_2 for " id > "/dev/stderr"; exit 2 }
+      if (desc=="" || desc ~ /^<.*>$/) { print "Missing DESCRIPTION for " id > "/dev/stderr"; exit 2 }
+      sc=sent_count(desc);
+      if (sc < 3) { print "DESCRIPTION must be >= 3 sentences for " id " (found " sc ")" > "/dev/stderr"; exit 2 }
+      split(p1, a1, ":"); split(p2, a2, ":");
+      p1id=a1[1]; p2id=a2[1];
+      if (p1id !~ /^CM-[0-9]{6}$/ || p2id !~ /^CM-[0-9]{6}$/) { print "Invalid probe ID format for " id > "/dev/stderr"; exit 2 }
       print ring >> rings;
-      print axis_id >> axes;
-      print failm >> corpus;
-      print core >> corpus;
-      print diff >> corpus;
-      print idea >> corpus;
-      printf "%s\t%s\t%s\n", id, ring, axis_id >> out;
+      print p1id >> probes;
+      print p2id >> probes;
+      print desc >> corpus;
       count++;
     }
     END{
       if (found==0) { print "Missing required heading: " start > "/dev/stderr"; exit 2 }
       print count+0;
     }
-  ' "$f")" || matrix_count=0
+  ' "$f")" || storm_count=0
 
-  if [[ "$matrix_count" -eq 0 ]]; then
+  if [[ "$storm_count" -eq 0 ]]; then
     gate_ok=0
-    gate_notes+=("Creative exploration matrix parse failed in $(basename "$f")")
+    gate_notes+=("Storm table parse failed in $(basename "$f")")
+  fi
+  if [[ "$expected_rows_local" -gt 0 && "$storm_count" -ne "$expected_rows_local" ]]; then
+    gate_ok=0
+    gate_notes+=("Storm table row count mismatch in $(basename "$f") (expected ${expected_rows_local}, found ${storm_count})")
   fi
 
-  if [[ -s "$expected_local" && -s "$found_local" ]]; then
-    if ! diff -u <(sort "$expected_local") <(sort "$found_local") >/dev/null 2>&1; then
-      gate_ok=0
-      gate_notes+=("Creative exploration matrix does not match required axes×rings combinations in $(basename "$f")")
-    fi
-  else
-    gate_ok=0
-    gate_notes+=("Missing expected/found matrix inputs for $(basename "$f") (SPARK axes header required)")
-  fi
-
-  div_total=$((div_total + matrix_count))
-  stress_total=$((stress_total + matrix_count))
+  div_total=$((div_total + storm_count))
+  desc_total=$((desc_total + storm_count))
 
   rev_count="$(awk -v start="## Revision passes" '
     BEGIN{ inside=0; c=0; }
@@ -443,7 +416,7 @@ frag_stats="$(phos_ds_fragment_stats "$CORPUS_CLEAN_TXT")"
 read -r frag_count frag_avg_words two_sent_ratio <<< "$frag_stats"
 
 uniq_rings="$(sort -u "$RINGS_TXT" | grep -c . || true)"
-axis_unique="$(sort -u "$AXES_TXT" | grep -c . || true)"
+probe_unique="$(sort -u "$PROBES_TXT" | grep -c . || true)"
 
 ref_cov="$(phos_ds_ratio_clamped "$ref_hits" "$ref_total" 1)"
 internal_cov="0"
@@ -457,7 +430,7 @@ CAND_TARGET="${expected_total_rows:-0}"
 if [[ "$CAND_TARGET" -le 0 ]]; then
   CAND_TARGET="$CAND_FULL"
 fi
-AXES_TARGET="10"
+PROBES_TARGET="${probe_target_max:-0}"
 NRQ_TARGET="3"
 
 s_cand="$(phos_ds_score_linear "$div_total" 0 "$CAND_TARGET")"
@@ -466,17 +439,17 @@ s_ring="$(awk -v r="$ring_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
 s_vol_text="$(phos_ds_score_linear "$out_in_primary_ratio" 0 "$PRIMARY_FULL_MULT")"
 score_vol="$(awk -v a="$s_cand" -v b="$s_ring" -v c="$s_vol_text" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
 
-axis_cov="$(awk -v n="$axis_unique" -v t="$AXES_TARGET" 'BEGIN{ if (t<=0) { print 0; exit } r=n/t; if (r>1) r=1; if (r<0) r=0; printf "%.4f\n", r }')"
-s_axis="$(awk -v r="$axis_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
+probe_cov="$(awk -v n="$probe_unique" -v t="$PROBES_TARGET" 'BEGIN{ if (t<=0) { print 0; exit } r=n/t; if (r>1) r=1; if (r<0) r=0; printf "%.4f\n", r }')"
+s_probe="$(awk -v r="$probe_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
 s_ent="$(phos_ds_score_linear "$ent_norm" 0.20 0.90)"
 s_uniq="$(phos_ds_score_linear "$uniq_ratio" 0.05 0.40)"
-score_div="$(awk -v a="$s_axis" -v b="$s_ent" -v c="$s_uniq" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
+score_div="$(awk -v a="$s_probe" -v b="$s_ent" -v c="$s_uniq" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
 
-stress_ratio="$(phos_ds_ratio_clamped "$stress_total" "$div_total" 1)"
-s_stress="$(awk -v r="$stress_ratio" 'BEGIN{ printf "%.2f\n", r*100 }')"
+desc_ratio="$(phos_ds_ratio_clamped "$desc_total" "$div_total" 1)"
+s_desc="$(awk -v r="$desc_ratio" 'BEGIN{ printf "%.2f\n", r*100 }')"
 s_frag="$(phos_ds_score_linear "$frag_avg_words" 6 20)"
 s_two="$(phos_ds_score_linear "$two_sent_ratio" 0.20 0.80)"
-score_dep="$(awk -v a="$s_stress" -v b="$s_frag" -v c="$s_two" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
+score_dep="$(awk -v a="$s_desc" -v b="$s_frag" -v c="$s_two" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
 
 s_ref="$(awk -v r="$ref_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
 s_nrq="$(phos_ds_score_linear "$nrq_total" 0 "$NRQ_TARGET")"
@@ -529,8 +502,8 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo ""
   echo "Outputs:"
   echo "  - idea files: ${out_items}"
-  echo "  - matrix rows: ${div_total}"
-  echo "  - rows with stress-tests: ${stress_total}"
+  echo "  - storm rows: ${div_total}"
+  echo "  - rows with descriptions: ${desc_total}"
   echo "  - output words: ${out_words}"
   echo "  - out/primary ratio (capped): ${out_in_primary_ratio}"
   echo ""
@@ -542,7 +515,7 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo ""
   echo "Key metrics:"
   echo "  - rings covered: ${uniq_rings}/3"
-  echo "  - axes covered: ${axis_unique}/${AXES_TARGET}"
+  echo "  - probes covered: ${probe_unique}/${PROBES_TARGET}"
   echo "  - ent_norm: ${ent_norm}"
   echo "  - uniq_ratio: ${uniq_ratio}"
   echo "  - frag_avg_words: ${frag_avg_words}"

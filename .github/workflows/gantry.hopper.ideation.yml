@@ -45,6 +45,7 @@ jobs:
           script: |
             const { execFileSync } = require("child_process");
             const fs = require("fs");
+            const crypto = require("crypto");
             const { owner, repo } = context.repo;
             const busPath = "phosphene/signals/bus.jsonl";
             const addedLines = [];
@@ -108,6 +109,8 @@ jobs:
               "depends_on",
               "sequence",
               "upstream_signal_id",
+              "manifold_probe_count",
+              "seed_sha256",
             ];
 
             const parseStrictBlock = (rawBlock) => {
@@ -133,8 +136,17 @@ jobs:
                   errors.push(`line ${i + 1} expected key "${expected}", got "${key}"`);
                   continue;
                 }
-                if (["lane", "work_type", "work_id", "intent"].includes(key) && !value) {
+                if (["lane", "work_type", "work_id", "intent", "manifold_probe_count", "seed_sha256"].includes(key) && !value) {
                   errors.push(`"${key}" must be non-empty`);
+                }
+                if (key === "manifold_probe_count") {
+                  const parsedCount = Number.parseInt(value, 10);
+                  if (!Number.isFinite(parsedCount) || parsedCount < 2) {
+                    errors.push(`"manifold_probe_count" must be an integer >= 2`);
+                  }
+                }
+                if (key === "seed_sha256" && value && !/^sha256:[0-9a-f]{64}$/.test(value)) {
+                  errors.push(`"seed_sha256" must be sha256:<hex>`);
                 }
                 kv[key] = value;
               }
@@ -160,29 +172,6 @@ jobs:
                 }
               }
               return Array.from(new Set(tokens));
-            };
-
-            const extractIdeationAxesBlock = (text) => {
-              const open = "[PHOSPHENE_IDEATION_AXES]";
-              const close = "[/PHOSPHENE_IDEATION_AXES]";
-              const idx = String(text || "").indexOf(open);
-              if (idx === -1) return [];
-              const end = String(text || "").indexOf(close, idx + open.length);
-              if (end === -1) return [];
-              const body = String(text || "").slice(idx + open.length, end);
-              const ids = [];
-              const seen = new Set();
-              for (const rawLine of body.split(/\r?\n/)) {
-                const line = String(rawLine || "").trim();
-                if (!line) continue;
-                const m = line.match(/\b(AX-[0-9]{3})\b/);
-                if (!m) continue;
-                const id = m[1];
-                if (seen.has(id)) continue;
-                seen.add(id);
-                ids.push(id);
-              }
-              return ids;
             };
 
             const busLines = fs.existsSync(busPath)
@@ -292,10 +281,16 @@ jobs:
               const work_id = String(kv.work_id || "").trim();
               const intent = String(kv.intent || title || "").trim();
               const depends_on = String(kv.depends_on || "").trim();
+              const sequence = String(kv.sequence || "").trim();
+              const upstream_signal_id = String(kv.upstream_signal_id || "").trim();
+              const manifold_probe_count = Number.parseInt(String(kv.manifold_probe_count || "").trim(), 10);
+              const seed_sha256 = String(kv.seed_sha256 || "").trim();
 
               reportLines.push(`- **Lane**: ${lane ? "`" + lane + "`" : "(missing)"}`);
               reportLines.push(`- **Work type**: ${work_type ? "`" + work_type + "`" : "(missing)"}`);
               reportLines.push(`- **Work ID**: ${work_id ? "`" + work_id + "`" : "(missing)"}`);
+              reportLines.push(`- **Manifold probe count**: ${Number.isFinite(manifold_probe_count) ? "`" + manifold_probe_count + "`" : "(missing)"}`);
+              reportLines.push(`- **SeedSHA256**: ${seed_sha256 ? "`" + seed_sha256 + "`" : "(missing)"}`);
 
               if (work_type !== "ideation" || lane !== "viridian") {
                 reportLines.push(`- **Eligible**: NO (work_type/lane mismatch for ideation)`);
@@ -323,18 +318,32 @@ jobs:
                 continue;
               }
 
-              const sparkId = `SPARK-${String(issue_number).padStart(6, "0")}`;
-              const sparkPath = `${SPARK_DIR}/${sparkId}.md`;
-              const inputWorkIds = extractInputsBlock(body);
-              const explorationAxisIds = extractIdeationAxesBlock(body);
-
-              reportLines.push(`- **Creative exploration axes (count)**: ${explorationAxisIds.length}`);
-
-              if (explorationAxisIds.length !== 10) {
-                reportLines.push(`- **Eligible**: NO (missing/invalid [PHOSPHENE_IDEATION_AXES]; expected 10 unique AX-### IDs)`);
+              if (!Number.isFinite(manifold_probe_count) || manifold_probe_count < 2) {
+                reportLines.push(`- **Eligible**: NO (manifold_probe_count must be >= 2)`);
                 await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
                 continue;
               }
+
+              const seedInputValues = [
+                lane,
+                work_type,
+                work_id,
+                intent,
+                depends_on,
+                sequence,
+                upstream_signal_id,
+                String(manifold_probe_count),
+              ].join("\n");
+              const expectedSeed = `sha256:${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
+              if (seed_sha256 !== expectedSeed) {
+                reportLines.push(`- **Eligible**: NO (seed_sha256 mismatch; expected ${expectedSeed})`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
+
+              const sparkId = `SPARK-${String(issue_number).padStart(6, "0")}`;
+              const sparkPath = `${SPARK_DIR}/${sparkId}.md`;
+              const inputWorkIds = extractInputsBlock(body);
 
               if (!fs.existsSync(SPARK_DIR)) {
                 fs.mkdirSync(SPARK_DIR, { recursive: true });
@@ -348,7 +357,8 @@ jobs:
                   `Lane: ${lane}`,
                   `UpstreamSignalID: ${parent_signal_id || ""}`,
                   `InputWorkIDs: ${inputWorkIds.join(",")}`,
-                  `ExplorationAxisIDs: ${explorationAxisIds.join(",")}`,
+                  `ManifoldProbeCount: ${manifold_probe_count}`,
+                  `SeedSHA256: ${seed_sha256}`,
                   `CreatedUTC: ${created_utc_spark}`,
                   "",
                   "## Issue snapshot",
@@ -394,7 +404,8 @@ jobs:
                   lane,
                   spark_id: sparkId,
                   spark_path: sparkPath,
-                  exploration_axis_ids: explorationAxisIds,
+                  manifold_probe_count,
+                  seed_sha256,
                   parents: parent_signal_id ? [parent_signal_id] : [],
                   run_marker: work_id,
                   output_key: spark_output_key,
@@ -421,7 +432,8 @@ jobs:
                 intent,
                 spark_id: sparkId,
                 spark_path: sparkPath,
-                exploration_axis_ids: explorationAxisIds,
+                manifold_probe_count,
+                seed_sha256,
                 phos_id: "",
                 parents: parent_signal_id ? [parent_signal_id] : [],
                 run_marker: work_id,

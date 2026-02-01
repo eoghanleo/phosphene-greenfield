@@ -9,9 +9,8 @@ source "$SCRIPT_DIR/../lib/done_receipt_helpers.sh"
 
 ROOT="$PHOSPHENE_REPO_ROOT"
 IDEA_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/create_idea.sh"
-BOOTSTRAP_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_bootstrap.sh"
-SET_IDEA_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_set_idea_paragraph.sh"
-SET_STRESS_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_set_stress_test.sh"
+BOOTSTRAP_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_storm_table_bootstrap.sh"
+SET_DESC_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_storm_set_description.sh"
 VALIDATE_SCRIPT="$ROOT/.github/scripts/validate_idea.sh"
 DONE_SCORE_SCRIPT="$ROOT/.github/scripts/ideation-domain-done-score.sh"
 EMIT_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_emit_done_receipt.sh"
@@ -50,6 +49,22 @@ spark_dir="$ROOT/phosphene/signals/sparks"
 mkdir -p "$spark_dir"
 spark_id="$(printf "SPARK-%06d" "$issue_number")"
 spark_path="$spark_dir/${spark_id}.md"
+probe_count="4"
+
+sha256_hex() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    printf "%s" "$1" | sha256sum | awk '{print $1}'
+  elif command -v shasum >/dev/null 2>&1; then
+    printf "%s" "$1" | shasum -a 256 | awk '{print $1}'
+  else
+    printf "%s" "$1" | openssl dgst -sha256 | awk '{print $2}'
+  fi
+}
+
+seed_input="$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" \
+  "viridian" "ideation" "$idea_id" "Test Idea" "" "" "" "$probe_count")"
+seed_sha256="sha256:$(sha256_hex "$seed_input")"
+
 cat > "$spark_path" <<EOF
 ID: ${spark_id}
 IssueNumber: ${issue_number}
@@ -57,7 +72,8 @@ WorkID: ${idea_id}
 Lane: viridian
 UpstreamSignalID:
 InputWorkIDs:
-ExplorationAxisIDs: AX-001,AX-002,AX-003,AX-004,AX-005,AX-006,AX-007,AX-008,AX-009,AX-010
+ManifoldProbeCount: ${probe_count}
+SeedSHA256: ${seed_sha256}
 CreatedUTC: 2026-02-01T00:00:00Z
 
 ## Issue snapshot
@@ -68,21 +84,23 @@ cleanup_paths+=("$spark_path")
 
 bash "$BOOTSTRAP_SCRIPT" --file "$idea_path" >/dev/null
 
-axis_ids=(AX-001 AX-002 AX-003 AX-004 AX-005 AX-006 AX-007 AX-008 AX-009 AX-010)
-for axis_id in "${axis_ids[@]}"; do
-  for ring in adjacent orthogonal extrapolatory; do
-    para="First sentence: explore via ${ring} dynamics. Second sentence: infuse the ${axis_id} axis as a context stance. Third sentence: anchor tightly to the SPARK prompt and constraints."
-    bash "$SET_IDEA_SCRIPT" --file "$idea_path" --axis-id "$axis_id" --ring "$ring" --paragraph "$para" >/dev/null
-  done
-done
-
-for n in $(seq -w 1 30); do
-  cand="CAND-${n}"
-  bash "$SET_STRESS_SCRIPT" --file "$idea_path" --cand-id "$cand" \
-    --failure-mode "Failure mode for ${cand} under constraints." \
-    --value-core "Value core for ${cand} if everything else fails." \
-    --differentiator "Differentiator for ${cand} compared to baseline." >/dev/null
-done
+while IFS=$'\t' read -r storm_id probe_one probe_two ring; do
+  [[ -n "${storm_id:-}" ]] || continue
+  desc="First sentence: explore ${ring} dynamics between ${probe_one} and ${probe_two}. Second sentence: anchor to the SPARK prompt and constraints with a concrete scenario. Third sentence: state a clear outcome and why the probe pairing matters."
+  bash "$SET_DESC_SCRIPT" --file "$idea_path" --storm-id "$storm_id" --description "$desc" >/dev/null
+done < <(awk -F'|' -v start="## Storm table" '
+  function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
+  BEGIN{ inside=0; }
+  $0==start { inside=1; next }
+  inside && $0 ~ /^## / { exit }
+  inside && $0 ~ /^\|/ {
+    n=split($0, a, /\|/);
+    if (n < 7) next;
+    id=trim(a[2]); p1=trim(a[3]); p2=trim(a[4]); ring=trim(a[5]);
+    if (id=="" || id=="STORM-ID" || id ~ /^-+$/) next;
+    print id "\t" p1 "\t" p2 "\t" ring;
+  }
+' "$idea_path")
 
 bash "$VALIDATE_SCRIPT" "$idea_path"
 done_out=""

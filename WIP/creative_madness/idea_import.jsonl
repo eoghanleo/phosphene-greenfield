@@ -1,0 +1,100 @@
+{"id":"CM-000359","category":"Sound and movement","label":"SILENCE","description":"Let silence become a presence that presses on the room."}
+{"id":"CM-000360","category":"Sound and movement","label":"NOISE","description":"Make noise feel textured, like grain in wood or grit in teeth."}
+{"id":"CM-000361","category":"Sound and movement","label":"RHYTHM","description":"Use rhythm to suggest intelligence without showing a face."}
+{"id":"CM-000362","category":"Sound and movement","label":"HARMONY","description":"Let harmony misbehave, resolving only when something is understood."}
+{"id":"CM-000363","category":"Sound and movement","label":"SPATIALITY","description":"Make space audible, so distance becomes a sound."}
+{"id":"CM-000364","category":"Sound and movement","label":"MOTIFS","description":"Treat sonic motifs like recurring dreams, familiar and altered."}
+{"id":"CM-000365","category":"Sound and movement","label":"WEIGHT","description":"Let motion carry weight through anticipation, not speed."}
+{"id":"CM-000366","category":"Sound and movement","label":"STILLNESS","description":"Make stillness feel active, as if something is deciding."}
+{"id":"CM-000367","category":"Sound and movement","label":"CHOREOGRAPHY","description":"Turn swarms into choreography that implies intention without speech."}
+{"id":"CM-000368","category":"Sound and movement","label":"MOTION","description":"Let movement reveal rules, the way dance reveals muscle and constraint."}
+{"id":"CM-000369","category":"Sound and movement","label":"TIMBRE","description":"Choose a sound’s material quality so the world feels made of wood, metal, glass, or breath."}
+{"id":"CM-000370","category":"Sound and movement","label":"DYNAMICS","description":"Let loudness behave like emotion, swelling and shrinking as attention shifts."}
+{"id":"CM-000371","category":"Sound and movement","label":"ATTACK","description":"Shape how sounds begin so impacts feel sharp, soft, or reluctant."}
+{"id":"CM-000372","category":"Sound and movement","label":"DECAY","description":"Let notes fade in a way that reveals the room, the medium, and the mood."}
+{"id":"CM-000373","category":"Sound and movement","label":"SUSTAIN","description":"Hold tones long enough that they become atmosphere rather than event."}
+{"id":"CM-000374","category":"Sound and movement","label":"RELEASE","description":"End sounds like endings, clean cuts or slow dissolves that change the aftertaste."}
+{"id":"CM-000375","category":"Sound and movement","label":"REVERB","description":"Use echoes to make emptiness feel huge or intimacy feel tight."}
+{"id":"CM-000376","category":"Sound and movement","label":"ECHO","description":"Let repeating reflections turn single actions into patterns with intent."}
+{"id":"CM-000377","category":"Sound and movement","label":"DELAY","description":"Stagger repeats so time itself feels elastic and slightly haunted."}
+{"id":"CM-000378","category":"Sound and movement","label":"DISTORTION","description":"Roughen audio until it feels like the signal is fighting its way through reality."}
+{"id":"CM-000379","category":"Sound and movement","label":"SATURATION","description":"Warm the edges of sound so it feels close, alive, and imperfectly human."}
+{"id":"CM-000380","category":"Sound and movement","label":"CLIPPING","description":"Let overload be audible so intensity becomes physically uncomfortable on purpose."}
+{"id":"CM-000381","category":"Sound and movement","label":"FREQUENCY","description":"Aim high and low bands to tickle nerves, not just ears."}
+{"id":"CM-000382","category":"Sound and movement","label":"SUBBASS","description":"Make low vibration a bodily event, the floor participating in the score."}
+{"id":"CM-000383","category":"Sound and movement","label":"HISS","description":"Use noise floor like atmosphere, a faint fog that makes silence meaningful."}
+{"id":"CM-000384","category":"Sound and movement","label":"CLICK","description":"Let tiny percussive details read as machinery, insects, or impatient thought."}
+{"id":"CM-000385","category":"Sound and movement","label":"PULSE","description":"Anchor the soundscape to a heartbeat that can quicken, falter, or stop."}
+{"id":"CM-000386","category":"Sound and movement","label":"METER","description":"Lock time into a grid, then break the grid to signal rebellion or panic."}
+{"id":"CM-000387","category":"Sound and movement","label":"SWING","description":"Make timing lean forward and back so groove feels like personality."}
+{"id":"CM-000388","category":"Sound and movement","label":"SYNCOPATION","description":"Place accents where comfort expects none, so the body stays alert."}
+{"id":"CM-000389","category":"Sound and movement","label":"POLYRHYTHM","description":"Stack competing cycles until the listener feels a living, multi-brained system."}
+{"id":"CM-000390","category":"Sound and movement","label":"OSTINATO","description":"Repeat a figure until it becomes a spell, then change one note to break it."}
+{"id":"CM-000391","category":"Sound and movement","label":"DRONE","description":"Hold a steady tone like a horizon so small events feel monumental."}
+{"id":"CM-000392","category":"Sound and movement","label":"MELODY","description":"Give the ear a path to follow, then let it get lost and find itself again."}
+{"id":"CM-000393","category":"Sound and movement","label":"COUNTERMELODY","description":"Let a second line comment on the first, like subtext you can hum."}
+{"id":"CM-000394","category":"Sound and movement","label":"DISSONANCE","description":"Make intervals scrape so tension becomes audible friction."}
+{"id":"CM-000395","category":"Sound and movement","label":"CONSONANCE","description":"Offer harmonic rest like shelter, then decide how safe that shelter truly is."}
+{"id":"CM-000396","category":"Sound and movement","label":"RESOLUTION","description":"Delay the satisfying chord until understanding arrives with it."}
+{"id":"CM-000397","category":"Sound and movement","label":"MODULATION","description":"Change key like changing weather, so the same theme feels newly moral."}
+{"id":"CM-000398","category":"Sound and movement","label":"MICROTONES","description":"Use in-between pitches to make reality feel slightly off its rails."}
+{"id":"CM-000399","category":"Sound and movement","label":"GLISSANDO","description":"Slide between notes so motion is audible, not just implied."}
+{"id":"CM-000400","category":"Sound and movement","label":"ARPEGGIO","description":"Turn chords into cascades so harmony becomes movement."}
+{"id":"CM-000401","category":"Sound and movement","label":"STACCATO","description":"Make sound arrive in bites, nervous, playful, or tactical."}
+{"id":"CM-000402","category":"Sound and movement","label":"LEGATO","description":"Connect tones so the score feels like breath and continuous thought."}
+{"id":"CM-000403","category":"Sound and movement","label":"TREMOLO","description":"Shake a note so the listener feels instability inside apparent stillness."}
+{"id":"CM-000404","category":"Sound and movement","label":"VIBRATO","description":"Waver pitch gently so emotion sounds human, not geometric."}
+{"id":"CM-000405","category":"Sound and movement","label":"PERCUSSION","description":"Let impacts define space, turning surfaces into instruments."}
+{"id":"CM-000406","category":"Sound and movement","label":"FOLEY","description":"Make everyday sounds narrate action more honestly than music does."}
+{"id":"CM-000407","category":"Sound and movement","label":"DIEGETIC","description":"Keep sound inside the world so it feels grounded, accountable, and real."}
+{"id":"CM-000408","category":"Sound and movement","label":"NONdiegetic","description":"Let music speak from outside the world, commenting like an unseen narrator."}
+{"id":"CM-000409","category":"Sound and movement","label":"LAYERING","description":"Stack textures until the soundscape feels like ecology rather than track."}
+{"id":"CM-000410","category":"Sound and movement","label":"MASKING","description":"Hide crucial sounds behind others so discovery feels like learning to listen."}
+{"id":"CM-000411","category":"Sound and movement","label":"ISOLATION","description":"Strip the mix down to one voice so attention becomes a spotlight."}
+{"id":"CM-000412","category":"Sound and movement","label":"PAN","description":"Move sound left and right so motion is felt in the skull."}
+{"id":"CM-000413","category":"Sound and movement","label":"DEPTH","description":"Place sources near and far using loudness and reverb, making distance tangible."}
+{"id":"CM-000414","category":"Sound and movement","label":"HEIGHT","description":"Use spectral cues to suggest above and below, so the world gains vertical audio."}
+{"id":"CM-000415","category":"Sound and movement","label":"SURROUND","description":"Wrap sound around the listener so orientation becomes a sense, not a guess."}
+{"id":"CM-000416","category":"Sound and movement","label":"DOPPLER","description":"Shift pitch with motion so speed becomes audible truth."}
+{"id":"CM-000417","category":"Sound and movement","label":"RUMBLE","description":"Let distant low thunder imply scale and approaching consequence."}
+{"id":"CM-000418","category":"Sound and movement","label":"WHISPER","description":"Make quiet speech intimate and threatening by forcing the listener closer."}
+{"id":"CM-000419","category":"Sound and movement","label":"CHANT","description":"Use repeated voices to manufacture ritual, unity, and trance."}
+{"id":"CM-000420","category":"Sound and movement","label":"CALL","description":"Let one signal invite response, turning the environment into conversation."}
+{"id":"CM-000421","category":"Sound and movement","label":"RESPONSE","description":"Answer motifs with altered echoes so the system sounds like it is thinking."}
+{"id":"CM-000422","category":"Sound and movement","label":"SIREN","description":"Use alarm tones sparingly so urgency stays sharp and credible."}
+{"id":"CM-000423","category":"Sound and movement","label":"ALARM","description":"Make danger audible before visible, forcing anticipation to do the work."}
+{"id":"CM-000424","category":"Sound and movement","label":"LULLABY","description":"Use soothing patterns to create safety, then let the safety turn ironic."}
+{"id":"CM-000425","category":"Sound and movement","label":"DIRGE","description":"Slow the music into gravity, making loss feel unavoidable and ceremonial."}
+{"id":"CM-000426","category":"Sound and movement","label":"FANFARE","description":"Announce achievement with bright brass energy, then question what was won."}
+{"id":"CM-000427","category":"Sound and movement","label":"GROOVE","description":"Make repetition pleasurable so the body stays engaged without explanation."}
+{"id":"CM-000428","category":"Sound and movement","label":"TEMPTATION","description":"Design a sonic lure that pulls the listener toward risk."}
+{"id":"CM-000429","category":"Sound and movement","label":"UNEASE","description":"Use subtle dissonance and off-timing so comfort never fully arrives."}
+{"id":"CM-000430","category":"Sound and movement","label":"SHIMMER","description":"Add high, delicate textures so lightness feels airborne."}
+{"id":"CM-000431","category":"Sound and movement","label":"GRIT","description":"Use rough textures to imply labor, damage, or truth without polish."}
+{"id":"CM-000432","category":"Sound and movement","label":"SPARK","description":"Introduce quick bright transients so moments feel like sudden ideas."}
+{"id":"CM-000433","category":"Sound and movement","label":"SWELL","description":"Build crescendos slowly so emotion arrives as inevitability."}
+{"id":"CM-000434","category":"Sound and movement","label":"DROP","description":"Remove layers abruptly so absence hits like a physical step down."}
+{"id":"CM-000435","category":"Sound and movement","label":"PAUSE","description":"Use silence between notes as punctuation that changes meaning."}
+{"id":"CM-000436","category":"Sound and movement","label":"BREATH","description":"Let inhalations and exhalations be audible, turning bodies into instruments."}
+{"id":"CM-000437","category":"Sound and movement","label":"FOOTSTEPS","description":"Make movement legible through contact sounds, revealing material and intent."}
+{"id":"CM-000438","category":"Sound and movement","label":"RUSTLE","description":"Use soft friction noises to imply nearby life even when unseen."}
+{"id":"CM-000439","category":"Sound and movement","label":"SPLASH","description":"Let water impacts encode force, scale, and panic instantly."}
+{"id":"CM-000440","category":"Sound and movement","label":"CRACK","description":"Use sharp breaks to signal brittle materials, sudden failure, or cold air."}
+{"id":"CM-000441","category":"Sound and movement","label":"HUM","description":"Keep a constant low tone so machinery or magic feels always-on."}
+{"id":"CM-000442","category":"Sound and movement","label":"BUZZ","description":"Add nervous high vibration so the environment feels electrically alive."}
+{"id":"CM-000443","category":"Sound and movement","label":"CHIME","description":"Use bell-like tones to mark transitions like tiny rituals."}
+{"id":"CM-000444","category":"Sound and movement","label":"BELLS","description":"Let resonant strikes suggest place, ceremony, and time passing."}
+{"id":"CM-000445","category":"Sound and movement","label":"STRIDE","description":"Give gait a signature rhythm so characters are identifiable by motion alone."}
+{"id":"CM-000446","category":"Sound and movement","label":"GLIDE","description":"Make movement smooth and low-friction so the world feels dreamlike or advanced."}
+{"id":"CM-000447","category":"Sound and movement","label":"JERK","description":"Use abrupt starts and stops so motion reads as fear, hostility, or malfunction."}
+{"id":"CM-000448","category":"Sound and movement","label":"DRIFT","description":"Let bodies wander with soft randomness so intention feels ambiguous."}
+{"id":"CM-000449","category":"Sound and movement","label":"SWARM","description":"Make many small motions cohere into one large behavior, like a living cloud."}
+{"id":"CM-000450","category":"Sound and movement","label":"FLOCK","description":"Let agents align and turn together, making group intelligence visible and beautiful."}
+{"id":"CM-000451","category":"Sound and movement","label":"VORTEX","description":"Spiral motion inward to suggest attraction, doom, or focus."}
+{"id":"CM-000452","category":"Sound and movement","label":"ORBIT","description":"Make entities circle a center so relationships become geometry."}
+{"id":"CM-000453","category":"Sound and movement","label":"COLLISION","description":"Let impacts be consequential, changing direction, mood, and structure."}
+{"id":"CM-000454","category":"Sound and movement","label":"RECOIL","description":"Make reaction motion visible, so forces feel reciprocal and real."}
+{"id":"CM-000455","category":"Sound and movement","label":"INERTIA","description":"Let mass resist change, making acceleration feel costly."}
+{"id":"CM-000456","category":"Sound and movement","label":"FRICTION","description":"Make motion scrape and slow so surfaces and effort become part of the story."}
+{"id":"CM-000457","category":"Sound and movement","label":"MOMENTUM","description":"Let sustained movement carry characters past their own intentions."}
+{"id":"CM-000458","category":"Sound and movement","label":"BALANCE","description":"Show tiny corrections in posture so stability feels continuously negotiated."}

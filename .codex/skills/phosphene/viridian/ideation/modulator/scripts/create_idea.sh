@@ -79,6 +79,9 @@ Dependencies: ${DEPENDENCIES}
 \`\`\`text
 [V-SCRIPT]:
 create_idea.sh
+ideation_storm_table_bootstrap.sh
+provide_next_storm_prompt.sh
+ideation_storm_set_description.sh
 \`\`\`
 
 ## Problem / opportunity
@@ -93,23 +96,15 @@ create_idea.sh
 
 - <What must we validate in <research>?>
 
-## Creative exploration matrix
+## Storm table
 
-The matrix must enumerate **every combination** of:
-- 3 rings: \`adjacent\`, \`orthogonal\`, \`extrapolatory\`
-- 10 axes: from the issue’s \`[PHOSPHENE_IDEATION_AXES]\` (persisted into the SPARK header)
+The storm table must enumerate **every unordered probe pair** × \`adjacent\` / \`orthogonal\` / \`extrapolatory\`,
+using the \`seed_sha256\` + \`manifold_probe_count\` from the SPARK header.
 
-Use the control scripts (do not hand-edit table rows):
+Use the control scripts (do not hand-edit table rows).
 
-\`\`\`text
-[V-SCRIPT]:
-ideation_matrix_bootstrap.sh
-ideation_matrix_set_idea_paragraph.sh
-ideation_matrix_set_stress_test.sh
-\`\`\`
-
-| CandID | Ring | AxisID | Axis | FailureMode | ValueCore | Differentiator | Idea |
-| --- | --- | --- | --- | --- | --- | --- | --- |
+| STORM-ID | PROBE_1 | PROBE_2 | RING | DESCRIPTION |
+| --- | --- | --- | --- | --- |
 
 ## Revision passes
 

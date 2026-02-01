@@ -16,6 +16,12 @@ This domain uses the canonical PHOSPHENE handoff at `phosphene/AGENTS.md`.
   - Control scripts live under: `.codex/skills/phosphene/viridian/ideation/modulator/scripts/`
   - Validators live under: `.github/scripts/`
 
+## Recommended loop
+
+- Create the IDEA artifact, then run `ideation_storm_table_bootstrap.sh`.
+- Use `provide_next_storm_prompt.sh` → `ideation_storm_set_description.sh` until complete.
+- Validate + done-score, iterate until PASS, then emit DONE receipt.
+
 ## In-doc script hints (`[V-SCRIPT]`)
 
 Some artifacts include fenced code blocks that begin with `[V-SCRIPT]:`.
