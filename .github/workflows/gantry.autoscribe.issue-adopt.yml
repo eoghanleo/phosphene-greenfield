@@ -617,7 +617,8 @@ jobs:
             }
 
             const busPath = "phosphene/signals/bus.jsonl";
-            const output_key = `autoscribe:issue-adopted:${domain}:issue:${issue_number}`;
+            const strictBlockHash = crypto.createHash("sha256").update(strictBlock).digest("hex").slice(0, 12);
+            const output_key = `autoscribe:issue-adopted:${domain}:issue:${issue_number}:block:${strictBlockHash}`;
             let didAppend = false;
             let signal_id = "";
 
@@ -667,7 +668,46 @@ jobs:
                 didAppend = true;
                 commentLines.push("", `- emitted: \`${sig.signal_type}\``, `- signal_id: \`${signal_id}\``);
               } else {
-                commentLines.push("", `- bus: already adopted (idempotent)`, `- signal_id: \`${signal_id}\``);
+                const retrigger_created_utc = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
+                const retrigger_output_key = `${output_key}:retrigger:${retrigger_created_utc}`;
+                const retrigger_hash_args = [
+                  "phosphene/phosphene-core/bin/signal_hash.sh",
+                  "signal-id",
+                  "--run-marker",
+                  work_id,
+                  "--output-key",
+                  retrigger_output_key,
+                ];
+                if (/^sha256:[0-9A-Fa-f]{64}$/.test(upstream_signal_id)) {
+                  retrigger_hash_args.push("--parent", upstream_signal_id);
+                }
+                const retrigger_signal_id = String(execFileSync("bash", retrigger_hash_args, { encoding: "utf8" }) || "").trim();
+                const retrigger_sig = {
+                  signal_version: 1,
+                  signal_id: retrigger_signal_id,
+                  signal_type: `phosphene.autoscribe.${domain}.issue_created.v1`,
+                  work_id,
+                  domain,
+                  issue_number,
+                  lane: dm.lane,
+                  intent,
+                  phos_id: "",
+                  parents: (/^sha256:[0-9A-Fa-f]{64}$/.test(upstream_signal_id) ? [upstream_signal_id] : []),
+                  run_marker: work_id,
+                  output_key: retrigger_output_key,
+                  created_utc: retrigger_created_utc,
+                  retrigger_of: signal_id,
+                };
+                execFileSync("bash", [
+                  "phosphene/phosphene-core/bin/signal_bus.sh",
+                  "append",
+                  "--bus",
+                  busPath,
+                  "--line",
+                  JSON.stringify(retrigger_sig),
+                ], { stdio: "inherit" });
+                didAppend = true;
+                commentLines.push("", `- bus: already adopted; retrigger emitted`, `- signal_id: \`${retrigger_signal_id}\``);
               }
             }
 
