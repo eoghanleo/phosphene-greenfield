@@ -1,0 +1,106 @@
+name: "discord.updates"
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "README.md"
+  pull_request:
+    types:
+      - closed
+  issues:
+    types:
+      - opened
+  release:
+    types:
+      - published
+
+permissions:
+  contents: read
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build message
+        id: message
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REPO: ${{ github.repository }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          SHA: ${{ github.sha }}
+          COMPARE_URL: ${{ github.event.compare }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_MERGED: ${{ github.event.pull_request.merged }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          RELEASE_NAME: ${{ github.event.release.name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          set -euo pipefail
+
+          escape_json() {
+            local s="$1"
+            s=${s//\\/\\\\}
+            s=${s//\"/\\\"}
+            s=${s//$'\n'/\\n}
+            s=${s//$'\r'/}
+            printf '%s' "$s"
+          }
+
+          case "$EVENT_NAME" in
+            push)
+              short_sha="${SHA:0:7}"
+              msg="Push to ${REPO}@${REF_NAME} (${short_sha}) by ${ACTOR}\n${COMPARE_URL}"
+              ;;
+            pull_request)
+              if [ "${PR_MERGED}" != "true" ]; then
+                echo "skip=true" >> "$GITHUB_OUTPUT"
+                exit 0
+              fi
+              msg="PR merged #${PR_NUMBER}: ${PR_TITLE}\n${PR_URL}"
+              ;;
+            issues)
+              msg="Issue opened #${ISSUE_NUMBER}: ${ISSUE_TITLE}\n${ISSUE_URL}"
+              ;;
+            release)
+              name_part="$RELEASE_NAME"
+              if [ -z "$name_part" ]; then
+                name_part="$RELEASE_TAG"
+              fi
+              msg="Release published ${RELEASE_TAG}: ${name_part}\n${RELEASE_URL}"
+              ;;
+            *)
+              msg="Event ${EVENT_NAME} on ${REPO}"
+              ;;
+          esac
+
+          escaped_msg="$(escape_json "$msg")"
+          payload="{\"content\":\"${escaped_msg}\"}"
+
+          {
+            echo "payload<<EOF"
+            echo "$payload"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - name: Send to Discord
+        if: ${{ steps.message.outputs.skip != 'true' }}
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DISCORD_WEBHOOK_URL}" ]; then
+            echo "DISCORD_WEBHOOK_URL is not set"
+            exit 1
+          fi
+          payload="${{ steps.message.outputs.payload }}"
+          curl -sS -X POST -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
