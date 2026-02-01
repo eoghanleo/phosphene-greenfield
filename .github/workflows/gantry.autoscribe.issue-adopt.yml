@@ -330,6 +330,14 @@ jobs:
 
             const collapseToSingleLine = (text) => String(text || "").replace(/\s+/g, " ").trim();
             const PRIMARY_OBJECTIVE_HEADING = "Primary objective of the ideation task:";
+            const isHydratedPrompt = (text) => {
+              const t = String(text || "");
+              return t.includes("PHOSPHENE — Domain Delegation Prompt (parameterized)")
+                || t.includes("SYSTEM: You are a Codex agent operating inside a PHOSPHENE harness repo.")
+                || t.includes("PHOSPHENE handoff detected:")
+                || t.includes("## Domain behavior and success criteria")
+                || t.includes("## Non-negotiable PHOSPHENE contract");
+            };
             const extractSection = (text, heading) => {
               const lines = String(text || "").split(/\r?\n/);
               let start = -1;
@@ -357,6 +365,12 @@ jobs:
                 if (/^##\s+/.test(lines[i]) || /^###\s+/.test(lines[i])) { end = i; break; }
               }
               return lines.slice(start, end).join("\n").trim();
+            };
+            const sanitizePrimaryObjective = (text) => {
+              const t = String(text || "").trim();
+              if (!t) return "";
+              if (isHydratedPrompt(t) || t.includes("SYSTEM:")) return "";
+              return t;
             };
             const stripPrimaryObjectiveBlock = (text) => {
               const lines = String(text || "").split(/\r?\n/);
@@ -474,8 +488,7 @@ jobs:
 
             // Compose updated issue body: replace existing [PHOSPHENE] block if present, else prepend.
             const rest = block ? (body.slice(0, block.openIdx) + body.slice(block.endIdx)).trim() : body.trim();
-            const hasTemplateMarker = rest.includes("PHOSPHENE — Domain Delegation Prompt (parameterized)")
-              || rest.includes("SYSTEM: You are a Codex agent operating inside a PHOSPHENE harness repo.");
+            const hasTemplateMarker = isHydratedPrompt(rest);
             const restSansPrimary = stripPrimaryObjectiveBlock(rest);
 
             const strictBlock = canonicalStrictBlock({
@@ -488,12 +501,12 @@ jobs:
               upstream_signal_id,
               manifold_probe_count,
               primary_objective: (domain === "ideation")
-                ? (extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
+                ? sanitizePrimaryObjective(extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
                 : "",
             });
 
             const primaryObjectiveRaw = (domain === "ideation")
-              ? (extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
+              ? sanitizePrimaryObjective(extractPrimaryObjectiveBlock(rest) || (!hasTemplateMarker ? restSansPrimary : ""))
               : "";
             const primaryObjectiveText = String(primaryObjectiveRaw || "").trim();
             const primaryObjectiveBlock = primaryObjectiveText
