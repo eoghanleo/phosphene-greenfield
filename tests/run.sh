@@ -9,6 +9,7 @@ set -euo pipefail
 #   bash tests/run.sh --e2e
 #   bash tests/run.sh --product-marketing
 #   bash tests/run.sh --product-management
+#   bash tests/run.sh --done-score
 #   bash tests/run.sh --product-vision
 #   bash tests/run.sh --product-strategy
 #   bash tests/run.sh --product-architecture
@@ -30,7 +31,7 @@ source "$SCRIPT_DIR/lib/test_helpers.sh"
 usage() {
   cat <<'EOF'
 Usage:
-  bash tests/run.sh [--all|--e2e|--ideation|--research|--product-vision|--product-strategy|--product-architecture|--product-evaluation|--feature-management|--test-management|--scrum-management|--product-marketing|--product-management] [--coverage]
+  bash tests/run.sh [--all|--e2e|--ideation|--research|--product-vision|--product-strategy|--product-architecture|--product-evaluation|--feature-management|--test-management|--scrum-management|--product-marketing|--product-management|--done-score] [--coverage]
 EOF
 }
 
@@ -52,6 +53,7 @@ while [[ $# -gt 0 ]]; do
     --product-marketing) MODE="product-marketing"; shift ;;
     --product-management) MODE="product-management"; shift ;;
     --coverage) ENABLE_COVERAGE=1; shift ;;
+    --done-score) MODE="done-score"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown arg: $1" >&2; usage; exit 2 ;;
   esac
@@ -90,6 +92,7 @@ case "$MODE" in
       "$SCRIPT_DIR/scrum-management"
       "$SCRIPT_DIR/product-marketing"
       "$SCRIPT_DIR/product-management"
+      "$SCRIPT_DIR/done-score"
     )
     ;;
   e2e)
@@ -127,6 +130,9 @@ case "$MODE" in
     ;;
   product-management)
     roots+=("$SCRIPT_DIR/product-management")
+    ;;
+  done-score)
+    roots+=("$SCRIPT_DIR/done-score")
     ;;
   *)
     echo "Unknown MODE: $MODE" >&2
@@ -171,4 +177,3 @@ fi
 
 echo ""
 echo "OK: all tests passed."
-

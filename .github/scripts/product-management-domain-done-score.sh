@@ -15,9 +15,6 @@ set -euo pipefail
 # - File discovery is sorted.
 # - Scoring output must be identical across runners for the same tree state.
 
-export LC_ALL=C
-export LANG=C
-export TZ=UTC
 #
 # Usage:
 #   ./.github/scripts/product-management-domain-done-score.sh <bundle_dir> [--min-score 80] [--quiet]
@@ -33,6 +30,9 @@ ROOT_FOR_LIB="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LIB_DIR="$ROOT_FOR_LIB/phosphene/phosphene-core/lib"
 # shellcheck source=/dev/null
 source "$LIB_DIR/phosphene_env.sh"
+# shellcheck source=/dev/null
+source "$LIB_DIR/phosphene_done_score_metrics.sh"
+phos_ds_env_defaults
 
 usage() {
   cat <<'EOF'
@@ -47,8 +47,8 @@ Notes:
   - The score is "earn-only": you only gain points by adding substance + linkages.
 
 Score box (0–100):
-  - volume (25):    output_words / input_words (full points at --vol-full-ratio; default 1.00)
-  - diversity (25): entropy_norm + unique_words_ratio (stopword-filtered)
+  - volume (25):    out_words / in_words (full points at --vol-full-ratio; default 1.00)
+  - diversity (25): ent_norm + uniq_ratio (stopword-filtered)
   - depth (25):     fragment_avg_words + two_sentence_ratio + requirements_fill_ratio + AC/telemetry fill
   - connectivity (25):
       - input linkage (PER/PROP refs to upstream set)
@@ -91,7 +91,7 @@ if [[ "$BUNDLE_DIR" != /* ]]; then
 fi
 [[ -d "$BUNDLE_DIR" ]] || fail "Missing bundle dir: $BUNDLE_DIR"
 
-if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+if ! phos_ds_assert_numeric_0_100 "$MIN_SCORE"; then
   fail "--min-score must be numeric (0..100)"
 fi
 if ! [[ "$VOL_FULL_RATIO" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
@@ -159,49 +159,13 @@ read_header_value() {
   return 1
 }
 
-append_section_text() {
-  # Extract plaintext-ish content from markdown between a start heading and the next "## " heading:
-  # - ignores fenced code blocks
-  # - skips tables
-  # - strips list prefixes
-  local file="$1"
-  local start="$2"
-  awk -v start="$start" '
-    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-    function clean(line){
-      line = trim(line);
-      sub(/^-+[[:space:]]+/, "", line);
-      if (line=="") return "";
-      if (line ~ /^\[V-SCRIPT\]/) return "";
-      if (line ~ /^[[:space:]]*[A-Za-z0-9_.-]+[.]sh[[:space:]]*$/) return "";
-      if (line ~ /^[|]/) return ""; # tables
-      return line;
-    }
-    BEGIN{ inside=0; fence=0; }
-    $0==start { inside=1; next }
-    inside && $0 ~ /^## / { exit }
-    inside {
-      if ($0 ~ /^```/) { fence = !fence; next }
-      if (fence) next
-      line = clean($0);
-      if (line!="") print line;
-    }
-  ' "$file"
-}
-
 clean_pm_corpus() {
   # Clean product-marketing corpus fragments (PER/PROP) so IDs/tags/paths don't count.
-  sed -E \
-    -e 's/`[^`]*`/ /g' \
-    -e 's#https?://[^[:space:]]+# #g' \
-    -e 's#file://[^[:space:]]+# #g' \
-    -e 's/[[:alnum:]_.-]+[.]sh\\b/ /g' \
-    -e 's/JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-PER-[0-9]{4}/ /g' \
-    -e 's/(BOOST|REL|CAP)-[0-9]{4}-PROP-[0-9]{4}/ /g' \
-    -e 's/(PER|PROP|CPE|SEG|PITCH|RA|E|VPD|ROADMAP)-[0-9]{3,4}/ /g' \
-    -e 's/[[:space:]]+/ /g' \
-    -e 's/^[[:space:]]+//; s/[[:space:]]+$//' \
-    "$INPUT_PM_CORPUS_TXT" > "$INPUT_PM_CLEAN_TXT"
+  phos_ds_clean_text_common \
+    's/JTBD-(JOB|PAIN|GAIN)-[0-9]{4}-PER-[0-9]{4}/ /g' \
+    's/(BOOST|REL|CAP)-[0-9]{4}-PROP-[0-9]{4}/ /g' \
+    's/(PER|PROP|CPE|SEG|PITCH|RA|E|VPD|ROADMAP)-[0-9]{3,4}/ /g' \
+    < "$INPUT_PM_CORPUS_TXT" > "$INPUT_PM_CLEAN_TXT"
 }
 
 clean_prd_corpus() {
@@ -210,38 +174,13 @@ clean_prd_corpus() {
   # - We intentionally exclude "token dumps" (huge comma-separated seed lists and similar) because
   #   they inflate volume/diversity without adding actionable requirement substance.
   # - This keeps the score aligned to natural-language arguments and structured linkages.
-  sed -E \
-    -e 's/`[^`]*`/ /g' \
-    -e 's#https?://[^[:space:]]+# #g' \
-    -e 's#file://[^[:space:]]+# #g' \
-    -e 's/[[:alnum:]_.-]+[.]sh\\b/ /g' \
-    -e 's/(PER|PROP|CPE|SEG|PITCH|RA|E|VPD|ROADMAP|FR|PRD)-[0-9]{3,4}/ /g' \
-    -e 's/R-[A-Z]+-[0-9]{3}/ /g' \
-    -e 's/NFR-[A-Z]+-[0-9]{3}/ /g' \
-    -e 's/F-[A-Z]+-[0-9]{2}/ /g' \
-    -e 's/[[:space:]]+/ /g' \
-    -e 's/^[[:space:]]+//; s/[[:space:]]+$//' \
-    "$CORPUS_TXT" \
-    | awk '
-        # Drop likely "token dump" lines:
-        # - very high comma counts (e.g. lexicon keyword lists)
-        # - CSV-like sequences with no spaces after commas (e.g. seed lists: a,b,c,d,...)
-        # This is intentionally heuristic and conservative.
-        {
-          orig=$0
-          line=$0
-          commas=0
-          dense_commas=0
-          commas = gsub(/,/, "", line)
-          tmp=$0
-          dense_commas = gsub(/,[[:alnum:]]/, "", tmp)
-          # If a single line contains a very long enumeration, it is almost certainly non-substantive
-          # with respect to PRD requirements quality (and is easy to game).
-          if (commas >= 12) next
-          if (dense_commas >= 8) next
-          print orig
-        }
-      ' > "$CORPUS_CLEAN_TXT"
+  phos_ds_clean_text_common \
+    's/(PER|PROP|CPE|SEG|PITCH|RA|E|VPD|ROADMAP|FR|PRD)-[0-9]{3,4}/ /g' \
+    's/R-[A-Z]+-[0-9]{3}/ /g' \
+    's/NFR-[A-Z]+-[0-9]{3}/ /g' \
+    's/F-[A-Z]+-[0-9]{2}/ /g' \
+    < "$CORPUS_TXT" \
+    | phos_ds_filter_token_dump > "$CORPUS_CLEAN_TXT"
 }
 
 extract_input_vpds() {
@@ -283,8 +222,8 @@ index_input_personas_props() {
           if (txt!="" && txt!="<...>") print txt;
         }
       ' "$f" >> "$INPUT_PM_CORPUS_TXT"
-      append_section_text "$f" "## Snapshot summary" >> "$INPUT_PM_CORPUS_TXT" || true
-      append_section_text "$f" "## Notes" >> "$INPUT_PM_CORPUS_TXT" || true
+      phos_ds_append_section_text "$f" "## Snapshot summary" >> "$INPUT_PM_CORPUS_TXT" || true
+      phos_ds_append_section_text "$f" "## Notes" >> "$INPUT_PM_CORPUS_TXT" || true
     done
 
     find "$vpd_dir" -type f -name "PROP-*.md" 2>/dev/null | sort | while IFS= read -r f; do
@@ -309,8 +248,8 @@ index_input_personas_props() {
           if (txt!="" && txt!="<...>") print txt;
         }
       ' "$f" >> "$INPUT_PM_CORPUS_TXT"
-      append_section_text "$f" "## Formal Pitch" >> "$INPUT_PM_CORPUS_TXT" || true
-      append_section_text "$f" "## Notes" >> "$INPUT_PM_CORPUS_TXT" || true
+      phos_ds_append_section_text "$f" "## Formal Pitch" >> "$INPUT_PM_CORPUS_TXT" || true
+      phos_ds_append_section_text "$f" "## Notes" >> "$INPUT_PM_CORPUS_TXT" || true
     done
   done < "$INPUT_VPD_IDS_TXT"
 
@@ -632,7 +571,7 @@ extract_input_vpds
 index_input_personas_props
 clean_pm_corpus
 
-input_words="$(wc -w < "$INPUT_PM_CLEAN_TXT" | awk '{print $1}')"
+in_words="$(wc -w < "$INPUT_PM_CLEAN_TXT" | awk '{print $1}')"
 input_personas="$(wc -l < "$INPUT_PER_IDS_TXT" | awk '{print $1}')"
 input_props="$(wc -l < "$INPUT_PROP_IDS_TXT" | awk '{print $1}')"
 
@@ -647,65 +586,20 @@ done < <(find "$BUNDLE_DIR" -type f -name "*.md" 2>/dev/null | sort)
 append_prd_table_fragments
 clean_prd_corpus
 
-output_words="$(wc -w < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
+out_words="$(wc -w < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
 
 # Diversity stats from cleaned corpus (stopword-filtered; length filtered).
-# Outputs: total_tokens \t uniq_tokens \t entropy_bits_per_token
-div_stats="$(cat "$CORPUS_CLEAN_TXT" 2>/dev/null \
-  | tr '[:upper:]' '[:lower:]' \
-  | tr -cs '[:alnum:]' '\n' \
-  | awk '
-      BEGIN{
-        split("a an the and or but if then else so to of in on for with without from into over under by as at is are was were be been being i you we they he she it my your our their this that these those not no yes", sw, " ");
-        for (i in sw) stop[sw[i]]=1;
-      }
-      NF{
-        w=$0;
-        if (length(w) < 3) next;
-        if (w ~ /^[0-9]+$/) next;
-        if (stop[w]) next;
-        cnt[w]++;
-      }
-      END{
-        for (w in cnt) print w "\t" cnt[w];
-      }
-    ' \
-  | sort -t $'\t' -k1,1 \
-  | awk -F'\t' '
-      { total += $2; uniq++; cnts[uniq] = $2; }
-      END{
-        if (total<=0) { printf "0\t0\t0.0000\n"; exit }
-        H=0;
-        for (i=1;i<=uniq;i++) {
-          p = cnts[i]/total;
-          H += (-p * (log(p)/log(2)));
-        }
-        printf "%d\t%d\t%.4f\n", total+0, uniq+0, H;
-      }
-    ')"
-div_total="$(echo "$div_stats" | awk -F'\t' '{print $1}')"
+# Outputs: out_tokens \t unique_words \t H \t ent_norm \t uniq_ratio
+div_stats="$(phos_ds_entropy_stats "$CORPUS_CLEAN_TXT")"
 unique_words="$(echo "$div_stats" | awk -F'\t' '{print $2}')"
-entropy="$(echo "$div_stats" | awk -F'\t' '{print $3}')"
+H="$(echo "$div_stats" | awk -F'\t' '{print $3}')"
+ent_norm="$(echo "$div_stats" | awk -F'\t' '{print $4}')"
+uniq_ratio="$(echo "$div_stats" | awk -F'\t' '{print $5}')"
 
-frag_stats="$(awk '
-  function sent_count(s){ c=0; for (i=1;i<=length(s);i++){ ch=substr(s,i,1); if (ch=="." || ch=="!" || ch=="?") c++; } return c; }
-  BEGIN{ n=0; ge2=0; wsum=0; }
-  {
-    n++;
-    w=split($0, a, /[[:space:]]+/);
-    wsum += (w>0?w:0);
-    sc=sent_count($0);
-    if (sc>=2) ge2++;
-  }
-  END{
-    avgw=(n>0)?(wsum/n):0;
-    r=(n>0)?(ge2/n):0;
-    printf "%d\t%.4f\t%.4f\n", n+0, avgw, r;
-  }
-' "$CORPUS_CLEAN_TXT")"
+frag_stats="$(phos_ds_fragment_stats "$CORPUS_CLEAN_TXT")"
 frag_count="$(echo "$frag_stats" | awk -F'\t' '{print $1}')"
 frag_avg_words="$(echo "$frag_stats" | awk -F'\t' '{print $2}')"
-frag_ge2_ratio="$(echo "$frag_stats" | awk -F'\t' '{print $3}')"
+two_sent_ratio="$(echo "$frag_stats" | awk -F'\t' '{print $3}')"
 
 # Given/When/Then tokens (case-insensitive) across corpus fragments (pre-clean).
 gwt_count="$(cat "$CORPUS_TXT" 2>/dev/null | awk '
@@ -744,9 +638,9 @@ trace_rows="$(extract_feature_req_edges)"
 n_req="$(wc -l < "$REQ_IDS_TXT" | awk '{print $1}')"
 n_feat="$(wc -l < "$FEATURE_IDS_TXT" | awk '{print $1}')"
 
-ac_fill_ratio="$(awk -v a="$ac_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
-tel_fill_ratio="$(awk -v a="$tel_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
-gwt_row_ratio="$(awk -v a="$gwt_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+row_fill_ac="$(awk -v a="$ac_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+row_fill_tel="$(awk -v a="$tel_filled_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
+row_fill_gwt="$(awk -v a="$gwt_rows" -v t="$req_total_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=a/t; if (x>1) x=1; printf "%.4f\n", x }')"
 
 # Targets derived from input magnitude (avoid "one row is enough").
 target_req_rows="$(awk -v p="$input_props" -v per="$input_personas" 'BEGIN{
@@ -766,7 +660,7 @@ target_trace_rows="$(awk -v p="$input_props" -v r="$n_req" 'BEGIN{
   print t+0;
 }')"
 
-req_fill_ratio="$(awk -v n="$func_req_rows" -v t="$target_req_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
+row_fill_req="$(awk -v n="$func_req_rows" -v t="$target_req_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
 trace_fill_ratio="$(awk -v n="$trace_rows" -v t="$target_trace_rows" 'BEGIN{ if (t<=0) { print 0; exit } x=n/t; if (x>1) x=1; printf "%.4f\n", x }')"
 
 # ----------------------------
@@ -810,9 +704,9 @@ prd_internal_cov="$(awk -v a="$trace_req_cov" -v b="$trace_feat_cov" -v c="$trac
 # ----------------------------
 # Scoring (earn-only; 25 pts per category)
 # ----------------------------
-scores="$(awk -v out_words="$output_words" -v in_words="$input_words" -v vol_full="$VOL_FULL_RATIO" \
-  -v ent="$entropy" -v uniq_words="$unique_words" -v corpus_words="$output_words" \
-  -v favg="$frag_avg_words" -v two_sent="$frag_ge2_ratio" -v req_fill="$req_fill_ratio" -v ac_fill="$ac_fill_ratio" -v tel_fill="$tel_fill_ratio" -v gwt_fill="$gwt_row_ratio" \
+scores="$(awk -v out_words="$out_words" -v in_words="$in_words" -v vol_full="$VOL_FULL_RATIO" \
+  -v ent_norm="$ent_norm" -v uniq_ratio="$uniq_ratio" \
+  -v favg="$frag_avg_words" -v two_sent="$two_sent_ratio" -v row_fill_req="$row_fill_req" -v row_fill_ac="$row_fill_ac" -v row_fill_tel="$row_fill_tel" -v row_fill_gwt="$row_fill_gwt" \
   -v dens_in="$dens_input" -v dens_req="$dens_req_link" -v dens_fr="$dens_feat_req" \
   -v cov_internal="$prd_internal_cov" -v mult_req="$multi_req_ratio" -v trace_fill="$trace_fill_ratio" '
 
@@ -843,9 +737,6 @@ BEGIN {
 
   # Ratios
   out_in_ratio = (in_words>0)?(out_words/in_words):0;
-  uniq_ratio = (corpus_words>0)?(uniq_words/corpus_words):0;
-  ent_norm = (uniq_words>1 && ent>0)?(ent/(log(uniq_words)/log(2))):0;
-
   # Normalize to 0..100
   s_vol = score_linear(out_in_ratio, 0.0, vol_full);
   s_ent = score_linear(ent_norm, 0.10, 0.98);
@@ -853,10 +744,10 @@ BEGIN {
 
   s_favg = score_linear(favg, 10, 34);
   s_2s   = score_linear(two_sent, 0.20, 0.75);
-  s_reqf = score_linear(req_fill, 0.10, 1.00);
-  s_acf  = score_linear(ac_fill, 0.20, 0.85);
-  s_telf = score_linear(tel_fill, 0.10, 0.75);
-  s_gwt  = score_linear(gwt_fill, 0.10, 0.60);
+  s_reqf = score_linear(row_fill_req, 0.10, 1.00);
+  s_acf  = score_linear(row_fill_ac, 0.20, 0.85);
+  s_telf = score_linear(row_fill_tel, 0.10, 0.75);
+  s_gwt  = score_linear(row_fill_gwt, 0.10, 0.60);
 
   s_in   = score_linear(dens_in, 0.10, 0.80);
   s_req  = score_linear(dens_req, 0.05, 0.40);
@@ -953,15 +844,15 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "Inputs (product-marketing):"
   echo "  - VPD(s): $(tr '\n' ' ' < "$INPUT_VPD_IDS_TXT" | sed -E 's/[[:space:]]+$//')"
   echo "  - personas: ${input_personas}, propositions: ${input_props}"
-  echo "  - input:   ${input_words} cleaned words (agent-written; IDs/scripts/tags excluded)"
+  echo "  - input:   ${in_words} cleaned words (agent-written; IDs/scripts/tags excluded)"
   echo ""
   echo "Output (product-management PRD):"
-  echo "  - output:  ${output_words} cleaned words (IDs/scripts/tags excluded)"
+  echo "  - output:  ${out_words} cleaned words (IDs/scripts/tags excluded)"
   echo ""
   echo "Subscores (0–100):"
   printf "  - %-12s %6.2f\n" "volume" "$score_vol"
-  printf "  - %-12s %6.2f  (entropy=%.4f bits/token, unique_words=%d)\n" "diversity" "$score_div" "$entropy" "$unique_words"
-  printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sentence_ratio=%.4f, req_fill=%.4f, ac_fill=%.4f, tel_fill=%.4f, gwt_row=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$frag_ge2_ratio" "$req_fill_ratio" "$ac_fill_ratio" "$tel_fill_ratio" "$gwt_row_ratio"
+  printf "  - %-12s %6.2f  (H=%.4f bits/token, ent_norm=%.4f, unique_words=%d, uniq_ratio=%.4f)\n" "diversity" "$score_div" "$H" "$ent_norm" "$unique_words" "$uniq_ratio"
+  printf "  - %-12s %6.2f  (frag_avg_words=%.4f, two_sent_ratio=%.4f, row_fill_req=%.4f, row_fill_ac=%.4f, row_fill_tel=%.4f, row_fill_gwt=%.4f)\n" "depth" "$score_depth" "$frag_avg_words" "$two_sent_ratio" "$row_fill_req" "$row_fill_ac" "$row_fill_tel" "$row_fill_gwt"
   printf "  - %-12s %6.2f  (dens_input=%.4f, dens_req_link=%.4f, dens_feat_req=%.4f, internal_cov=%.4f)\n" "connectivity" "$score_conn" "$dens_input" "$dens_req_link" "$dens_feat_req" "$prd_internal_cov"
   echo ""
   echo "Pane readiness:"
@@ -973,9 +864,9 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo ""
   echo "Key counters (scaled targets):"
   printf "  - functional requirement rows: %d (target=%d)\n" "$func_req_rows" "$target_req_rows"
-  printf "    - AC filled rows:           %d/%d (%.4f)\n" "$ac_filled_rows" "$req_total_rows" "$ac_fill_ratio"
-  printf "    - telemetry filled rows:    %d/%d (%.4f)\n" "$tel_filled_rows" "$req_total_rows" "$tel_fill_ratio"
-  printf "    - rows with Given/When/Then:%d/%d (%.4f)\n" "$gwt_rows" "$req_total_rows" "$gwt_row_ratio"
+  printf "    - AC filled rows:           %d/%d (%.4f)\n" "$ac_filled_rows" "$req_total_rows" "$row_fill_ac"
+  printf "    - telemetry filled rows:    %d/%d (%.4f)\n" "$tel_filled_rows" "$req_total_rows" "$row_fill_tel"
+  printf "    - rows with Given/When/Then:%d/%d (%.4f)\n" "$gwt_rows" "$req_total_rows" "$row_fill_gwt"
   printf "  - traceability matrix rows:    %d (target=%d)\n" "$trace_rows" "$target_trace_rows"
   printf "  - G/W/T tokens (bundle):       %d\n" "$gwt_count"
   printf "  - multi-target requirements:   %d/%d (%.4f)\n" "$multi_req_rows" "$req_total_rows" "$multi_req_ratio"
@@ -995,4 +886,3 @@ awk -v s="$overall" -v m="$MIN_SCORE" -v p="$pane_ready" 'BEGIN{
   if (p+0 < 1) exit 1;
   exit (s+0 >= m+0) ? 0 : 1;
 }'
-

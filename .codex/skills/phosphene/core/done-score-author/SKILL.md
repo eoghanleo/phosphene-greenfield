@@ -20,6 +20,11 @@ Create deterministic done-score scripts that resist gaming and reward substantiv
 - Avoid non-deterministic sources (time, randomness, unsorted globs).
 - Use stable printing (fixed decimals, stable ordering).
 
+## Shared metrics library (MUST)
+- **MUST** source `phosphene/phosphene-core/lib/phosphene_done_score_metrics.sh` immediately after `phosphene_env.sh` in every done-score script.
+- **MUST** use canonical metric base names from `references/done-score-design.md` for variable names and report labels (suffixes allowed for multiple instances).
+- When introducing new metrics, **MUST** add them to the shared library (or document why they must remain domain-local).
+
 ## Script composition modules
 - Discovery: locate docs roots and input roots; validate existence.
 - Extraction: parse sections and tables; emit canonical TSVs.
