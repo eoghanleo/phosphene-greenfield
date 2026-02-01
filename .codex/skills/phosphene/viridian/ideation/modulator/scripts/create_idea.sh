@@ -93,21 +93,23 @@ create_idea.sh
 
 - <What must we validate in <research>?>
 
-## Divergence enumeration (pure)
+## Creative exploration matrix
 
-| CandID | Ring | Axes | OneLiner |
-| --- | --- | --- | --- |
-| CAND-01 | adjacent | mechanism,channel | <One-line candidate summary> |
-| CAND-02 | orthogonal | business_model,user | <One-line candidate summary> |
-| CAND-03 | extrapolatory | constraint,modality | <One-line candidate summary> |
+The matrix must enumerate **every combination** of:
+- 3 rings: \`adjacent\`, \`orthogonal\`, \`extrapolatory\`
+- 10 axes: from the issue’s \`[PHOSPHENE_IDEATION_AXES]\` (persisted into the SPARK header)
 
-## Stress-test enumeration (all candidates)
+Use the control scripts (do not hand-edit table rows):
 
-| CandID | FailureMode | ValueCore | Differentiator |
-| --- | --- | --- | --- |
-| CAND-01 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
-| CAND-02 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
-| CAND-03 | <What breaks first?> | <Smallest valuable core> | <Why this beats baseline> |
+\`\`\`text
+[V-SCRIPT]:
+ideation_matrix_bootstrap.sh
+ideation_matrix_set_idea_paragraph.sh
+ideation_matrix_set_stress_test.sh
+\`\`\`
+
+| CandID | Ring | AxisID | Axis | FailureMode | ValueCore | Differentiator | Idea |
+| --- | --- | --- | --- | --- | --- | --- | --- |
 
 ## Revision passes
 

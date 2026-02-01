@@ -60,8 +60,8 @@ OUT_IN_RATIO_CAP="10.00"
 PRIMARY_WORD_FLOOR="100"
 PRIMARY_GATE_MULT="3"
 PRIMARY_FULL_MULT="10"
-CAND_GATE="12"
-CAND_FULL="18"
+CAND_GATE="30"
+CAND_FULL="30"
 SEC_TRACE_TARGET="3"
 
 while [[ $# -gt 0 ]]; do
@@ -164,6 +164,7 @@ nrq_total=0
 spark_count=0
 in_words_primary=0
 in_words_secondary=0
+expected_total_rows=0
 
 read_header_value() {
   local file="$1"
@@ -240,70 +241,117 @@ for f in "${OUTPUT_FILES[@]}"; do
   ' "$f")"
   nrq_total=$((nrq_total + nrq_count))
 
-  div_ids_local="$tmp/div_ids_$(basename "$f").txt"
-  stress_ids_local="$tmp/stress_ids_$(basename "$f").txt"
-  : > "$div_ids_local"
-  : > "$stress_ids_local"
+  axes_list_local="$tmp/axes_${issue_number}.txt"
+  expected_local="$tmp/matrix_expected_${issue_number}.tsv"
+  found_local="$tmp/matrix_found_$(basename "$f").tsv"
+  : > "$axes_list_local"
+  : > "$expected_local"
+  : > "$found_local"
 
-  div_count="$(awk -F'|' -v start="## Divergence enumeration (pure)" -v ids="$div_ids_local" -v rings="$RINGS_TXT" -v axes="$AXES_TXT" -v corpus="$CORPUS_TXT" '
-    function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-    BEGIN{ inside=0; count=0; }
-    $0==start { inside=1; next }
-    inside && $0 ~ /^## / { exit }
-    !inside { next }
-    $0 !~ /^\|/ { next }
-    {
-      id=trim($2); ring=tolower(trim($3)); axes_raw=trim($4); one=trim($5);
-      if (id=="" || id=="CandID" || id ~ /^-+$/) next;
-      if (id !~ /^CAND-[0-9]{2,3}$/) { print "Invalid CandID in divergence table: " id > "/dev/stderr"; exit 2 }
-      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid Ring in divergence table: " ring > "/dev/stderr"; exit 2 }
-      if (axes_raw=="" || axes_raw ~ /^<.*>$/) { print "Missing Axes for " id > "/dev/stderr"; exit 2 }
-      if (one=="" || one ~ /^<.*>$/) { print "Missing OneLiner for " id > "/dev/stderr"; exit 2 }
-      print id >> ids;
-      print ring >> rings;
-      n=split(axes_raw, arr, /[,;]+/);
-      for (i=1;i<=n;i++){ a=trim(arr[i]); if (a!="") print tolower(a) >> axes; }
-      print one >> corpus;
-      count++;
-    }
-    END{ print count+0; }
-  ' "$f")" || div_count=0
-
-  if [[ "$div_count" -lt "$CAND_GATE" ]]; then
-    gate_ok=0
-    gate_notes+=("Need at least ${CAND_GATE} divergence candidates in $(basename "$f")")
+  axis_ids_raw=""
+  if [[ -f "$spark_path" ]]; then
+    axis_ids_raw="$(read_header_value "$spark_path" "ExplorationAxisIDs" || true)"
   fi
-  div_total=$((div_total + div_count))
+  if [[ -z "${axis_ids_raw:-}" ]]; then
+    gate_ok=0
+    gate_notes+=("Missing ExplorationAxisIDs in SPARK header for issue ${issue_number} (${spark_id}.md)")
+  else
+    printf "%s\n" "$axis_ids_raw" \
+      | tr ',' '\n' \
+      | sed -E 's/^[[:space:]]+|[[:space:]]+$//g' \
+      | grep -E '^AX-[0-9]{3}$' \
+      > "$axes_list_local" || true
 
-  stress_count="$(awk -F'|' -v start="## Stress-test enumeration (all candidates)" -v ids="$stress_ids_local" -v corpus="$CORPUS_TXT" '
+    axis_count_local="$(wc -l < "$axes_list_local" | awk '{print $1}')"
+    axis_uniq_local="$(sort -u "$axes_list_local" | wc -l | awk '{print $1}')"
+    if [[ "$axis_count_local" -ne 10 || "$axis_uniq_local" -ne 10 ]]; then
+      gate_ok=0
+      gate_notes+=("ExplorationAxisIDs must contain 10 unique AX-### IDs for issue ${issue_number} (found ${axis_uniq_local} unique / ${axis_count_local} parsed)")
+    else
+      axis_index=0
+      while IFS= read -r axis_id; do
+        [[ -n "${axis_id:-}" ]] || continue
+        axis_index=$((axis_index + 1))
+        for ring in adjacent orthogonal extrapolatory; do
+          ring_index=0
+          case "$ring" in
+            adjacent) ring_index=1 ;;
+            orthogonal) ring_index=2 ;;
+            extrapolatory) ring_index=3 ;;
+          esac
+          n=$(( (axis_index - 1) * 3 + ring_index ))
+          cand_id="$(printf "CAND-%02d" "$n")"
+          printf "%s\t%s\t%s\n" "$cand_id" "$ring" "$axis_id" >> "$expected_local"
+        done
+      done < "$axes_list_local"
+      expected_rows_local="$(wc -l < "$expected_local" | awk '{print $1}')"
+      expected_total_rows=$((expected_total_rows + expected_rows_local))
+    fi
+  fi
+
+  matrix_count="$(awk -F'|' -v start="## Creative exploration matrix" -v out="$found_local" -v rings="$RINGS_TXT" -v axes="$AXES_TXT" -v corpus="$CORPUS_TXT" '
     function trim(s){ gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s; }
-    BEGIN{ inside=0; count=0; }
-    $0==start { inside=1; next }
+    function sent_count(s){
+      c=0;
+      for (i=1;i<=length(s);i++){
+        ch=substr(s,i,1);
+        if (ch=="." || ch=="!" || ch=="?") c++;
+      }
+      return c;
+    }
+    BEGIN{ inside=0; found=0; count=0; }
+    $0==start { inside=1; found=1; next }
     inside && $0 ~ /^## / { exit }
     !inside { next }
-    $0 !~ /^\|/ { next }
+    $0 !~ /^[|]/ { next }
     {
-      id=trim($2); failm=trim($3); core=trim($4); diff=trim($5);
+      n=split($0, a, /[|]/);
+      if (n != 10) { print "Invalid matrix row (unexpected pipe count; avoid | in cells)" > "/dev/stderr"; exit 2 }
+      id=trim(a[2]); ring=tolower(trim(a[3])); axis_id=trim(a[4]); axis=trim(a[5]);
+      failm=trim(a[6]); core=trim(a[7]); diff=trim(a[8]); idea=trim(a[9]);
       if (id=="" || id=="CandID" || id ~ /^-+$/) next;
-      if (id !~ /^CAND-[0-9]{2,3}$/) { print "Invalid CandID in stress-test table: " id > "/dev/stderr"; exit 2 }
+      if (id !~ /^CAND-[0-9]{2}$/) { print "Invalid CandID in matrix table: " id > "/dev/stderr"; exit 2 }
+      if (ring !~ /^(adjacent|orthogonal|extrapolatory)$/) { print "Invalid Ring in matrix table: " ring " for " id > "/dev/stderr"; exit 2 }
+      if (axis_id !~ /^AX-[0-9]{3}$/) { print "Invalid AxisID in matrix table: " axis_id " for " id > "/dev/stderr"; exit 2 }
+      if (axis=="" || axis ~ /^<.*>$/) { print "Missing Axis cell for " id > "/dev/stderr"; exit 2 }
       if (failm=="" || failm ~ /^<.*>$/) { print "Missing FailureMode for " id > "/dev/stderr"; exit 2 }
       if (core=="" || core ~ /^<.*>$/) { print "Missing ValueCore for " id > "/dev/stderr"; exit 2 }
       if (diff=="" || diff ~ /^<.*>$/) { print "Missing Differentiator for " id > "/dev/stderr"; exit 2 }
-      print id >> ids;
+      if (idea=="" || idea ~ /^<.*>$/) { print "Missing Idea paragraph for " id > "/dev/stderr"; exit 2 }
+      sc=sent_count(idea);
+      if (sc < 3) { print "Idea paragraph must be >= 3 sentences for " id " (found " sc ")" > "/dev/stderr"; exit 2 }
+      print ring >> rings;
+      print axis_id >> axes;
       print failm >> corpus;
       print core >> corpus;
       print diff >> corpus;
+      print idea >> corpus;
+      printf "%s\t%s\t%s\n", id, ring, axis_id >> out;
       count++;
     }
-    END{ print count+0; }
-  ' "$f")" || stress_count=0
+    END{
+      if (found==0) { print "Missing required heading: " start > "/dev/stderr"; exit 2 }
+      print count+0;
+    }
+  ' "$f")" || matrix_count=0
 
-  stress_total=$((stress_total + stress_count))
-
-  if ! diff -u <(sort -u "$div_ids_local") <(sort -u "$stress_ids_local") >/dev/null 2>&1; then
+  if [[ "$matrix_count" -eq 0 ]]; then
     gate_ok=0
-    gate_notes+=("CandID mismatch between divergence and stress-test tables in $(basename "$f")")
+    gate_notes+=("Creative exploration matrix parse failed in $(basename "$f")")
   fi
+
+  if [[ -s "$expected_local" && -s "$found_local" ]]; then
+    if ! diff -u <(sort "$expected_local") <(sort "$found_local") >/dev/null 2>&1; then
+      gate_ok=0
+      gate_notes+=("Creative exploration matrix does not match required axes×rings combinations in $(basename "$f")")
+    fi
+  else
+    gate_ok=0
+    gate_notes+=("Missing expected/found matrix inputs for $(basename "$f") (SPARK axes header required)")
+  fi
+
+  div_total=$((div_total + matrix_count))
+  stress_total=$((stress_total + matrix_count))
 
   rev_count="$(awk -v start="## Revision passes" '
     BEGIN{ inside=0; c=0; }
@@ -405,8 +453,11 @@ row_fill="0"
 # ----------------------------
 # 6) Normalization
 # ----------------------------
-CAND_TARGET="$CAND_FULL"
-AXES_TARGET="6"
+CAND_TARGET="${expected_total_rows:-0}"
+if [[ "$CAND_TARGET" -le 0 ]]; then
+  CAND_TARGET="$CAND_FULL"
+fi
+AXES_TARGET="10"
 NRQ_TARGET="3"
 
 s_cand="$(phos_ds_score_linear "$div_total" 0 "$CAND_TARGET")"
@@ -478,8 +529,8 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo ""
   echo "Outputs:"
   echo "  - idea files: ${out_items}"
-  echo "  - candidates: ${div_total}"
-  echo "  - stress-tested: ${stress_total}"
+  echo "  - matrix rows: ${div_total}"
+  echo "  - rows with stress-tests: ${stress_total}"
   echo "  - output words: ${out_words}"
   echo "  - out/primary ratio (capped): ${out_in_primary_ratio}"
   echo ""

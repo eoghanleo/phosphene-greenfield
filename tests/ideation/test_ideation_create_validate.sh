@@ -9,6 +9,9 @@ source "$SCRIPT_DIR/../lib/done_receipt_helpers.sh"
 
 ROOT="$PHOSPHENE_REPO_ROOT"
 IDEA_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/create_idea.sh"
+BOOTSTRAP_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_bootstrap.sh"
+SET_IDEA_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_set_idea_paragraph.sh"
+SET_STRESS_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_matrix_set_stress_test.sh"
 VALIDATE_SCRIPT="$ROOT/.github/scripts/validate_idea.sh"
 DONE_SCORE_SCRIPT="$ROOT/.github/scripts/ideation-domain-done-score.sh"
 EMIT_SCRIPT="$ROOT/.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_emit_done_receipt.sh"
@@ -43,58 +46,6 @@ awk -v n="$issue_number" '
 ' "$idea_path" > "$tmp"
 mv "$tmp" "$idea_path"
 
-div_table="$tmp.div"
-cat > "$div_table" <<'EOF'
-| CandID | Ring | Axes | OneLiner |
-| --- | --- | --- | --- |
-| CAND-01 | adjacent | mechanism,channel | Fast-path workflow tweak |
-| CAND-02 | adjacent | user,context | Role-specific entry point |
-| CAND-03 | adjacent | modality,channel | Lightweight capture loop |
-| CAND-04 | orthogonal | business_model,user | Usage-based trigger |
-| CAND-05 | orthogonal | mechanism,workflow | Offline-first variant |
-| CAND-06 | orthogonal | channel,feedback_loop | Ambient notification model |
-| CAND-07 | extrapolatory | constraint,modality | No-input predictive mode |
-| CAND-08 | extrapolatory | mechanism,context | Self-healing system |
-| CAND-09 | extrapolatory | business_model,constraint | Negative-cost path |
-| CAND-10 | adjacent | user,feedback_loop | Micro-reward loop |
-| CAND-11 | orthogonal | modality,mechanism | Audio-first loop |
-| CAND-12 | extrapolatory | channel,workflow | Cross-surface orchestration |
-EOF
-
-stress_table="$tmp.stress"
-cat > "$stress_table" <<'EOF'
-| CandID | FailureMode | ValueCore | Differentiator |
-| --- | --- | --- | --- |
-| CAND-01 | Upstream latency kills trust | Fewer steps to first signal | Removes manual handoff |
-| CAND-02 | Role mismatch causes churn | Right entry for the moment | Context-aware targeting |
-| CAND-03 | Capture fatigue | One-tap logging | Minimal cognitive load |
-| CAND-04 | Pricing friction | Pay only for value moments | Aligns cost to spikes |
-| CAND-05 | Sync conflicts | Local continuity | Offline reliability |
-| CAND-06 | Notification overload | Ambient attention | Passive visibility |
-| CAND-07 | Bad predictions | Zero-input guidance | Proactive framing |
-| CAND-08 | Drift from reality | Auto-correct loops | System self-repairs |
-| CAND-09 | Economics collapse | Negative cost loop | Incentive inversion |
-| CAND-10 | Reward spam | Small wins | Consistent momentum |
-| CAND-11 | Audio noise | Hands-free access | New modality channel |
-| CAND-12 | Orchestration complexity | Unified surface | Cross-surface cohesion |
-EOF
-
-tmp2="$(mktemp)"
-awk -v div_file="$div_table" -v stress_file="$stress_table" '
-  BEGIN{ in_div=0; in_stress=0; }
-  $0=="## Divergence enumeration (pure)" { print; print ""; while ((getline line < div_file) > 0) print line; close(div_file); in_div=1; next }
-  in_div && $0 ~ /^## / { in_div=0 }
-  $0=="## Stress-test enumeration (all candidates)" { print; print ""; while ((getline line < stress_file) > 0) print line; close(stress_file); in_stress=1; next }
-  in_stress && $0 ~ /^## / { in_stress=0 }
-  in_div || in_stress { next }
-  { print }
-' "$idea_path" > "$tmp2"
-mv "$tmp2" "$idea_path"
-
-for i in $(seq 1 60); do
-  echo "Additional context line $i: The colony simulation emphasizes emergent behavior, lineage continuity, and clear causal explanations." >> "$idea_path"
-done
-
 spark_dir="$ROOT/phosphene/signals/sparks"
 mkdir -p "$spark_dir"
 spark_id="$(printf "SPARK-%06d" "$issue_number")"
@@ -106,6 +57,7 @@ WorkID: ${idea_id}
 Lane: viridian
 UpstreamSignalID:
 InputWorkIDs:
+ExplorationAxisIDs: AX-001,AX-002,AX-003,AX-004,AX-005,AX-006,AX-007,AX-008,AX-009,AX-010
 CreatedUTC: 2026-02-01T00:00:00Z
 
 ## Issue snapshot
@@ -114,8 +66,30 @@ Test ideation input snapshot.
 EOF
 cleanup_paths+=("$spark_path")
 
+bash "$BOOTSTRAP_SCRIPT" --file "$idea_path" >/dev/null
+
+axis_ids=(AX-001 AX-002 AX-003 AX-004 AX-005 AX-006 AX-007 AX-008 AX-009 AX-010)
+for axis_id in "${axis_ids[@]}"; do
+  for ring in adjacent orthogonal extrapolatory; do
+    para="First sentence: explore via ${ring} dynamics. Second sentence: infuse the ${axis_id} axis as a context stance. Third sentence: anchor tightly to the SPARK prompt and constraints."
+    bash "$SET_IDEA_SCRIPT" --file "$idea_path" --axis-id "$axis_id" --ring "$ring" --paragraph "$para" >/dev/null
+  done
+done
+
+for n in $(seq -w 1 30); do
+  cand="CAND-${n}"
+  bash "$SET_STRESS_SCRIPT" --file "$idea_path" --cand-id "$cand" \
+    --failure-mode "Failure mode for ${cand} under constraints." \
+    --value-core "Value core for ${cand} if everything else fails." \
+    --differentiator "Differentiator for ${cand} compared to baseline." >/dev/null
+done
+
 bash "$VALIDATE_SCRIPT" "$idea_path"
-bash "$DONE_SCORE_SCRIPT" --file "$idea_path" --min-score 0 >/dev/null
+done_out=""
+if ! done_out="$(bash "$DONE_SCORE_SCRIPT" --file "$idea_path" --min-score 0 2>&1)"; then
+  echo "$done_out"
+  exit 1
+fi
 
 where_line="$("$ROOT/phosphene/phosphene-core/bin/phosphene" id where "$idea_id" | head -n 1)"
 [[ -n "${where_line:-}" ]] || phos_fail "id where failed for $idea_id"

@@ -183,7 +183,7 @@ jobs:
 
               const seed = `${issueNum}:${parent}:${it}`;
               const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "10").trim();
-              const doneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --min-score ${doneScoreMin}`;
+              const doneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --file <IDEA_PATH> --min-score ${doneScoreMin}`;
               const phos_id = `PHOS-${crypto.createHash("sha256").update(seed).digest("hex").slice(0, 12)}`;
               const spark_id = `SPARK-${String(issueNum).padStart(6, "0")}`;
               const spark_path = `phosphene/signals/sparks/${spark_id}.md`;
@@ -245,6 +245,7 @@ jobs:
                   `- **done-score (required)**: \`${doneScoreCmd}\``,
                   `- **done-score threshold**: \`${doneScoreMin}\``,
                   `- **volume rule**: output >= 3x primary input; full points at 10x (primary = SPARK snapshot only)`,
+                  "- **matrix requirement**: 10 sampled axes × 3 rings = 30 rows (Idea paragraph ≥ 3 sentences per row + stress-test fields)",
                   branchLine,
                   "",
                   "TO AGENT (from prism):",
@@ -252,6 +253,7 @@ jobs:
                   "- Read `.codex/skills/phosphene/viridian/ideation/modulator/SKILL.md`",
                   `- Use the SPARK snapshot at \`${spark_path}\` as the authoritative input`,
                   "- Use bash-only domain scripts (no hand-editing script-managed artifacts)",
+                  "- Bootstrap/update the matrix using scripts in `.codex/skills/phosphene/viridian/ideation/modulator/scripts/` (see `[V-SCRIPT]` blocks in the IDEA file)",
                   `- Definition of done: run \`${doneScoreCmd}\` and PASS before writing DONE receipt`,
                   "",
                   "**CRITICAL (TO AGENT)**",

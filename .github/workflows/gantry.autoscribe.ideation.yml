@@ -193,25 +193,88 @@ jobs:
               const domainSkillPath = ".codex/skills/phosphene/viridian/ideation/modulator/SKILL.md";
               const domainScriptsPath = ".codex/skills/phosphene/viridian/ideation/modulator/scripts/";
               const doneScoreMin = String(process.env.PHOSPHENE_DONE_SCORE_MIN || "10").trim();
-              const domainDoneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --min-score ${doneScoreMin}`;
+              const domainDoneScoreCmd = `./.github/scripts/ideation-domain-done-score.sh --file <IDEA_PATH> --min-score ${doneScoreMin}`;
+              const AXES_REGISTRY_PATH = "phosphene/domains/ideation/reference/creative_exploration_axes.tsv";
+              const AXES_OPEN = "[PHOSPHENE_IDEATION_AXES]";
+              const AXES_CLOSE = "[/PHOSPHENE_IDEATION_AXES]";
+
+              const seedFromString = (s) => {
+                const t = String(s || "");
+                let h = 2166136261;
+                for (let i = 0; i < t.length; i++) {
+                  h ^= t.charCodeAt(i);
+                  h = Math.imul(h, 16777619);
+                }
+                return (h >>> 0) || 1;
+              };
+
+              const mulberry32 = (a) => () => {
+                let t = (a += 0x6D2B79F5);
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+              };
+
+              const readAxesRegistry = () => {
+                if (!fs.existsSync(AXES_REGISTRY_PATH)) throw new Error(`Missing axes registry: ${AXES_REGISTRY_PATH}`);
+                const raw = String(fs.readFileSync(AXES_REGISTRY_PATH, "utf8") || "").trim();
+                const lines = raw.split(/\r?\n/).map((l) => l.trimEnd()).filter(Boolean);
+                const out = [];
+                for (let i = 0; i < lines.length; i++) {
+                  const line = lines[i];
+                  if (i === 0 && line.startsWith("AxisID\t")) continue;
+                  const parts = line.split("\t");
+                  if (parts.length < 5) continue;
+                  const [id, category, axis, poles, explanation] = parts;
+                  if (!/^AX-[0-9]{3}$/.test(id)) continue;
+                  out.push({ id, category, axis, poles, explanation });
+                }
+                return out;
+              };
+
+              const sampleAxes = (allAxes, n, seed) => {
+                const rng = mulberry32(Number(seed || 1));
+                const arr = allAxes.slice();
+                for (let i = arr.length - 1; i > 0; i--) {
+                  const j = Math.floor(rng() * (i + 1));
+                  const tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
+                }
+                return arr.slice(0, n);
+              };
+
+              const buildAxesBlock = (selected) => ([
+                AXES_OPEN,
+                ...selected.map((a) => `${a.id} | ${a.category} | ${a.axis} | ${a.poles} | ${a.explanation}`),
+                AXES_CLOSE,
+              ].join("\n"));
 
               const pointerLines = Array.isArray(pointers) && pointers.length
                 ? pointers
                 : [`- Upstream signal: ${resolvedParentSignalId || "(none)"}`];
 
+              const axesBlockText = buildAxesBlock(sampleAxes(readAxesRegistry(), 10, seedFromString(dedupeMarker)));
+
               const notesBlock = [
+                "## CREATIVE EXPLORATION AXES (mandatory for this run)",
+                "",
+                axesBlockText,
+                "",
                 "### Intended behavior",
-                "- Produce a single IDEA artifact with two required enumerations:",
-                "  - Divergence enumeration (pure): >= 12 candidates across rings + axes.",
-                "  - Stress-test enumeration (all candidates): FailureMode, ValueCore, Differentiator for each CandID.",
+                "- Produce a single IDEA artifact that contains a **Creative exploration matrix**:",
+                "  - 10 sampled axes (above) × 3 rings = **30 required rows** (every combination).",
+                "  - Final column must be an **Idea paragraph (≥ 3 sentences)** per row.",
+                "  - Stress-test fields must be present per row: FailureMode, ValueCore, Differentiator.",
+                "- Interpret each axis as a **context infusion** (an abstract stance/persona).",
+                "  - Do NOT copy the axis label/poles verbatim into the Idea paragraph unless it is a perfect fit.",
+                "- Use bash scripts to update the matrix (do not hand-edit table rows).",
                 "- Use the SPARK snapshot as the authoritative primary input.",
                 "- Output volume is evaluated against the primary input only: gate at 3x, full points at 10x.",
                 "- Secondary inputs (from [PHOSPHENE_INPUTS]) do NOT increase the volume requirement.",
                 "- If secondary inputs are present, cite IDs from within those bundles (not just the top-level ID).",
                 "",
                 "### Interpreting success",
-                "- Success means the divergence table is complete, ring/axis coverage is real, and every candidate has a stress-test trace.",
-                "- Done-score will fail if: SPARK missing, <12 candidates, CandID mismatch, or empty stress-test fields.",
+                "- Success means: matrix is complete (30/30), paragraphs are real (≥3 sentences), stress-tests are filled, and axes are used as divergence drivers.",
+                "- Validators will fail if: SPARK missing, ExplorationAxisIDs missing, wrong row count, missing/placeholder cells, or any Idea paragraph <3 sentences.",
                 "- Done-score will fail if output volume is below 3x primary input.",
                 "",
                 "### Input notes",

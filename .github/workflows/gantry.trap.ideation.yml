@@ -100,8 +100,9 @@ jobs:
 
               const requiredActions = [
                 "- Validate ID registry: `./phosphene/phosphene-core/bin/phosphene id validate`",
-                "- Validate ideas: `bash .github/scripts/validate_idea.sh --all`",
-                "- Run done-score: `bash .github/scripts/ideation-domain-done-score.sh --min-score 10`",
+                "- Resolve the IDEA path: `./phosphene/phosphene-core/bin/phosphene id where <IDEA-####>`",
+                "- Validate the IDEA: `bash .github/scripts/validate_idea.sh <path>`",
+                "- Run done-score: `bash .github/scripts/ideation-domain-done-score.sh --file <path> --min-score 10`",
                 `- Re-emit DONE receipt: \`./.codex/skills/phosphene/viridian/ideation/modulator/scripts/ideation_emit_done_receipt.sh --issue-number ${issue_number} --work-id ${work_id}\``,
               ];
 

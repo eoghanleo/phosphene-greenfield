@@ -162,6 +162,29 @@ jobs:
               return Array.from(new Set(tokens));
             };
 
+            const extractIdeationAxesBlock = (text) => {
+              const open = "[PHOSPHENE_IDEATION_AXES]";
+              const close = "[/PHOSPHENE_IDEATION_AXES]";
+              const idx = String(text || "").indexOf(open);
+              if (idx === -1) return [];
+              const end = String(text || "").indexOf(close, idx + open.length);
+              if (end === -1) return [];
+              const body = String(text || "").slice(idx + open.length, end);
+              const ids = [];
+              const seen = new Set();
+              for (const rawLine of body.split(/\r?\n/)) {
+                const line = String(rawLine || "").trim();
+                if (!line) continue;
+                const m = line.match(/\b(AX-[0-9]{3})\b/);
+                if (!m) continue;
+                const id = m[1];
+                if (seen.has(id)) continue;
+                seen.add(id);
+                ids.push(id);
+              }
+              return ids;
+            };
+
             const busLines = fs.existsSync(busPath)
               ? fs.readFileSync(busPath, "utf8").split(/\r?\n/).map((l) => l.trim()).filter(Boolean)
               : [];
@@ -303,6 +326,15 @@ jobs:
               const sparkId = `SPARK-${String(issue_number).padStart(6, "0")}`;
               const sparkPath = `${SPARK_DIR}/${sparkId}.md`;
               const inputWorkIds = extractInputsBlock(body);
+              const explorationAxisIds = extractIdeationAxesBlock(body);
+
+              reportLines.push(`- **Creative exploration axes (count)**: ${explorationAxisIds.length}`);
+
+              if (explorationAxisIds.length !== 10) {
+                reportLines.push(`- **Eligible**: NO (missing/invalid [PHOSPHENE_IDEATION_AXES]; expected 10 unique AX-### IDs)`);
+                await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
+                continue;
+              }
 
               if (!fs.existsSync(SPARK_DIR)) {
                 fs.mkdirSync(SPARK_DIR, { recursive: true });
@@ -316,6 +348,7 @@ jobs:
                   `Lane: ${lane}`,
                   `UpstreamSignalID: ${parent_signal_id || ""}`,
                   `InputWorkIDs: ${inputWorkIds.join(",")}`,
+                  `ExplorationAxisIDs: ${explorationAxisIds.join(",")}`,
                   `CreatedUTC: ${created_utc_spark}`,
                   "",
                   "## Issue snapshot",
@@ -361,6 +394,7 @@ jobs:
                   lane,
                   spark_id: sparkId,
                   spark_path: sparkPath,
+                  exploration_axis_ids: explorationAxisIds,
                   parents: parent_signal_id ? [parent_signal_id] : [],
                   run_marker: work_id,
                   output_key: spark_output_key,
@@ -387,6 +421,7 @@ jobs:
                 intent,
                 spark_id: sparkId,
                 spark_path: sparkPath,
+                exploration_axis_ids: explorationAxisIds,
                 phos_id: "",
                 parents: parent_signal_id ? [parent_signal_id] : [],
                 run_marker: work_id,
