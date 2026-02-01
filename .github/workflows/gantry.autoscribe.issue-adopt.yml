@@ -398,7 +398,7 @@ jobs:
                 upstream_signal_id || "",
                 String(manifold_probe_count),
               ].join("\n");
-              const seed_sha256 = `sha256:${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
+              const seed_sha256 = `${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
               const lines = [
                 PH_OPEN,
                 `lane: ${lane}`,

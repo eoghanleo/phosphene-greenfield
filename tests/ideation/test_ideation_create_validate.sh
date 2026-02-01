@@ -63,7 +63,7 @@ sha256_hex() {
 
 seed_input="$(printf "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s" \
   "viridian" "ideation" "$idea_id" "Test Idea" "" "" "" "$probe_count")"
-seed_sha256="sha256:$(sha256_hex "$seed_input")"
+seed_sha256="$(sha256_hex "$seed_input")"
 
 cat > "$spark_path" <<EOF
 ID: ${spark_id}

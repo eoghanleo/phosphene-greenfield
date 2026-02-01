@@ -212,7 +212,7 @@ jobs:
                 resolvedParentSignalId || "",
                 String(manifoldProbeCount),
               ].join("\n");
-              const seedSha256 = `sha256:${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
+              const seedSha256 = `${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
 
               const notesBlock = [
                 "## STORM TABLE (mandatory for this run)",

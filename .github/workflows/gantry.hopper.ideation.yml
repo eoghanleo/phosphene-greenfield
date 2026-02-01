@@ -145,8 +145,8 @@ jobs:
                     errors.push(`"manifold_probe_count" must be an integer >= 2`);
                   }
                 }
-                if (key === "seed_sha256" && value && !/^sha256:[0-9a-f]{64}$/.test(value)) {
-                  errors.push(`"seed_sha256" must be sha256:<hex>`);
+                if (key === "seed_sha256" && value && !/^(sha256:)?[0-9a-f]{64}$/i.test(value)) {
+                  errors.push(`"seed_sha256" must be <hex> (optional sha256: prefix)`);
                 }
                 kv[key] = value;
               }
@@ -334,9 +334,10 @@ jobs:
                 upstream_signal_id,
                 String(manifold_probe_count),
               ].join("\n");
-              const expectedSeed = `sha256:${crypto.createHash("sha256").update(seedInputValues).digest("hex")}`;
-              if (seed_sha256 !== expectedSeed) {
-                reportLines.push(`- **Eligible**: NO (seed_sha256 mismatch; expected ${expectedSeed})`);
+              const expectedSeedHex = crypto.createHash("sha256").update(seedInputValues).digest("hex");
+              const expectedSeedPrefixed = `sha256:${expectedSeedHex}`;
+              if (seed_sha256 !== expectedSeedHex && seed_sha256 !== expectedSeedPrefixed) {
+                reportLines.push(`- **Eligible**: NO (seed_sha256 mismatch; expected ${expectedSeedHex})`);
                 await github.rest.issues.createComment({ owner, repo, issue_number, body: reportLines.join("\n") });
                 continue;
               }

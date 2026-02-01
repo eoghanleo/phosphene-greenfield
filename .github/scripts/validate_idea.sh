@@ -117,8 +117,8 @@ validate_file() {
   ' "$spark_path" 2>/dev/null || true)"
   seed_sha256="$(printf "%s" "${seed_sha256:-}" | tr -d '\r' | tr -d '[:space:]')"
   [[ -n "${seed_sha256:-}" ]] || fail "Missing SeedSHA256 in SPARK header: $spark_path"
-  if ! [[ "$seed_sha256" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-    fail "SeedSHA256 must be sha256:<hex> in SPARK header: $spark_path"
+  if ! [[ "$seed_sha256" =~ ^(sha256:)?[0-9a-f]{64}$ ]]; then
+    fail "SeedSHA256 must be <hex> (optional sha256: prefix) in SPARK header: $spark_path"
   fi
 
   expected_rows=$(( probe_count * (probe_count - 1) / 2 * 3 ))
@@ -186,13 +186,16 @@ validate_file() {
 
   [[ -n "${footer_seed:-}" ]] || fail "Missing seed_sha256 in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
   [[ -n "${footer_count:-}" ]] || fail "Missing manifold_probe_count in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
-  if ! [[ "$footer_seed" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+  if ! [[ "$footer_seed" =~ ^(sha256:)?[0-9a-f]{64}$ ]]; then
     fail "Invalid seed_sha256 in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
   fi
   if ! [[ "$footer_count" =~ ^[0-9]+$ ]]; then
     fail "Invalid manifold_probe_count in [PHOSPHENE_MANIFOLD_PROBES] block in $file"
   fi
-  if [[ "$footer_seed" != "$seed_sha256" ]]; then
+  normalize_seed() {
+    printf "%s" "$1" | sed -E 's/^sha256://I'
+  }
+  if [[ "$(normalize_seed "$footer_seed")" != "$(normalize_seed "$seed_sha256")" ]]; then
     fail "seed_sha256 in footer does not match SPARK header for $file"
   fi
   if [[ "$footer_count" -ne "$probe_count" ]]; then

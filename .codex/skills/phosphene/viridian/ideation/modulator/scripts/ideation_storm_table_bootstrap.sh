@@ -78,6 +78,7 @@ spark_path="$ROOT/phosphene/signals/sparks/${spark_id}.md"
 seed_sha256="$(read_header_value "$spark_path" "SeedSHA256" || true)"
 seed_sha256="$(printf "%s" "${seed_sha256:-}" | tr -d '\r' | tr -d '[:space:]')"
 [[ -n "${seed_sha256:-}" ]] || { echo "Error: missing SeedSHA256 in SPARK header: $spark_path" >&2; exit 1; }
+seed_sha256="$(printf "%s" "$seed_sha256" | sed -E 's/^sha256://I')"
 
 probe_count_raw="$(read_header_value "$spark_path" "ManifoldProbeCount" || true)"
 probe_count_raw="$(printf "%s" "${probe_count_raw:-}" | tr -d '\r' | tr -d '[:space:]')"

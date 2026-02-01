@@ -19,7 +19,7 @@ The header is a simple key:value block; the first blank line ends the header.
 - `UpstreamSignalID: sha256:...` (if available)
 - `InputWorkIDs: RA-001,VPD-002` (optional; may be empty)
 - `ManifoldProbeCount: 10` (ideation storm-table size)
-- `SeedSHA256: sha256:...` (seed for deterministic probe selection)
+- `SeedSHA256: <hex>` (seed for deterministic probe selection; optional sha256: prefix accepted)
 - `CreatedUTC: 2026-02-01T00:00:00Z`
 
 ## Body schema (v1)
