@@ -124,7 +124,7 @@ jobs:
 
               for (let i = 0; i < lines.length; i++) {
                 const line = lines[i];
-                const m = line.match(/^\s*([a-zA-Z_]+)\s*:\s*(.*?)\s*$/);
+                const m = line.match(/^\s*([a-zA-Z0-9_]+)\s*:\s*(.*?)\s*$/);
                 if (!m) {
                   errors.push(`line ${i + 1} is not key:value`);
                   continue;

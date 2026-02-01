@@ -279,7 +279,7 @@ jobs:
               for (const line of lines) {
                 if (!line.includes(":")) continue;
                 if (line.trim() === PH_OPEN || line.trim() === PH_CLOSE) continue;
-                const m = line.match(/^\s*([a-zA-Z_]+)\s*:\s*(.*?)\s*$/);
+                const m = line.match(/^\s*([a-zA-Z0-9_]+)\s*:\s*(.*?)\s*$/);
                 if (!m) continue;
                 kv[String(m[1] || "").toLowerCase()] = String(m[2] || "").trim();
               }
