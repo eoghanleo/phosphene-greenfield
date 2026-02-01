@@ -4,15 +4,14 @@ set -euo pipefail
 # product-strategy-domain-done-score.sh
 # Minimal programmatic scoring for <product-strategy> artifacts.
 
-export LC_ALL=C
-export LANG=C
-export TZ=UTC
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_FOR_LIB="$(cd "$SCRIPT_DIR/../.." && pwd)"
 LIB_DIR="$ROOT_FOR_LIB/phosphene/phosphene-core/lib"
 # shellcheck source=/dev/null
 source "$LIB_DIR/phosphene_env.sh"
+# shellcheck source=/dev/null
+source "$LIB_DIR/phosphene_done_score_metrics.sh"
+phos_ds_env_defaults
 
 usage() {
   cat <<'EOF'
@@ -48,7 +47,7 @@ else
   [[ -d "$DOCS_ROOT" ]] || fail "Missing docs root dir: $DOCS_ROOT"
 fi
 
-if ! [[ "$MIN_SCORE" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+if ! phos_ds_assert_numeric_0_100 "$MIN_SCORE"; then
   fail "--min-score must be numeric (0..100)"
 fi
 
@@ -62,17 +61,16 @@ else
   done < <(find "$DOCS_ROOT" -type f -name "ROADMAP-*.md" 2>/dev/null | sort)
 fi
 
-n_files="${#files[@]}"
-if [[ "$n_files" -eq 0 ]]; then
+out_items="${#files[@]}"
+if [[ "$out_items" -eq 0 ]]; then
   fail "No ROADMAP artifacts found under: $DOCS_ROOT"
 fi
 
-word_count="$(cat "${files[@]}" 2>/dev/null | wc -w | awk '{print $1}')"
-score="$(awk -v n="$n_files" -v w="$word_count" 'BEGIN{
-  s = (n * 12) + (w / 70);
-  if (s > 100) s = 100;
-  printf "%.2f\n", s;
-}')"
+out_words="$(cat "${files[@]}" 2>/dev/null \
+  | phos_ds_strip_codeblocks_and_tables \
+  | phos_ds_clean_text_common \
+  | wc -w | awk '{print $1}')"
+score="$(phos_ds_score_minimal "$out_items" "$out_words" 12 70 100)"
 
 result="$(awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN{ if (s+0 >= m+0) print "PASS"; else print "FAIL" }')"
 
@@ -82,8 +80,8 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "Result:    ${result}   Overall: ${score}/100   Threshold: ${MIN_SCORE}"
   echo ""
   echo "Inputs:"
-  echo "  - roadmap files: ${n_files}"
-  echo "  - total words: ${word_count}"
+  echo "  - roadmap files: ${out_items}"
+  echo "  - total words: ${out_words}"
 fi
 
 awk -v s="$score" -v m="$MIN_SCORE" 'BEGIN{ exit (s+0 >= m+0) ? 0 : 1 }'
