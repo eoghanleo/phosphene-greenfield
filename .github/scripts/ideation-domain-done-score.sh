@@ -56,7 +56,13 @@ FILE=""
 MIN_SCORE="10"
 QUIET=0
 VOL_FULL_RATIO="1.00"
-OUT_IN_RATIO_CAP="5.00"
+OUT_IN_RATIO_CAP="10.00"
+PRIMARY_WORD_FLOOR="100"
+PRIMARY_GATE_MULT="3"
+PRIMARY_FULL_MULT="10"
+CAND_GATE="12"
+CAND_FULL="18"
+SEC_TRACE_TARGET="3"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -136,6 +142,8 @@ CORPUS_CLEAN_TXT="$tmp/corpus_clean.txt"
 RINGS_TXT="$tmp/rings.txt"
 AXES_TXT="$tmp/axes.txt"
 INPUT_IDS_TXT="$tmp/input_ids.txt"
+SECONDARY_PREFIXES_TXT="$tmp/secondary_prefixes.txt"
+SECONDARY_IDS_TXT="$tmp/secondary_ids.txt"
 IDEA_RAW_TXT="$tmp/idea_raw.txt"
 
 : > "$CORPUS_TXT"
@@ -143,6 +151,8 @@ IDEA_RAW_TXT="$tmp/idea_raw.txt"
 : > "$RINGS_TXT"
 : > "$AXES_TXT"
 : > "$INPUT_IDS_TXT"
+: > "$SECONDARY_PREFIXES_TXT"
+: > "$SECONDARY_IDS_TXT"
 : > "$IDEA_RAW_TXT"
 
 gate_ok=1
@@ -152,7 +162,8 @@ div_total=0
 stress_total=0
 nrq_total=0
 spark_count=0
-input_words=0
+in_words_primary=0
+in_words_secondary=0
 
 read_header_value() {
   local file="$1"
@@ -198,15 +209,12 @@ for f in "${OUTPUT_FILES[@]}"; do
     gate_notes+=("Missing SPARK snapshot for issue ${issue_number} (${spark_id}.md)")
   else
     spark_count=$((spark_count + 1))
-    spark_tmp="$tmp/spark_${issue_number}.txt"
-    : > "$spark_tmp"
-    phos_ds_append_section_text "$spark_path" "## Issue snapshot" > "$spark_tmp" || true
-    spark_words="$(phos_ds_clean_text_common < "$spark_tmp" | wc -w | awk '{print $1}')"
+    spark_words="$(phos_ds_section_words "$spark_path" "## Issue snapshot" "$PRIMARY_WORD_FLOOR")"
     if [[ "${spark_words:-0}" -eq 0 ]]; then
       gate_ok=0
       gate_notes+=("SPARK snapshot is empty for issue ${issue_number}")
     fi
-    input_words=$((input_words + spark_words))
+    in_words_primary=$((in_words_primary + spark_words))
 
     input_ids_raw="$(read_header_value "$spark_path" "InputWorkIDs" || true)"
     if [[ -n "${input_ids_raw:-}" ]]; then
@@ -261,9 +269,9 @@ for f in "${OUTPUT_FILES[@]}"; do
     END{ print count+0; }
   ' "$f")" || div_count=0
 
-  if [[ "$div_count" -lt 12 ]]; then
+  if [[ "$div_count" -lt "$CAND_GATE" ]]; then
     gate_ok=0
-    gate_notes+=("Need at least 12 divergence candidates in $(basename "$f")")
+    gate_notes+=("Need at least ${CAND_GATE} divergence candidates in $(basename "$f")")
   fi
   div_total=$((div_total + div_count))
 
@@ -314,6 +322,8 @@ sort -u "$INPUT_IDS_TXT" -o "$INPUT_IDS_TXT" || true
 
 ref_total=0
 ref_hits=0
+sec_ref_ids_total=0
+sec_ref_ids_hit=0
 if [[ -s "$INPUT_IDS_TXT" ]]; then
   ref_total="$(wc -l < "$INPUT_IDS_TXT" | awk '{print $1}')"
   while IFS= read -r id; do
@@ -327,16 +337,20 @@ if [[ -s "$INPUT_IDS_TXT" ]]; then
       gate_notes+=("InputWorkID not found in id registry: $id")
       continue
     fi
+    base_prefix="$(dirname "$rel_path")"
+    if [[ -n "${base_prefix:-}" ]]; then
+      echo "$base_prefix" >> "$SECONDARY_PREFIXES_TXT"
+    fi
     abs_path="$ROOT/$rel_path"
     if [[ -d "$abs_path" ]]; then
       w="$(phos_ds_clean_markdown_tree_words "$abs_path")"
-      input_words=$((input_words + w))
+      in_words_secondary=$((in_words_secondary + w))
     elif [[ -f "$abs_path" ]]; then
       w="$(cat "$abs_path" 2>/dev/null \
         | phos_ds_strip_codeblocks_and_tables \
         | phos_ds_clean_text_common \
         | wc -w | awk '{print $1}')"
-      input_words=$((input_words + w))
+      in_words_secondary=$((in_words_secondary + w))
     else
       gate_ok=0
       gate_notes+=("InputWorkID path missing: $id ($rel_path)")
@@ -344,8 +358,21 @@ if [[ -s "$INPUT_IDS_TXT" ]]; then
   done < "$INPUT_IDS_TXT"
 fi
 
-in_items=$((spark_count + ref_total))
-in_words="$input_words"
+in_items_primary="$spark_count"
+in_items_secondary="$ref_total"
+in_words="$((in_words_primary + in_words_secondary))"
+
+if [[ -s "$SECONDARY_PREFIXES_TXT" ]]; then
+  sort -u "$SECONDARY_PREFIXES_TXT" -o "$SECONDARY_PREFIXES_TXT" || true
+  phos_ds_index_ids_for_prefixes "$ROOT/phosphene/id_index.tsv" "$SECONDARY_PREFIXES_TXT" \
+    | sort -u > "$SECONDARY_IDS_TXT" || true
+  if [[ -s "$INPUT_IDS_TXT" ]]; then
+    grep -v -F -f "$INPUT_IDS_TXT" "$SECONDARY_IDS_TXT" > "$SECONDARY_IDS_TXT.filtered" || true
+    mv "$SECONDARY_IDS_TXT.filtered" "$SECONDARY_IDS_TXT"
+  fi
+  sec_ref_ids_total="$(wc -l < "$SECONDARY_IDS_TXT" | awk '{print $1}')"
+  sec_ref_ids_hit="$(phos_ds_count_unique_ids_in_text "$SECONDARY_IDS_TXT" "$IDEA_RAW_TXT")"
+fi
 
 # ----------------------------
 # 4) Cleaning
@@ -358,7 +385,8 @@ phos_ds_clean_text_common < "$CORPUS_TXT" \
 # ----------------------------
 out_words="$(wc -w < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
 out_lines="$(wc -l < "$CORPUS_CLEAN_TXT" | awk '{print $1}')"
-out_in_ratio="$(phos_ds_ratio_clamped "$out_words" "$in_words" "$OUT_IN_RATIO_CAP")"
+out_in_primary_ratio="$(phos_ds_ratio_clamped "$out_words" "$in_words_primary" "$OUT_IN_RATIO_CAP")"
+out_in_ratio="$out_in_primary_ratio"
 
 div_stats="$(phos_ds_entropy_stats "$CORPUS_CLEAN_TXT")"
 read -r out_tokens unique_words H ent_norm uniq_ratio <<< "$div_stats"
@@ -377,14 +405,15 @@ row_fill="0"
 # ----------------------------
 # 6) Normalization
 # ----------------------------
-CAND_TARGET="12"
+CAND_TARGET="$CAND_FULL"
 AXES_TARGET="6"
 NRQ_TARGET="3"
 
 s_cand="$(phos_ds_score_linear "$div_total" 0 "$CAND_TARGET")"
 ring_cov="$(awk -v n="$uniq_rings" 'BEGIN{ if (n>3) n=3; if (n<0) n=0; printf "%.4f\n", n/3 }')"
 s_ring="$(awk -v r="$ring_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
-score_vol="$(awk -v a="$s_cand" -v b="$s_ring" 'BEGIN{ printf "%.2f\n", (a+b)/2 }')"
+s_vol_text="$(phos_ds_score_linear "$out_in_primary_ratio" 0 "$PRIMARY_FULL_MULT")"
+score_vol="$(awk -v a="$s_cand" -v b="$s_ring" -v c="$s_vol_text" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
 
 axis_cov="$(awk -v n="$axis_unique" -v t="$AXES_TARGET" 'BEGIN{ if (t<=0) { print 0; exit } r=n/t; if (r>1) r=1; if (r<0) r=0; printf "%.4f\n", r }')"
 s_axis="$(awk -v r="$axis_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
@@ -400,7 +429,18 @@ score_dep="$(awk -v a="$s_stress" -v b="$s_frag" -v c="$s_two" 'BEGIN{ printf "%
 
 s_ref="$(awk -v r="$ref_cov" 'BEGIN{ printf "%.2f\n", r*100 }')"
 s_nrq="$(phos_ds_score_linear "$nrq_total" 0 "$NRQ_TARGET")"
-score_con="$(awk -v a="$s_ref" -v b="$s_nrq" 'BEGIN{ printf "%.2f\n", (a+b)/2 }')"
+if [[ "$sec_ref_ids_total" -gt 0 ]]; then
+  s_sec_trace="$(phos_ds_score_linear "$sec_ref_ids_hit" 0 "$SEC_TRACE_TARGET")"
+else
+  s_sec_trace="100"
+fi
+score_con="$(awk -v a="$s_ref" -v b="$s_sec_trace" -v c="$s_nrq" 'BEGIN{ printf "%.2f\n", (a+b+c)/3 }')"
+
+min_out_words="$(awk -v p="$in_words_primary" -v m="$PRIMARY_GATE_MULT" 'BEGIN{ printf "%.0f\n", p*m }')"
+if [[ "$out_words" -lt "$min_out_words" ]]; then
+  gate_ok=0
+  gate_notes+=("Output words below minimum (${out_words} < ${min_out_words}) for primary input volume gate")
+fi
 
 # ----------------------------
 # 7) Scoring + levelling
@@ -432,14 +472,16 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "Inputs:"
   echo "  - spark files: ${spark_count}"
   echo "  - input IDs: ${ref_total}"
-  echo "  - input words: ${in_words}"
+  echo "  - primary words (floor ${PRIMARY_WORD_FLOOR}): ${in_words_primary}"
+  echo "  - secondary words: ${in_words_secondary}"
+  echo "  - input words total: ${in_words}"
   echo ""
   echo "Outputs:"
   echo "  - idea files: ${out_items}"
   echo "  - candidates: ${div_total}"
   echo "  - stress-tested: ${stress_total}"
   echo "  - output words: ${out_words}"
-  echo "  - out/in ratio (capped): ${out_in_ratio}"
+  echo "  - out/primary ratio (capped): ${out_in_primary_ratio}"
   echo ""
   echo "Subscores:"
   echo "  - volume: ${score_vol}"
@@ -455,6 +497,7 @@ if [[ "$QUIET" -ne 1 ]]; then
   echo "  - frag_avg_words: ${frag_avg_words}"
   echo "  - two_sent_ratio: ${two_sent_ratio}"
   echo "  - ref_cov: ${ref_cov}"
+  echo "  - secondary trace: ${sec_ref_ids_hit}/${sec_ref_ids_total}"
   echo "  - next_research_questions: ${nrq_total}"
   if [[ "${#gate_notes[@]}" -gt 0 ]]; then
     echo ""

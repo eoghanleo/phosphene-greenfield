@@ -91,6 +91,10 @@ awk -v div_file="$div_table" -v stress_file="$stress_table" '
 ' "$idea_path" > "$tmp2"
 mv "$tmp2" "$idea_path"
 
+for i in $(seq 1 60); do
+  echo "Additional context line $i: The colony simulation emphasizes emergent behavior, lineage continuity, and clear causal explanations." >> "$idea_path"
+done
+
 spark_dir="$ROOT/phosphene/signals/sparks"
 mkdir -p "$spark_dir"
 spark_id="$(printf "SPARK-%06d" "$issue_number")"

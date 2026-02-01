@@ -154,12 +154,17 @@ Use these metrics as concrete building blocks. Variables are explicit and reusab
 - **Output/input ratio**: `out_in_ratio = (in_words>0)?(out_words/in_words):0`.
 - **Output lines**: `out_lines = wc -l on cleaned output corpus`.
 - **Output items**: `out_items = count of output artifacts (e.g., PER/PROP/REQ)`.
+- **Primary input words**: `in_words_primary = cleaned words in primary input corpus`.
+- **Secondary input words**: `in_words_secondary = cleaned words in secondary input corpora`.
+- **Output/primary ratio**: `out_in_primary_ratio = (in_words_primary>0)?(out_words/in_words_primary):0`.
 
 ### Coverage metrics
 - **Input reference coverage**: `ref_cov = unique_input_refs / available_input_refs`.
 - **Internal coverage**: `internal_cov = unique_internal_refs / created_internal_ids`.
 - **Category coverage**: `cat_cov = categories_with_items / total_required_categories`.
 - **Row fill ratio**: `row_fill = rows_filled / target_rows` (clamp to 1.0).
+- **Secondary trace hits**: `sec_ref_ids_hit = unique secondary IDs referenced in output`.
+- **Secondary trace total**: `sec_ref_ids_total = unique secondary IDs available in the secondary corpus`.
 
 ### Diversity metrics (textual)
 - **Unique word ratio (TTR)**: `uniq_ratio = unique_words / out_words`.

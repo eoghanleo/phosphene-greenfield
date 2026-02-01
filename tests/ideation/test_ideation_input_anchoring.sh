@@ -88,6 +88,10 @@ awk -v div_file="$div_table" -v stress_file="$stress_table" '
 ' "$idea_path" > "$tmp2"
 mv "$tmp2" "$idea_path"
 
+for i in $(seq 1 60); do
+  echo "Additional context line $i: The colony simulation emphasizes emergent behavior, lineage continuity, and clear causal explanations." >> "$idea_path"
+done
+
 spark_dir="$ROOT/phosphene/signals/sparks"
 mkdir -p "$spark_dir"
 spark_id="$(printf "SPARK-%06d" "$issue_number")"
@@ -108,6 +112,10 @@ EOF
 cleanup_paths+=("$spark_path")
 
 bash "$VALIDATE_SCRIPT" "$idea_path"
-bash "$DONE_SCORE_SCRIPT" --file "$idea_path" --min-score 0 >/dev/null
+done_out=""
+if ! done_out="$(bash "$DONE_SCORE_SCRIPT" --file "$idea_path" --min-score 0 2>&1)"; then
+  echo "$done_out"
+  exit 1
+fi
 
 echo "OK: ideation input anchoring test passed."

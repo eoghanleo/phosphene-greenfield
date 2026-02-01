@@ -244,6 +244,7 @@ jobs:
                   `- **SPARK path**: \`${spark_path}\``,
                   `- **done-score (required)**: \`${doneScoreCmd}\``,
                   `- **done-score threshold**: \`${doneScoreMin}\``,
+                  `- **volume rule**: output >= 3x primary input; full points at 10x (primary = SPARK snapshot only)`,
                   branchLine,
                   "",
                   "TO AGENT (from prism):",

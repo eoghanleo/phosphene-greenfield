@@ -275,6 +275,48 @@ phos_ds_append_section_text() {
   ' "$file"
 }
 
+phos_ds_section_words() {
+  local file="$1"
+  local start="$2"
+  local floor="${3:-0}"
+  local tmp
+  tmp="$(mktemp)"
+  phos_ds_append_section_text "$file" "$start" > "$tmp" || true
+  local words
+  words="$(phos_ds_clean_text_common < "$tmp" | wc -w | awk '{print $1}')"
+  rm -f "$tmp"
+  if [[ "$floor" =~ ^[0-9]+$ && "$floor" -gt 0 ]]; then
+    if [[ "$words" -lt "$floor" ]]; then
+      words="$floor"
+    fi
+  fi
+  echo "$words"
+}
+
+phos_ds_index_ids_for_prefixes() {
+  local index_tsv="$1"
+  local prefixes_file="$2"
+  awk -F'\t' 'FNR==NR{
+    if ($0!="") pref[$0]=1;
+    next
+  }
+  {
+    for (p in pref) {
+      if (index($3, p) == 1) { print $2; break; }
+    }
+  }' "$prefixes_file" "$index_tsv"
+}
+
+phos_ds_count_unique_ids_in_text() {
+  local ids_file="$1"
+  local text_file="$2"
+  if [[ ! -s "$ids_file" ]]; then
+    echo "0"
+    return 0
+  fi
+  { grep -F -o -f "$ids_file" "$text_file" 2>/dev/null || true; } | sort -u | wc -l | awk '{print $1}'
+}
+
 phos_ds_filter_token_dump() {
   awk '
     {

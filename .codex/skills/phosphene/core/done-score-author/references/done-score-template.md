@@ -296,6 +296,11 @@ These base names come from `done-score-design.md`. Keep them identical between s
 - `in_items`: count of upstream input artifacts (if applicable)
 - `in_words`: cleaned input corpus words (if applicable)
 - `out_in_ratio`: output/input ratio (capped)
+- `in_items_primary`: count of primary upstream inputs (optional)
+- `in_words_primary`: cleaned primary input corpus words (optional)
+- `in_items_secondary`: count of secondary upstream inputs (optional)
+- `in_words_secondary`: cleaned secondary input corpus words (optional)
+- `out_in_primary_ratio`: output/primary ratio (capped; optional)
 
 ### Coverage
 
