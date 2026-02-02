@@ -98,7 +98,7 @@ jobs:
             echo "DISCORD_WEBHOOK_URL is not set"
             exit 1
           fi
-          payload="${{ steps.message.outputs.payload }}"
+          payload='${{ steps.message.outputs.payload }}'
           curl -sS -X POST -H "Content-Type: application/json" \
             -d "$payload" \
             "$DISCORD_WEBHOOK_URL"
