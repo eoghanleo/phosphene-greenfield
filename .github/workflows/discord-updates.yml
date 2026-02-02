@@ -63,7 +63,8 @@ jobs:
               if [ -z "$subject" ]; then
                 subject="Update pushed"
               fi
-              msg="PHOSPHENE WORKSHOP — Update pushed\nRepo: ${REPO}@${REF_NAME}\nCommit: ${short_sha} — ${subject}\nBy: ${ACTOR}\nCompare: ${COMPARE_URL}"
+              printf -v msg "PHOSPHENE WORKSHOP — Update pushed\nRepo: %s@%s\nCommit: %s — %s\nBy: %s\nCompare: %s" \
+                "$REPO" "$REF_NAME" "$short_sha" "$subject" "$ACTOR" "$COMPARE_URL"
               ;;
             pull_request)
               if [ "${PR_MERGED}" != "true" ]; then
@@ -71,21 +72,25 @@ jobs:
                 exit 0
               fi
               author="${PR_AUTHOR:-unknown}"
-              msg="PHOSPHENE WORKSHOP — PR merged\nPR: #${PR_NUMBER} — ${PR_TITLE}\nBy: ${author}\nLink: ${PR_URL}"
+              printf -v msg "PHOSPHENE WORKSHOP — PR merged\nPR: #%s — %s\nBy: %s\nLink: %s" \
+                "$PR_NUMBER" "$PR_TITLE" "$author" "$PR_URL"
               ;;
             issues)
               author="${ISSUE_AUTHOR:-unknown}"
-              msg="PHOSPHENE WORKSHOP — Issue opened\nIssue: #${ISSUE_NUMBER} — ${ISSUE_TITLE}\nBy: ${author}\nLink: ${ISSUE_URL}"
+              printf -v msg "PHOSPHENE WORKSHOP — Issue opened\nIssue: #%s — %s\nBy: %s\nLink: %s" \
+                "$ISSUE_NUMBER" "$ISSUE_TITLE" "$author" "$ISSUE_URL"
               ;;
             release)
               name_part="$RELEASE_NAME"
               if [ -z "$name_part" ]; then
                 name_part="$RELEASE_TAG"
               fi
-              msg="PHOSPHENE WORKSHOP — Release published\nTag: ${RELEASE_TAG}\nName: ${name_part}\nLink: ${RELEASE_URL}"
+              printf -v msg "PHOSPHENE WORKSHOP — Release published\nTag: %s\nName: %s\nLink: %s" \
+                "$RELEASE_TAG" "$name_part" "$RELEASE_URL"
               ;;
             *)
-              msg="PHOSPHENE WORKSHOP — Event ${EVENT_NAME}\nRepo: ${REPO}"
+              printf -v msg "PHOSPHENE WORKSHOP — Event %s\nRepo: %s" \
+                "$EVENT_NAME" "$REPO"
               ;;
           esac
 
