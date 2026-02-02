@@ -4,6 +4,8 @@
 
 ## PHOSPHENE --
 
+_Workshop note: Discord notifications are enabled for main updates._
+
 PHOSPHENE is a **git-native multi-agent harness for continuous autonomous product development**: a way to keep ideas, decisions, artifacts, documents, code, memory, learnings and handoffs legible over time—without needing a heavyweight platform.
 
 At its core:

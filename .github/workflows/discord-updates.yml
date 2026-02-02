@@ -31,13 +31,16 @@ jobs:
           REF_NAME: ${{ github.ref_name }}
           SHA: ${{ github.sha }}
           COMPARE_URL: ${{ github.event.compare }}
+          HEAD_MESSAGE: ${{ github.event.head_commit.message }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
           PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
           PR_MERGED: ${{ github.event.pull_request.merged }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
           ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
           RELEASE_NAME: ${{ github.event.release.name }}
           RELEASE_TAG: ${{ github.event.release.tag_name }}
           RELEASE_URL: ${{ github.event.release.html_url }}
@@ -56,27 +59,33 @@ jobs:
           case "$EVENT_NAME" in
             push)
               short_sha="${SHA:0:7}"
-              msg="Push to ${REPO}@${REF_NAME} (${short_sha}) by ${ACTOR}\n${COMPARE_URL}"
+              subject="$(printf "%s\n" "${HEAD_MESSAGE:-}" | head -n 1)"
+              if [ -z "$subject" ]; then
+                subject="Update pushed"
+              fi
+              msg="PHOSPHENE WORKSHOP — Update pushed\nRepo: ${REPO}@${REF_NAME}\nCommit: ${short_sha} — ${subject}\nBy: ${ACTOR}\nCompare: ${COMPARE_URL}"
               ;;
             pull_request)
               if [ "${PR_MERGED}" != "true" ]; then
                 echo "skip=true" >> "$GITHUB_OUTPUT"
                 exit 0
               fi
-              msg="PR merged #${PR_NUMBER}: ${PR_TITLE}\n${PR_URL}"
+              author="${PR_AUTHOR:-unknown}"
+              msg="PHOSPHENE WORKSHOP — PR merged\nPR: #${PR_NUMBER} — ${PR_TITLE}\nBy: ${author}\nLink: ${PR_URL}"
               ;;
             issues)
-              msg="Issue opened #${ISSUE_NUMBER}: ${ISSUE_TITLE}\n${ISSUE_URL}"
+              author="${ISSUE_AUTHOR:-unknown}"
+              msg="PHOSPHENE WORKSHOP — Issue opened\nIssue: #${ISSUE_NUMBER} — ${ISSUE_TITLE}\nBy: ${author}\nLink: ${ISSUE_URL}"
               ;;
             release)
               name_part="$RELEASE_NAME"
               if [ -z "$name_part" ]; then
                 name_part="$RELEASE_TAG"
               fi
-              msg="Release published ${RELEASE_TAG}: ${name_part}\n${RELEASE_URL}"
+              msg="PHOSPHENE WORKSHOP — Release published\nTag: ${RELEASE_TAG}\nName: ${name_part}\nLink: ${RELEASE_URL}"
               ;;
             *)
-              msg="Event ${EVENT_NAME} on ${REPO}"
+              msg="PHOSPHENE WORKSHOP — Event ${EVENT_NAME}\nRepo: ${REPO}"
               ;;
           esac
 
