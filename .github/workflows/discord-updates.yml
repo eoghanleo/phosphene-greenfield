@@ -63,7 +63,7 @@ jobs:
               if [ -z "$subject" ]; then
                 subject="Update pushed"
               fi
-              printf -v msg "PHOSPHENE WORKSHOP — Update pushed\nRepo: %s@%s\nCommit: %s — %s\nBy: %s\nCompare: %s" \
+              printf -v msg "🟪 PHOSPHENE REACTOR - Update Live\nRepo: %s@%s\nCommit: %s — %s\nBy: %s\nCompare: %s" \
                 "$REPO" "$REF_NAME" "$short_sha" "$subject" "$ACTOR" "$COMPARE_URL"
               ;;
             pull_request)
@@ -72,12 +72,12 @@ jobs:
                 exit 0
               fi
               author="${PR_AUTHOR:-unknown}"
-              printf -v msg "PHOSPHENE WORKSHOP — PR merged\nPR: #%s — %s\nBy: %s\nLink: %s" \
+              printf -v msg ":white_check_mark: PHOSPHENE WORKSHOP — PR merged\nPR: #%s — %s\nBy: %s\nLink: %s" \
                 "$PR_NUMBER" "$PR_TITLE" "$author" "$PR_URL"
               ;;
             issues)
               author="${ISSUE_AUTHOR:-unknown}"
-              printf -v msg "PHOSPHENE WORKSHOP — Issue opened\nIssue: #%s — %s\nBy: %s\nLink: %s" \
+              printf -v msg ":bookmark_tabs: PHOSPHENE WORKSHOP — Issue opened\nIssue: #%s — %s\nBy: %s\nLink: %s" \
                 "$ISSUE_NUMBER" "$ISSUE_TITLE" "$author" "$ISSUE_URL"
               ;;
             release)
@@ -85,11 +85,11 @@ jobs:
               if [ -z "$name_part" ]; then
                 name_part="$RELEASE_TAG"
               fi
-              printf -v msg "PHOSPHENE WORKSHOP — Release published\nTag: %s\nName: %s\nLink: %s" \
+              printf -v msg ":rocket: PHOSPHENE WORKSHOP — Release published\nTag: %s\nName: %s\nLink: %s" \
                 "$RELEASE_TAG" "$name_part" "$RELEASE_URL"
               ;;
             *)
-              printf -v msg "PHOSPHENE WORKSHOP — Event %s\nRepo: %s" \
+              printf -v msg ":bell: PHOSPHENE WORKSHOP — Event %s\nRepo: %s" \
                 "$EVENT_NAME" "$REPO"
               ;;
           esac
